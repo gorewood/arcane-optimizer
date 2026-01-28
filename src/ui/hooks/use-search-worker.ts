@@ -19,6 +19,7 @@ import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore, type GAParams } from "@/stores/search-store";
 import type { ExitMetadata, WorkerRequest, WorkerResponse } from "@/workers/search-worker";
+import { ExhaustiveCoordinator } from "@/workers/exhaustive-coordinator";
 
 // ---------------------------------------------------------------------------
 // Progress state type
@@ -158,6 +159,42 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
 }
 
 // ---------------------------------------------------------------------------
+// Coordinator launcher
+// ---------------------------------------------------------------------------
+
+interface CoordinatorLaunchConfig {
+  readonly gearPool: GearPool;
+  readonly fitness: readonly SoftConstraint[];
+  readonly maxResults: number;
+  readonly enhancementMode: EnhancementMode;
+}
+
+interface CoordinatorCallbacks {
+  readonly onProgress: (checked: number, total: number, bestScore: number) => void;
+  readonly onComplete: (results: readonly SearchResult[]) => void;
+  readonly onError: (message: string) => void;
+}
+
+function launchCoordinator(config: CoordinatorLaunchConfig, cb: CoordinatorCallbacks): ExhaustiveCoordinator {
+  const coordinator = new ExhaustiveCoordinator();
+  coordinator.start(
+    {
+      gearPool: config.gearPool,
+      constraints: DEFAULT_HARD_CONSTRAINTS,
+      fitness: config.fitness,
+      maxResults: config.maxResults,
+      enhancementMode: config.enhancementMode,
+    },
+    {
+      onProgress: cb.onProgress,
+      onComplete: cb.onComplete,
+      onError: cb.onError,
+    },
+  );
+  return coordinator;
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -185,10 +222,12 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const [progress, setProgress] = useState<ProgressState>(INITIAL_PROGRESS);
   const [warning, setWarning] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
+  const coordinatorRef = useRef<ExhaustiveCoordinator | null>(null);
 
   useEffect(() => {
-    const ref = workerRef;
-    return () => { ref.current?.terminate(); };
+    const wRef = workerRef;
+    const cRef = coordinatorRef;
+    return () => { wRef.current?.terminate(); cRef.current?.stop(); };
   }, []);
 
   const start = useCallback(() => {
@@ -201,24 +240,26 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     startSearch();
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
-    workerRef.current = launchWorker(
-      { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm, gaParams },
-      {
-        onProgress: (c, t, b) => { setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b })); },
-        onComplete: (r, meta) => { setResults(r, meta); workerRef.current = null; },
-        onError: (m) => { setError(m); workerRef.current = null; },
-      },
-    );
+    const progressCb = (c: number, t: number, b: number): void => {
+      setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b }));
+    };
+
+    if (algorithm === "exhaustive") {
+      coordinatorRef.current = launchCoordinator(
+        { gearPool, fitness: constraints, maxResults, enhancementMode },
+        { onProgress: progressCb, onComplete: (r) => { setResults(r, undefined); }, onError: setError },
+      );
+    } else {
+      workerRef.current = launchWorker(
+        { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm, gaParams },
+        { onProgress: progressCb, onComplete: setResults, onError: setError },
+      );
+    }
   }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, gaParams, startSearch, setResults, setError]);
 
   const stop = useCallback(() => {
-    const w = workerRef.current;
-    if (w != null) {
-      const stopMsg: WorkerRequest = { type: "stop" };
-      w.postMessage(stopMsg);
-      w.terminate();
-      workerRef.current = null;
-    }
+    workerRef.current?.terminate(); workerRef.current = null;
+    coordinatorRef.current?.stop(); coordinatorRef.current = null;
     reset();
   }, [reset]);
 
