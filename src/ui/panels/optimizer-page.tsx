@@ -12,6 +12,7 @@
 import { useState } from "react";
 import { useSearchStore } from "@/stores/search-store";
 import { useFitnessStore } from "@/stores/fitness-store";
+import { useUIStore } from "@/stores/ui-store";
 import { useSearchWorker } from "@/ui/hooks/use-search-worker";
 import { GoalsSection } from "./fitness-section";
 import { SearchBar } from "./search-bar";
@@ -54,6 +55,8 @@ function ResultsSection(): React.JSX.Element {
   const results = useSearchStore((s) => s.results);
   const status = useSearchStore((s) => s.status);
   const constraints = useFitnessStore((s) => s.constraints);
+  const expandedCards = useUIStore((s) => s.expandedCardIndices);
+  const toggleCardExpanded = useUIStore((s) => s.toggleCardExpanded);
 
   if (results.length === 0 && status !== "running") {
     return (
@@ -84,6 +87,8 @@ function ResultsSection(): React.JSX.Element {
           rank={i + 1}
           result={result}
           constraints={constraints}
+          expanded={expandedCards.has(i)}
+          onToggleExpanded={() => { toggleCardExpanded(i); }}
         />
       ))}
     </div>
