@@ -1,0 +1,52 @@
+[
+  {
+    "id": "gilded",
+    "name": "Gilded",
+    "stats": {},
+    "grantsSocket": true
+  },
+  {
+    "id": "archaic",
+    "name": "Archaic",
+    "stats": { "size": 24 }
+  },
+  {
+    "id": "blasted",
+    "name": "Blasted",
+    "stats": { "power": 8 }
+  },
+  {
+    "id": "crystalline",
+    "name": "Crystalline",
+    "stats": { "dexterity": 24 }
+  },
+  {
+    "id": "drowned",
+    "name": "Drowned",
+    "stats": { "defense": 39, "size": 14 }
+  },
+  {
+    "id": "frozen",
+    "name": "Frozen",
+    "stats": { "defense": 76 }
+  },
+  {
+    "id": "sandy",
+    "name": "Sandy",
+    "stats": { "size": 38 }
+  },
+  {
+    "id": "superheated",
+    "name": "Superheated",
+    "stats": { "power": 15, "size": 24 }
+  },
+  {
+    "id": "atlantean",
+    "name": "Atlantean",
+    "stats": {},
+    "atlanteanBehavior": {
+      "insanity": 1,
+      "possibleBonusStats": ["power", "defense", "size", "dexterity", "range", "haste"]
+    }
+  }
+]

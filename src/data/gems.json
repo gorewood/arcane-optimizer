@@ -1,0 +1,50 @@
+[
+  {
+    "id": "agate",
+    "name": "Agate",
+    "tier": 2,
+    "stats": { "defense": 48, "size": 8 }
+  },
+  {
+    "id": "malachite",
+    "name": "Malachite",
+    "tier": 2,
+    "stats": { "power": 4, "size": 8 }
+  },
+  {
+    "id": "candelaria",
+    "name": "Candelaria",
+    "tier": 2,
+    "stats": { "power": 4, "dexterity": 8 }
+  },
+  {
+    "id": "painite",
+    "name": "Painite",
+    "tier": 2,
+    "stats": { "defense": 224, "drawback": 1 }
+  },
+  {
+    "id": "emerald",
+    "name": "Emerald",
+    "tier": 1,
+    "stats": { "size": 16 }
+  },
+  {
+    "id": "sapphire",
+    "name": "Sapphire",
+    "tier": 1,
+    "stats": { "dexterity": 16 }
+  },
+  {
+    "id": "lapis-lazuli",
+    "name": "Lapis Lazuli",
+    "tier": 1,
+    "stats": { "power": 8 }
+  },
+  {
+    "id": "larimar",
+    "name": "Larimar",
+    "tier": 2,
+    "stats": { "dexterity": 12, "haste": 12 }
+  }
+]

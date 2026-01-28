@@ -1,0 +1,52 @@
+[
+  {
+    "id": "powerful",
+    "name": "Powerful",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "power": 14 }
+  },
+  {
+    "id": "armored",
+    "name": "Armored",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "defense": 136 }
+  },
+  {
+    "id": "explosive",
+    "name": "Explosive",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "size": 44 }
+  },
+  {
+    "id": "brisk",
+    "name": "Brisk",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "dexterity": 44 }
+  },
+  {
+    "id": "virtuous",
+    "name": "Virtuous",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "defense": 71, "warding": 1 },
+    "incompatibleWith": ["atlantean"]
+  },
+  {
+    "id": "charged",
+    "name": "Charged",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "power": 9, "haste": 23 }
+  },
+  {
+    "id": "hasty",
+    "name": "Hasty",
+    "tier": 2,
+    "applicableTo": ["armor", "accessory"],
+    "stats": { "dexterity": 23, "range": 23 }
+  }
+]
