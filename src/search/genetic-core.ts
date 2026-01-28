@@ -70,7 +70,9 @@ export function extractResults(
   const results: SearchResult[] = [];
 
   for (const ind of sorted) {
-    const key = ind.loadout.slots.map((s) => s.piece.id).join(",");
+    const key = ind.loadout.slots.map((s) =>
+      `${s.piece.id}:${s.enchantment?.id ?? ""}:${s.modifier?.id ?? ""}`,
+    ).join(",");
     if (seen.has(key)) continue;
     seen.add(key);
     results.push({

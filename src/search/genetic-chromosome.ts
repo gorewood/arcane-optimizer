@@ -383,4 +383,3 @@ function mutateSlotGene(chromo: Chromosome, gene: number, pool: IndexedPool): vo
     chromo.atlanteanChoices[slot] = randInt(7) - 1;
   }
 }
-
