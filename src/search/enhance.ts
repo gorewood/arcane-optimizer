@@ -7,6 +7,7 @@
 
 import type {
   Enchantment,
+  EquipmentPiece,
   EquippedSlot,
   GearPool,
   Gem,
@@ -54,6 +55,20 @@ function getApplicableEnchantments(
   enchantments: readonly Enchantment[],
 ): readonly Enchantment[] {
   return enchantments.filter((e) => e.applicableTo.includes(category));
+}
+
+// ---------------------------------------------------------------------------
+// Modifier filtering — set pieces can only use Atlantean
+// ---------------------------------------------------------------------------
+
+function getApplicableModifiers(
+  piece: EquipmentPiece,
+  modifiers: readonly Modifier[],
+): readonly Modifier[] {
+  if (piece.setName != null) {
+    return modifiers.filter((m) => m.atlanteanBehavior != null);
+  }
+  return modifiers;
 }
 
 // ---------------------------------------------------------------------------
@@ -270,12 +285,13 @@ function findBestSlotEnhancement(params: FindBestParams): SlotCandidate {
   const { slot, pool, hardConstraints, otherSlotStats, fitness } = params;
   const category = slotCategory(slot);
   const enchantments = getApplicableEnchantments(category, pool.enchantments);
+  const applicableMods = getApplicableModifiers(slot.piece, pool.modifiers);
 
   const enchantOptions: readonly (Enchantment | undefined)[] = [
     undefined, ...enchantments,
   ];
   const modOptions: readonly (Modifier | undefined)[] = [
-    undefined, ...pool.modifiers,
+    undefined, ...applicableMods,
   ];
 
   const ctx: EvalContext = { slot, pool, otherSlotStats, fitness };
@@ -443,6 +459,7 @@ function findBestBudgetSlot(
   const { slot, pool, hardConstraints, otherSlotStats, fitness } = params;
   const category = slotCategory(slot);
   const enchantments = getApplicableEnchantments(category, pool.enchantments);
+  const applicableMods = getApplicableModifiers(slot.piece, pool.modifiers);
   const ctx: EvalContext = { slot, pool, otherSlotStats, fitness };
 
   let best: SlotCandidate = {
@@ -451,7 +468,7 @@ function findBestBudgetSlot(
   };
 
   for (const ench of [undefined, ...enchantments]) {
-    for (const mod of [undefined, ...pool.modifiers]) {
+    for (const mod of [undefined, ...applicableMods]) {
       if (!isAtlanteanCompatible(ench, mod, hardConstraints)) continue;
       const candidate = evaluateEnchantModPair(ctx, ench, mod);
       if (candidateNetInsanity(candidate) > insanityBudget) continue;

@@ -191,6 +191,89 @@ describe("greedyAssignEnhancements", () => {
   });
 });
 
+describe("set-piece modifier constraint", () => {
+  const ATLANTEAN: Modifier = {
+    id: "atlantean", name: "Atlantean", stats: {},
+    atlanteanBehavior: {
+      insanity: 1,
+      possibleBonusStats: ["power", "defense", "size", "dexterity"],
+    },
+  };
+
+  const SET_CHEST = makeEquipment({
+    id: "set-c", name: "Set Chest", slot: "chestplate",
+    setName: "TestSet", baseStats: { defense: 200 },
+  });
+  const SET_LEGS = makeEquipment({
+    id: "set-l", name: "Set Legs", slot: "leggings",
+    setName: "TestSet", baseStats: { defense: 150 },
+  });
+  const SET_ACC = makeEquipment({
+    id: "set-a", name: "Set Cape", slot: "accessory",
+    setName: "TestSet", baseStats: { defense: 30 },
+  });
+  const NONSET_ACC = makeEquipment({
+    id: "ns-a", name: "Arcsphere", slot: "accessory",
+    baseStats: { power: 10 },
+  });
+  const NONSET_AMULET = makeEquipment({
+    id: "ns-am", name: "Amulet", slot: "accessory-A",
+    baseStats: { power: 8 },
+  });
+
+  it("set pieces only receive atlantean modifier, not regular modifiers", () => {
+    const loadout = makeLoadout([SET_CHEST, SET_LEGS, SET_ACC, NONSET_ACC, NONSET_AMULET]);
+    const pool: GearPool = {
+      chestplates: [SET_CHEST], leggings: [SET_LEGS],
+      accessories: [SET_ACC, NONSET_ACC, NONSET_AMULET],
+      enchantments: [],
+      modifiers: [FROZEN, ATLANTEAN],
+      gems: [],
+    };
+    const fitness: SoftConstraint[] = [
+      { stat: "defense", type: "maximize", weight: 1 },
+    ];
+
+    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+
+    // Set pieces (slots 0-2) should not have Frozen modifier
+    const [s0, s1, s2] = result.loadout.slots;
+    for (const slot of [s0, s1, s2]) {
+      if (slot.modifier != null) {
+        expect(slot.modifier.atlanteanBehavior).toBeDefined();
+      }
+    }
+  });
+
+  it("non-set accessories can receive any modifier", () => {
+    const loadout = makeLoadout([SET_CHEST, SET_LEGS, SET_ACC, NONSET_ACC, NONSET_AMULET]);
+    const pool: GearPool = {
+      chestplates: [SET_CHEST], leggings: [SET_LEGS],
+      accessories: [SET_ACC, NONSET_ACC, NONSET_AMULET],
+      enchantments: [],
+      modifiers: [FROZEN],
+      gems: [],
+    };
+    const fitness: SoftConstraint[] = [
+      { stat: "defense", type: "maximize", weight: 1 },
+    ];
+
+    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+
+    const [s0, s1, s2, s3, s4] = result.loadout.slots;
+
+    // Non-set accessories (slots 3-4) should be able to get Frozen
+    const nonSetModifiers = [s3.modifier, s4.modifier];
+    const hasFrozen = nonSetModifiers.some((m) => m?.id === "frozen");
+    expect(hasFrozen).toBe(true);
+
+    // Set pieces (slots 0-2) should NOT get Frozen (no atlantean in pool for them)
+    for (const slot of [s0, s1, s2]) {
+      expect(slot.modifier).toBeUndefined();
+    }
+  });
+});
+
 describe("budgetAwareAssign", () => {
   it("respects insanity budget", () => {
     const atlantean: Modifier = {

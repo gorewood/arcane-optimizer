@@ -55,6 +55,8 @@ export interface IndexedPool {
   readonly armorEnchantments: readonly Enchantment[];
   readonly accessoryEnchantments: readonly Enchantment[];
   readonly modifiers: readonly Modifier[];
+  /** Indices into `modifiers` valid for armor-set pieces (Atlantean only). */
+  readonly setModifierIndices: readonly number[];
   readonly gems: readonly Gem[];
 }
 
@@ -66,6 +68,9 @@ export function buildIndexedPool(pool: GearPool): IndexedPool {
     armorEnchantments: pool.enchantments.filter((e) => e.applicableTo.includes("armor")),
     accessoryEnchantments: pool.enchantments.filter((e) => e.applicableTo.includes("accessory")),
     modifiers: pool.modifiers,
+    setModifierIndices: pool.modifiers
+      .map((m, i) => (m.atlanteanBehavior != null ? i : -1))
+      .filter((i) => i >= 0),
     gems: pool.gems,
   };
 }
@@ -80,6 +85,33 @@ function getEnchantPool(slotIdx: number, pool: IndexedPool): readonly Enchantmen
 
 function randInt(max: number): number {
   return Math.floor(Math.random() * max);
+}
+
+// ---------------------------------------------------------------------------
+// Set-piece modifier constraint helpers
+// ---------------------------------------------------------------------------
+
+function getPieceForSlot(
+  chromo: Chromosome,
+  slotIdx: number,
+  pool: IndexedPool,
+): EquipmentPiece | undefined {
+  if (slotIdx === 0) return pool.chestplates[chromo.chestIdx];
+  if (slotIdx === 1) return pool.leggings[chromo.legsIdx];
+  return pool.accessories[chromo.accIndices[slotIdx - 2] ?? 0];
+}
+
+function pickRandomModIdx(
+  piece: EquipmentPiece | undefined,
+  pool: IndexedPool,
+): number {
+  if (piece?.setName != null) {
+    const valid = pool.setModifierIndices;
+    if (valid.length === 0) return -1;
+    const r = randInt(valid.length + 1) - 1;
+    return r < 0 ? -1 : valid[r] ?? -1;
+  }
+  return randInt(pool.modifiers.length + 1) - 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,7 +134,11 @@ function resolveSlot(
   const eIdx = chromo.enchantIndices[slotIdx] ?? -1;
   const mIdx = chromo.modIndices[slotIdx] ?? -1;
   const enchantment = eIdx >= 0 ? enchPool[eIdx] : undefined;
-  const modifier = mIdx >= 0 ? pool.modifiers[mIdx] : undefined;
+  const rawModifier = mIdx >= 0 ? pool.modifiers[mIdx] : undefined;
+  // Set pieces can only have the Atlantean modifier
+  const modifier = (piece.setName != null && rawModifier?.atlanteanBehavior == null)
+    ? undefined
+    : rawModifier;
 
   const gems = resolveGems(piece, modifier, chromo.gemIndices[slotIdx] ?? [], pool);
   const slot: EquippedSlot = { piece, enchantment, modifier, gems };
@@ -237,7 +273,7 @@ function randomSlotGenes(
 ): { enchIdx: number; modIdx: number; gems: number[]; atlChoice: number } {
   const enchPool = getEnchantPool(slotIdx, pool);
   const enchIdx = randInt(enchPool.length + 1) - 1;
-  const modIdx = randInt(pool.modifiers.length + 1) - 1;
+  const modIdx = pickRandomModIdx(piece, pool);
 
   const mod = modIdx >= 0 ? pool.modifiers[modIdx] : undefined;
   const sockets = (piece?.socketCount ?? 0) + (mod?.grantsSocket === true ? 1 : 0);
@@ -367,7 +403,8 @@ function mutateSlotGene(chromo: Chromosome, gene: number, pool: IndexedPool): vo
   if (gene === 3) {
     chromo.enchantIndices[slot] = randInt(getEnchantPool(slot, pool).length + 1) - 1;
   } else if (gene === 4) {
-    chromo.modIndices[slot] = randInt(pool.modifiers.length + 1) - 1;
+    const piece = getPieceForSlot(chromo, slot, pool);
+    chromo.modIndices[slot] = pickRandomModIdx(piece, pool);
   } else if (gene === 5) {
     const slotGems = chromo.gemIndices[slot];
     if (slotGems != null && slotGems.length > 0) {
@@ -408,10 +445,22 @@ function repairAccessories(chromo: Chromosome, pool: IndexedPool): void {
   }
 }
 
+function repairSetModifier(chromo: Chromosome, i: number, pool: IndexedPool): void {
+  const piece = getPieceForSlot(chromo, i, pool);
+  if (piece?.setName == null) return;
+  const modIdx = chromo.modIndices[i] ?? -1;
+  if (modIdx < 0) return;
+  const mod = pool.modifiers[modIdx];
+  if (mod != null && mod.atlanteanBehavior == null) {
+    chromo.modIndices[i] = pool.setModifierIndices[0] ?? -1;
+  }
+}
+
 function repairSlotIndices(chromo: Chromosome, i: number, pool: IndexedPool): void {
   const enchPool = getEnchantPool(i, pool);
   chromo.enchantIndices[i] = clamp(chromo.enchantIndices[i] ?? -1, -1, enchPool.length - 1);
   chromo.modIndices[i] = clamp(chromo.modIndices[i] ?? -1, -1, pool.modifiers.length - 1);
+  repairSetModifier(chromo, i, pool);
   const slotGems = chromo.gemIndices[i];
   if (slotGems != null) {
     for (let s = 0; s < slotGems.length; s++) {
