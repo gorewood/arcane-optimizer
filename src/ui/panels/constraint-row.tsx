@@ -105,7 +105,7 @@ function useHardCapHandler(
 }
 
 // ---------------------------------------------------------------------------
-// ConstraintRow
+// ConstraintRow — grid layout for column alignment
 // ---------------------------------------------------------------------------
 
 export function ConstraintRow({ constraint, index, onUpdate, onRemove }: ConstraintRowProps): React.JSX.Element {
@@ -117,12 +117,12 @@ export function ConstraintRow({ constraint, index, onUpdate, onRemove }: Constra
   const handleHardCap = useHardCapHandler(constraint, index, onUpdate, statMax);
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
+    <div className="grid grid-cols-[7rem_3.5rem_4.5rem_6rem_1fr_9rem_1.5rem] items-center gap-1.5 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
       <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
       <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
-      {showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} label={isBetween ? "min" : undefined} max={statMax} />}
-      {showHardCap && <HardCapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "max" : "cap"} max={statMax} />}
-      <div className="flex-1" />
+      <div>{showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} max={statMax} />}</div>
+      <div>{showHardCap && <CapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "to" : "cap"} max={statMax} />}</div>
+      <div />
       <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
       <RemoveButton index={index} onRemove={onRemove} />
     </div>
@@ -255,44 +255,38 @@ function TypeSelect({
 }
 
 // ---------------------------------------------------------------------------
-// ValueInput
+// ValueInput — clean number input without label
 // ---------------------------------------------------------------------------
 
 function ValueInput({
   value,
   onChange,
-  label,
   max,
 }: {
   readonly value: number;
   readonly onChange: (value: number) => void;
-  readonly label?: string | undefined;
   readonly max?: number | undefined;
 }): React.JSX.Element {
   return (
-    <div className="flex items-center gap-0.5">
-      {label != null && <span className="text-[10px] text-text-muted shrink-0">{label}:</span>}
-      <input
-        type="number"
-        value={value}
-        min={0}
-        max={max}
-        onChange={(e) => {
-          const parsed = Number(e.target.value);
-          if (!Number.isNaN(parsed) && parsed >= 0) {
-            onChange(max != null ? Math.min(parsed, max) : parsed);
-          }
-        }}
-        onBlur={() => {
-          // Normalize: round to integer, clamp to valid range
-          const normalized = Math.max(0, Math.round(value));
-          const clamped = max != null ? Math.min(normalized, max) : normalized;
-          if (clamped !== value) onChange(clamped);
-        }}
-        className="w-16 rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold"
-        title={max != null ? `Value (max: ${String(max)})` : "Target value"}
-      />
-    </div>
+    <input
+      type="number"
+      value={value}
+      min={0}
+      max={max}
+      onChange={(e) => {
+        const parsed = Number(e.target.value);
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          onChange(max != null ? Math.min(parsed, max) : parsed);
+        }
+      }}
+      onBlur={() => {
+        const normalized = Math.max(0, Math.round(value));
+        const clamped = max != null ? Math.min(normalized, max) : normalized;
+        if (clamped !== value) onChange(clamped);
+      }}
+      className="w-full rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold"
+      title={max != null ? `Value (max: ${String(max)})` : "Target value"}
+    />
   );
 }
 
@@ -328,48 +322,44 @@ function WeightControl({
 }
 
 // ---------------------------------------------------------------------------
-// HardCapInput
+// CapInput — labeled cap/max input
 // ---------------------------------------------------------------------------
 
-function HardCapInput({
+function CapInput({
   value,
   onChange,
-  label = "cap",
+  label,
   max,
 }: {
   readonly value: number | undefined;
   readonly onChange: (value: number | undefined) => void;
-  readonly label?: string;
+  readonly label: string;
   readonly max?: number | undefined;
 }): React.JSX.Element {
   return (
-    <div className="flex items-center gap-0.5">
-      <span className="text-[10px] text-text-muted shrink-0">{label}:</span>
+    <div className="flex items-center gap-1">
+      <span className="text-[10px] text-text-muted shrink-0">{label}</span>
       <input
         type="number"
         value={value ?? ""}
-        placeholder="--"
+        placeholder="—"
         min={0}
         max={max}
         onChange={(e) => {
           const raw = e.target.value;
-          if (raw === "") {
-            onChange(undefined);
-            return;
-          }
+          if (raw === "") { onChange(undefined); return; }
           const parsed = Number(raw);
           if (!Number.isNaN(parsed) && parsed >= 0) {
             onChange(max != null ? Math.min(parsed, max) : parsed);
           }
         }}
         onBlur={() => {
-          // Normalize: round to integer, clamp to valid range
           if (value == null) return;
           const normalized = Math.max(0, Math.round(value));
           const clamped = max != null ? Math.min(normalized, max) : normalized;
           if (clamped !== value) onChange(clamped);
         }}
-        className="w-14 rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold placeholder:text-text-muted"
+        className="w-12 rounded-md border border-border-default bg-bg-elevated px-1 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold placeholder:text-text-muted"
         title={max != null ? `${label} (max: ${String(max)})` : `${label} (optional)`}
       />
     </div>
