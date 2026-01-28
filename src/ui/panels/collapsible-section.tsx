@@ -67,9 +67,10 @@ export function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
   const effectiveOpen = disabled ? false : open;
 
+  const roundedClass = effectiveOpen ? "rounded-t-md" : "rounded-md";
   const buttonClass = disabled
-    ? "flex w-full items-center gap-2 rounded-md border border-border-default bg-bg-surface px-4 py-3 text-left transition-colors opacity-60 cursor-not-allowed"
-    : "flex w-full items-center gap-2 rounded-md border border-border-default bg-bg-surface px-4 py-3 text-left transition-colors hover:bg-bg-elevated";
+    ? `flex w-full items-center gap-2 ${roundedClass} border border-border-default bg-bg-surface px-4 py-3 text-left transition-colors opacity-60 cursor-not-allowed`
+    : `flex w-full items-center gap-2 ${roundedClass} border border-border-default bg-bg-surface px-4 py-3 text-left transition-colors hover:bg-bg-elevated`;
 
   const contentClass = disabled
     ? "border-x border-b border-border-default rounded-b-md bg-bg-surface px-4 py-3 opacity-50 pointer-events-none"
