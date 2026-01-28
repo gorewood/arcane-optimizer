@@ -25,3 +25,5 @@ export {
   FITNESS_PRESETS,
   PRESET_NAMES,
 } from "./fitness";
+
+export { ExhaustiveSearch } from "./exhaustive";
