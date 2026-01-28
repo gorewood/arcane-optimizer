@@ -1,0 +1,7 @@
+# Copy to .envrc and fill in values:
+#   cp .envrc.example .envrc && direnv allow
+
+# Mise integration — activates project-local tool versions
+if command -v mise &> /dev/null; then
+  eval "$(mise activate bash)"
+fi
