@@ -12,13 +12,11 @@ describe("App", () => {
     expect(screen.getByText("AO Armor Optimizer")).toBeInTheDocument();
   });
 
-  it("displays all four tab labels", () => {
+  it("displays both tab labels", () => {
     render(<App />);
     const tabs = screen.getAllByRole("button");
     const tabLabels = tabs.map((t) => t.textContent);
     expect(tabLabels).toContain("Gear Pool");
-    expect(tabLabels).toContain("Fitness");
-    expect(tabLabels).toContain("Search");
-    expect(tabLabels).toContain("Results");
+    expect(tabLabels).toContain("Optimizer");
   });
 });

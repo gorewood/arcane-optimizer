@@ -187,6 +187,7 @@
     background: var(--color-bg-elevated);
     border-radius: 9999px;
     overflow: hidden;
+    position: relative;
   }
 
   /* Stat progress bar fill */
@@ -194,6 +195,18 @@
     height: 100%;
     border-radius: 9999px;
     transition: width var(--duration-normal) ease;
+  }
+
+  /* Animated progress shimmer for running searches */
+  .stat-bar-fill.animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-accent-gold) 0%,
+      var(--color-accent-amber) 50%,
+      var(--color-accent-gold) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 
   /* Rarity badge pill */
@@ -204,5 +217,19 @@
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 500;
+  }
+
+  /* Gold accent border strip */
+  .border-gold-strip {
+    border-left: 3px solid var(--color-accent-gold);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }

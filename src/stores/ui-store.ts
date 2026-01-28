@@ -12,7 +12,7 @@ import { create } from "zustand";
 export interface UIState {
   selectedResultIndex: number | null;
   expandedCardIndices: ReadonlySet<number>;
-  activePanel: "gear" | "fitness" | "search" | "results";
+  activePanel: "gear" | "optimizer";
 }
 
 export interface UIActions {
@@ -42,7 +42,7 @@ function toggleNumericSetItem(set: ReadonlySet<number>, value: number): Readonly
 export const useUIStore = create<UIState & UIActions>()((set) => ({
   selectedResultIndex: null,
   expandedCardIndices: new Set<number>(),
-  activePanel: "gear" as const,
+  activePanel: "optimizer" as const,
 
   selectResult: (index: number | null): void => {
     set({ selectedResultIndex: index });

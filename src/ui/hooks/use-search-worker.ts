@@ -1,15 +1,12 @@
 /**
- * SearchPanel -- manages search execution controls, progress, and results.
+ * useSearchWorker — manages Web Worker lifecycle for search execution.
  *
- * Start/Stop button, max-results slider, progress bar with live stats,
- * error display, and results summary. Validates gear pool and fitness
- * configuration before launching the worker.
+ * Extracted from search-panel.tsx to allow the worker to live in a
+ * component that stays mounted (OptimizerPage) rather than in a tab
+ * panel that unmounts on tab switch.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
 import {
   loadEquipment,
   loadEnchantments,
@@ -22,14 +19,24 @@ import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore } from "@/stores/search-store";
 import type { WorkerRequest, WorkerResponse } from "@/workers/search-worker";
-import {
-  ErrorDisplay,
-  INITIAL_PROGRESS,
-  ProgressDisplay,
-  ResultsSummary,
-  WarningMessage,
-} from "./search-feedback";
-import type { ProgressState } from "./search-feedback";
+
+// ---------------------------------------------------------------------------
+// Progress state type
+// ---------------------------------------------------------------------------
+
+export interface ProgressState {
+  readonly checked: number;
+  readonly total: number;
+  readonly bestScore: number;
+  readonly startTime: number;
+}
+
+export const INITIAL_PROGRESS: ProgressState = {
+  checked: 0,
+  total: 0,
+  bestScore: 0,
+  startTime: 0,
+};
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -119,7 +126,7 @@ function createSearchWorker(cb: WorkerCallbacks): Worker {
 // Worker launch helper
 // ---------------------------------------------------------------------------
 
-type Algorithm = "exhaustive" | "genetic";
+export type Algorithm = "exhaustive" | "genetic";
 
 interface LaunchConfig {
   readonly gearPool: GearPool;
@@ -147,24 +154,22 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
 }
 
 // ---------------------------------------------------------------------------
-// useSearchWorker hook
+// Hook
 // ---------------------------------------------------------------------------
 
-interface WorkerHookResult {
+export interface WorkerHookResult {
   readonly controls: { readonly start: () => void; readonly stop: () => void };
   readonly progress: ProgressState;
   readonly warning: string | null;
 }
 
-function useSearchWorker(
-  maxResults: number,
-  enhancementMode: EnhancementMode,
-  algorithm: Algorithm,
-): WorkerHookResult {
+export function useSearchWorker(maxResults: number): WorkerHookResult {
   const startSearch = useSearchStore((s) => s.startSearch);
   const setResults = useSearchStore((s) => s.setResults);
   const setError = useSearchStore((s) => s.setError);
   const reset = useSearchStore((s) => s.reset);
+  const enhancementMode = useSearchStore((s) => s.enhancementMode);
+  const algorithm = useSearchStore((s) => s.algorithm);
   const constraints = useFitnessStore((s) => s.constraints);
 
   const eqIds = useGearPoolStore((s) => s.enabledEquipmentIds);
@@ -213,183 +218,4 @@ function useSearchWorker(
   }, [reset]);
 
   return { controls: { start, stop }, progress, warning };
-}
-
-// ---------------------------------------------------------------------------
-// SearchPanel
-// ---------------------------------------------------------------------------
-
-export function SearchPanel(): React.JSX.Element {
-  const status = useSearchStore((s) => s.status);
-  const results = useSearchStore((s) => s.results);
-  const error = useSearchStore((s) => s.error);
-
-  const [maxResults, setMaxResults] = useState(10);
-  const [enhancementMode, setEnhancementMode] = useState<EnhancementMode>("greedy");
-  const [algorithm, setAlgorithm] = useState<Algorithm>("exhaustive");
-  const { controls, progress, warning } = useSearchWorker(maxResults, enhancementMode, algorithm);
-
-  const canStart = status === "idle" || status === "complete" || status === "error";
-
-  return (
-    <div className="space-y-4 p-6">
-      <h2 className="text-lg font-bold text-text-primary">Search Controls</h2>
-      <MaxResultsSlider value={maxResults} onChange={setMaxResults} />
-      <EnhancementModeSelect value={enhancementMode} onChange={setEnhancementMode} />
-      <AlgorithmSelect value={algorithm} onChange={setAlgorithm} />
-      <Separator className="bg-border-subtle" />
-      <SearchButton canStart={canStart} isRunning={status === "running"} onStart={controls.start} onStop={controls.stop} />
-      {warning != null && <WarningMessage message={warning} />}
-      {status === "running" && <ProgressDisplay progress={progress} />}
-      {status === "error" && error != null && <ErrorDisplay message={error} />}
-      {status === "complete" && <ResultsSummary results={results} />}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// MaxResultsSlider
-// ---------------------------------------------------------------------------
-
-function MaxResultsSlider({
-  value,
-  onChange,
-}: {
-  readonly value: number;
-  readonly onChange: (v: number) => void;
-}): React.JSX.Element {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-accent-gold">Max Results</span>
-        <span className="text-sm font-stat text-text-primary">{String(value)}</span>
-      </div>
-      <Slider
-        min={5} max={50} step={5} value={[value]}
-        onValueChange={(vals) => { const first = vals[0]; if (first !== undefined) onChange(first); }}
-      />
-      <div className="flex justify-between text-xs text-text-muted">
-        <span>5</span>
-        <span>50</span>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// EnhancementModeSelect
-// ---------------------------------------------------------------------------
-
-const ENHANCEMENT_MODE_LABELS: Record<EnhancementMode, string> = {
-  none: "None (bare equipment)",
-  greedy: "Greedy (recommended)",
-  "budget-aware": "Budget-Aware",
-};
-
-function EnhancementModeSelect({
-  value,
-  onChange,
-}: {
-  readonly value: EnhancementMode;
-  readonly onChange: (v: EnhancementMode) => void;
-}): React.JSX.Element {
-  return (
-    <div className="space-y-2">
-      <span className="text-sm font-semibold text-accent-gold">Enhancement Mode</span>
-      <div className="flex gap-2">
-        {(["none", "greedy", "budget-aware"] as const).map((mode) => (
-          <OptionButton key={mode} selected={value === mode} onClick={() => { onChange(mode); }}>
-            {ENHANCEMENT_MODE_LABELS[mode]}
-          </OptionButton>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// AlgorithmSelect
-// ---------------------------------------------------------------------------
-
-const ALGORITHM_LABELS: Record<Algorithm, string> = {
-  exhaustive: "Exhaustive (recommended)",
-  genetic: "Genetic Algorithm",
-};
-
-function AlgorithmSelect({
-  value,
-  onChange,
-}: {
-  readonly value: Algorithm;
-  readonly onChange: (v: Algorithm) => void;
-}): React.JSX.Element {
-  return (
-    <div className="space-y-2">
-      <span className="text-sm font-semibold text-accent-gold">Algorithm</span>
-      <div className="flex gap-2">
-        {(["exhaustive", "genetic"] as const).map((algo) => (
-          <OptionButton key={algo} selected={value === algo} onClick={() => { onChange(algo); }}>
-            {ALGORITHM_LABELS[algo]}
-          </OptionButton>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Shared option button
-// ---------------------------------------------------------------------------
-
-function OptionButton({
-  selected,
-  onClick,
-  children,
-}: {
-  readonly selected: boolean;
-  readonly onClick: () => void;
-  readonly children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <button
-      type="button"
-      className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
-        selected
-          ? "border-accent-gold bg-accent-gold/10 text-accent-gold font-semibold"
-          : "border-border-default text-text-secondary hover:border-text-muted"
-      }`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// SearchButton
-// ---------------------------------------------------------------------------
-
-function SearchButton({
-  canStart,
-  isRunning,
-  onStart,
-  onStop,
-}: {
-  readonly canStart: boolean;
-  readonly isRunning: boolean;
-  readonly onStart: () => void;
-  readonly onStop: () => void;
-}): React.JSX.Element {
-  if (isRunning) {
-    return (
-      <Button variant="destructive" className="w-full" onClick={onStop}>
-        Stop Search
-      </Button>
-    );
-  }
-  return (
-    <Button variant="default" className="w-full" disabled={!canStart} onClick={onStart}>
-      Start Search
-    </Button>
-  );
 }

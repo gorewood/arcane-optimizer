@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { GearPoolPanel, FitnessPanel, SearchPanel, ResultsPanel } from "@/ui/panels";
+import { GearPoolPanel } from "@/ui/panels";
+import { OptimizerPage } from "@/ui/panels/optimizer-page";
 import { useUIStore } from "@/stores/ui-store";
 import type { UIState } from "@/stores/ui-store";
 
@@ -14,9 +15,7 @@ interface TabDef {
 
 const TABS: readonly TabDef[] = [
   { id: "gear", label: "Gear Pool" },
-  { id: "fitness", label: "Fitness" },
-  { id: "search", label: "Search" },
-  { id: "results", label: "Results" },
+  { id: "optimizer", label: "Optimizer" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -105,13 +104,5 @@ function PanelContent({
     return <GearPoolPanel />;
   }
 
-  if (panel === "fitness") {
-    return <FitnessPanel />;
-  }
-
-  if (panel === "search") {
-    return <SearchPanel />;
-  }
-
-  return <ResultsPanel />;
+  return <OptimizerPage />;
 }

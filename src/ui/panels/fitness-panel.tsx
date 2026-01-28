@@ -1,8 +1,8 @@
 /**
- * FitnessPanel -- main editor for configuring soft constraints and presets.
+ * FitnessPanel -- editor for configuring soft constraints and presets.
  *
- * Allows users to select presets, add/edit/remove soft constraints,
- * and view a summary of their fitness configuration.
+ * Allows users to select presets, add/edit/remove soft constraints.
+ * Note: Heading and summary moved to FitnessSection collapsible wrapper.
  */
 
 import type { SoftConstraint } from "@/models/types";
@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { PresetSelector } from "./preset-selector";
 import { ConstraintRow } from "./constraint-row";
-import { ConstraintSummary } from "./constraint-summary";
 
 // ---------------------------------------------------------------------------
 // Default constraint for the "Add" button
@@ -38,10 +37,6 @@ export function FitnessPanel(): React.JSX.Element {
 
   return (
     <div className="space-y-4 p-4">
-      <h2 className="text-lg font-bold text-text-primary">
-        Fitness Configuration
-      </h2>
-
       <PresetSelector
         activePresetName={activePresetName}
         onLoadPreset={loadPreset}
@@ -57,13 +52,6 @@ export function FitnessPanel(): React.JSX.Element {
       />
 
       <AddConstraintButton onAdd={addConstraint} />
-
-      <Separator className="bg-border-subtle" />
-
-      <ConstraintSummary
-        constraints={constraints}
-        activePresetName={activePresetName}
-      />
     </div>
   );
 }

@@ -4,20 +4,22 @@
  */
 
 import { create } from "zustand";
-import type { SearchResult } from "@/models/types";
+import type { EnhancementMode, SearchResult } from "@/models/types";
 
 // ---------------------------------------------------------------------------
 // State & Action Types
 // ---------------------------------------------------------------------------
 
 export type SearchStatus = "idle" | "running" | "complete" | "error";
+export type Algorithm = "exhaustive" | "genetic";
 
 export interface SearchState {
   status: SearchStatus;
   progress: number;
   results: readonly SearchResult[];
   error: string | null;
-  algorithm: "exhaustive" | "genetic";
+  algorithm: Algorithm;
+  enhancementMode: EnhancementMode;
 }
 
 export interface SearchActions {
@@ -26,7 +28,8 @@ export interface SearchActions {
   setResults: (results: readonly SearchResult[]) => void;
   setError: (error: string) => void;
   reset: () => void;
-  setAlgorithm: (algorithm: "exhaustive" | "genetic") => void;
+  setAlgorithm: (algorithm: Algorithm) => void;
+  setEnhancementMode: (mode: EnhancementMode) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -39,6 +42,7 @@ const INITIAL_STATE: SearchState = {
   results: [],
   error: null,
   algorithm: "exhaustive",
+  enhancementMode: "budget-aware",
 };
 
 export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
@@ -64,7 +68,11 @@ export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
     set(INITIAL_STATE);
   },
 
-  setAlgorithm: (algorithm: "exhaustive" | "genetic"): void => {
+  setAlgorithm: (algorithm: Algorithm): void => {
     set({ algorithm });
+  },
+
+  setEnhancementMode: (mode: EnhancementMode): void => {
+    set({ enhancementMode: mode });
   },
 }));
