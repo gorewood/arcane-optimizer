@@ -1,5 +1,5 @@
 /**
- * Search feedback components — progress, warnings, errors, summaries.
+ * Search feedback components — progress, warnings, errors, status bar.
  */
 
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ export interface ProgressState {
   readonly total: number;
   readonly bestScore: number;
   readonly startTime: number;
+  readonly resultsCount?: number;
 }
 
 export const INITIAL_PROGRESS: ProgressState = {
@@ -23,6 +24,7 @@ export const INITIAL_PROGRESS: ProgressState = {
   total: 0,
   bestScore: 0,
   startTime: 0,
+  resultsCount: 0,
 };
 
 // ---------------------------------------------------------------------------
@@ -38,56 +40,126 @@ export function WarningMessage({ message }: { readonly message: string }): React
 }
 
 // ---------------------------------------------------------------------------
-// ProgressDisplay — uses interval for elapsed time to avoid impure render
+// SearchStatusBar — unified progress/results display
 // ---------------------------------------------------------------------------
 
-export function ProgressDisplay({
-  progress,
-}: {
+interface SearchStatusBarProps {
+  readonly isRunning: boolean;
+  readonly isComplete: boolean;
   readonly progress: ProgressState;
-}): React.JSX.Element {
-  const { checked, total, bestScore, startTime } = progress;
-  const [elapsed, setElapsed] = useState(0);
+  readonly results: readonly SearchResult[];
+  readonly exitMetadata: ExitMetadata | null;
+}
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setElapsed((Date.now() - startTime) / 1000);
-    }, 200);
-    return () => { clearInterval(id); };
-  }, [startTime]);
-
-  const pct = total > 0 ? Math.min((checked / total) * 100, 100) : 0;
+export function SearchStatusBar(props: SearchStatusBarProps): React.JSX.Element {
+  const { isRunning, isComplete, progress, results, exitMetadata } = props;
+  const elapsed = useElapsedTime(progress.startTime, isRunning);
+  const stats = computeDisplayStats(progress, results, isComplete, elapsed);
+  const cardClass = isComplete
+    ? "border-stat-positive/40 bg-stat-positive/5"
+    : "border-text-muted/20 bg-surface-elevated/50";
 
   return (
-    <div className="space-y-3">
-      <div className="stat-bar">
-        <div
-          className="stat-bar-fill bg-accent-gold"
-          style={{ width: `${String(pct)}%` }}
-        />
-      </div>
-      <div className="grid grid-cols-3 gap-2 text-center text-xs">
-        <ProgressStat label="Checked" value={`${String(checked)} / ${String(total)}`} />
-        <ProgressStat label="Elapsed" value={`${elapsed.toFixed(1)}s`} />
-        <ProgressStat label="Best Score" value={bestScore.toFixed(1)} />
+    <Card className={`${cardClass} p-3 space-y-2`}>
+      {isRunning && <ProgressBar checked={progress.checked} total={progress.total} />}
+      <StatusRow isRunning={isRunning} isComplete={isComplete} stats={stats} exitMetadata={exitMetadata} />
+    </Card>
+  );
+}
+
+function useElapsedTime(startTime: number, isRunning: boolean): number {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!isRunning) return;
+    const id = setInterval(() => { setElapsed((Date.now() - startTime) / 1000); }, 200);
+    return () => { clearInterval(id); };
+  }, [startTime, isRunning]);
+  return elapsed;
+}
+
+interface DisplayStats {
+  readonly checked: number;
+  readonly total: number;
+  readonly resultsCount: number;
+  readonly bestScore: number;
+  readonly elapsed: number;
+}
+
+function computeDisplayStats(
+  progress: ProgressState,
+  results: readonly SearchResult[],
+  isComplete: boolean,
+  elapsed: number,
+): DisplayStats {
+  return {
+    checked: progress.checked,
+    total: progress.total,
+    resultsCount: isComplete ? results.length : (progress.resultsCount ?? 0),
+    bestScore: isComplete && results.length > 0 ? (results[0]?.score ?? progress.bestScore) : progress.bestScore,
+    elapsed,
+  };
+}
+
+function ProgressBar({ checked, total }: { readonly checked: number; readonly total: number }): React.JSX.Element {
+  const pct = total > 0 ? Math.min((checked / total) * 100, 100) : 0;
+  return (
+    <div className="stat-bar">
+      <div className="stat-bar-fill bg-accent-gold" style={{ width: `${String(pct)}%` }} />
+    </div>
+  );
+}
+
+interface StatusRowProps {
+  readonly isRunning: boolean;
+  readonly isComplete: boolean;
+  readonly stats: DisplayStats;
+  readonly exitMetadata: ExitMetadata | null;
+}
+
+function StatusRow({ isRunning, isComplete, stats, exitMetadata }: StatusRowProps): React.JSX.Element {
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <StatusLabel isComplete={isComplete} exitMetadata={exitMetadata} />
+      <div className="flex items-center gap-4 text-text-secondary">
+        {isRunning && <StatPair label="Checked" value={`${formatNumber(stats.checked)}/${formatNumber(stats.total)}`} />}
+        <StatPair label="Results" value={String(stats.resultsCount)} />
+        <StatPair label="Best" value={formatScore(stats.bestScore)} valueClass="text-accent-gold" />
+        <StatPair label="Time" value={`${stats.elapsed.toFixed(1)}s`} />
       </div>
     </div>
   );
 }
 
-function ProgressStat({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string;
-}): React.JSX.Element {
+function StatPair({ label, value, valueClass }: { readonly label: string; readonly value: string; readonly valueClass?: string }): React.JSX.Element {
   return (
-    <div>
-      <p className="text-text-muted">{label}</p>
-      <p className="font-stat text-text-primary">{value}</p>
-    </div>
+    <span>
+      <span className="text-text-muted">{label} </span>
+      <span className={`font-stat ${valueClass ?? "text-text-primary"}`}>{value}</span>
+    </span>
   );
+}
+
+function StatusLabel({ isComplete, exitMetadata }: { readonly isComplete: boolean; readonly exitMetadata: ExitMetadata | null }): React.JSX.Element {
+  if (!isComplete) return <span className="text-text-muted">Searching...</span>;
+  const earlyExit = exitMetadata?.reason === "stagnation" && exitMetadata.finalGeneration != null;
+  return (
+    <span className="font-semibold text-stat-positive">
+      Complete{earlyExit && <span className="font-normal text-text-muted ml-1">(gen {String(exitMetadata.finalGeneration)})</span>}
+    </span>
+  );
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function formatScore(score: number): string {
+  if (score === -Infinity) return "—";
+  if (Math.abs(score) >= 1_000_000) return `${(score / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(score) >= 1_000) return `${(score / 1_000).toFixed(1)}K`;
+  return score.toFixed(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -102,44 +174,6 @@ export function ErrorDisplay({ message }: { readonly message: string }): React.J
       <p className="text-xs text-text-muted">
         Try relaxing constraints or expanding the gear pool
       </p>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// ResultsSummary
-// ---------------------------------------------------------------------------
-
-export function ResultsSummary({
-  results,
-  exitMetadata,
-}: {
-  readonly results: readonly SearchResult[];
-  readonly exitMetadata: ExitMetadata | null;
-}): React.JSX.Element {
-  const bestScore = results.length > 0 ? results[0]?.score ?? 0 : 0;
-
-  return (
-    <Card className="border-stat-positive/40 bg-stat-positive/5 p-4 space-y-1">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-stat-positive">Search Complete</p>
-        {exitMetadata?.reason === "stagnation" && exitMetadata.finalGeneration != null && (
-          <span className="text-xs text-text-muted">
-            Converged early (gen {String(exitMetadata.finalGeneration)}/{String(exitMetadata.totalGenerations ?? "?")})
-          </span>
-        )}
-      </div>
-      <p className="text-sm text-text-secondary">
-        Found{" "}
-        <span className="font-stat text-text-primary">{String(results.length)}</span>
-        {" "}result{results.length !== 1 ? "s" : ""}
-      </p>
-      {results.length > 0 && (
-        <p className="text-sm text-text-secondary">
-          Best score:{" "}
-          <span className="font-stat text-accent-gold">{bestScore.toFixed(1)}</span>
-        </p>
-      )}
     </Card>
   );
 }

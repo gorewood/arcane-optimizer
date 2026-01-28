@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useSearchStore, type Algorithm, type GAParams } from "@/stores/search-store";
 import type { ProgressState } from "@/ui/hooks/use-search-worker";
-import { WarningMessage, ProgressDisplay, ErrorDisplay, ResultsSummary } from "./search-feedback";
+import { WarningMessage, SearchStatusBar, ErrorDisplay } from "./search-feedback";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -73,8 +73,15 @@ export function SearchBar({
 
       {/* Feedback area */}
       {warning != null && <WarningMessage message={warning} />}
-      {isRunning && <ProgressDisplay progress={progress} />}
-      {status === "complete" && <ResultsSummary results={results} exitMetadata={exitMetadata} />}
+      {(isRunning || status === "complete") && (
+        <SearchStatusBar
+          isRunning={isRunning}
+          isComplete={status === "complete"}
+          progress={progress}
+          results={results}
+          exitMetadata={exitMetadata}
+        />
+      )}
       {status === "error" && error != null && <ErrorDisplay message={error} />}
     </div>
   );
@@ -120,7 +127,7 @@ function ToggleOption({
     <button
       type="button"
       disabled={disabled}
-      className={`px-2.5 py-1 text-xs transition-colors ${
+      className={`px-3 h-7 text-xs transition-colors ${
         selected
           ? "bg-accent-gold/20 text-accent-gold font-semibold"
           : "text-text-secondary hover:bg-bg-elevated disabled:opacity-50"

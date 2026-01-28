@@ -30,6 +30,7 @@ export interface ProgressState {
   readonly total: number;
   readonly bestScore: number;
   readonly startTime: number;
+  readonly resultsCount: number;
 }
 
 export const INITIAL_PROGRESS: ProgressState = {
@@ -37,6 +38,7 @@ export const INITIAL_PROGRESS: ProgressState = {
   total: 0,
   bestScore: 0,
   startTime: 0,
+  resultsCount: 0,
 };
 
 // ---------------------------------------------------------------------------
@@ -237,7 +239,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
     const onProg = (c: number, t: number, b: number, r: readonly SearchResult[]): void => {
-      setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b }));
+      setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b, resultsCount: r.length }));
       setPreviewResults(r);
     };
 
