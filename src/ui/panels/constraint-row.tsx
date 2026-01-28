@@ -117,14 +117,20 @@ export function ConstraintRow({ constraint, index, onUpdate, onRemove }: Constra
   const handleHardCap = useHardCapHandler(constraint, index, onUpdate, statMax);
 
   return (
-    <div className="grid grid-cols-[8rem_9rem_4.5rem_6rem_1fr_9rem_1.5rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
-      <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
-      <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
-      <div>{showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} max={statMax} />}</div>
-      <div>{showHardCap && <CapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "to" : "cap"} max={statMax} />}</div>
-      <div />
-      <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
-      <RemoveButton index={index} onRemove={onRemove} />
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
+      {/* Row 1: stat + operator (always together) */}
+      <div className="flex items-center gap-2 shrink-0">
+        <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
+        <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
+      </div>
+      {/* Row 2 on narrow, continues row 1 on wide: value, cap, weight, remove */}
+      <div className="flex flex-1 items-center gap-2 min-w-[16rem]">
+        <div className="w-[4.5rem]">{showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} max={statMax} />}</div>
+        <div className="w-24">{showHardCap && <CapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "to" : "cap"} max={statMax} />}</div>
+        <div className="flex-1" />
+        <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
+        <RemoveButton index={index} onRemove={onRemove} />
+      </div>
     </div>
   );
 }
