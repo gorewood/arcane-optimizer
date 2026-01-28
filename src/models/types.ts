@@ -168,10 +168,14 @@ export interface GearPool {
   readonly gems: readonly Gem[];
 }
 
+/** Enhancement assignment mode for search. */
+export type EnhancementMode = "none" | "greedy" | "budget-aware";
+
 /** Configuration options for a search run. */
 export interface SearchOptions {
   readonly maxResults: number;
   readonly timeout?: number | undefined;
+  readonly enhancementMode?: EnhancementMode | undefined;
   readonly populationSize?: number | undefined;
   readonly generations?: number | undefined;
   readonly mutationRate?: number | undefined;
@@ -183,6 +187,7 @@ export interface SearchResult {
   readonly loadout: Loadout;
   readonly score: number;
   readonly stats: Stats;
+  readonly atlanteanChoices?: ReadonlyMap<number, StatName> | undefined;
 }
 
 /** A pluggable search strategy that explores the gear space. */
@@ -194,5 +199,5 @@ export interface SearchStrategy {
     fitness: readonly SoftConstraint[],
     options: SearchOptions,
   ): Promise<readonly SearchResult[]>;
-  onProgress?: ((generation: number, best: number) => void) | undefined;
+  onProgress?: ((checked: number, total: number, bestScore: number) => void) | undefined;
 }

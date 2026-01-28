@@ -1,18 +1,22 @@
 /**
  * BuildCard — displays a single search result as an expandable card.
  *
- * Collapsed: rank, score, item names.
- * Expanded: full stat breakdown with constraint satisfaction indicators.
+ * Collapsed: rank, score, item names with augment badges.
+ * Expanded: per-slot detail (equipment, enchantment, modifier, gems,
+ *           Atlantean bonus) and full stat breakdown with constraint indicators.
  */
 
 import { useState, useCallback } from "react";
 import type {
+  EquippedSlot,
   SearchResult,
   SoftConstraint,
   StatName,
   SlotType,
 } from "@/models/types";
 import { STAT_NAMES } from "@/search/stats";
+import { computeSlotStats } from "@/search/constraints";
+import { resolveAtlanteanBonus, ATLANTEAN_BONUS_VALUES } from "@/search/stats";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +44,13 @@ function formatBuildText(rank: number, result: SearchResult): string {
 
   for (const slot of result.loadout.slots) {
     const label = SLOT_LABELS[slot.piece.slot];
-    lines.push(`${label}: ${slot.piece.name}`);
+    const parts = [slot.piece.name];
+    if (slot.enchantment != null) parts.push(`[${slot.enchantment.name}]`);
+    if (slot.modifier != null) parts.push(`(${slot.modifier.name})`);
+    if (slot.gems.length > 0) {
+      parts.push(`{${slot.gems.map((g) => g.name).join(", ")}}`);
+    }
+    lines.push(`${label}: ${parts.join(" ")}`);
   }
 
   const statParts = STAT_NAMES.filter((s) => result.stats[s] !== 0).map(
@@ -99,6 +109,11 @@ export function BuildCard({
       <SlotList slots={result.loadout.slots} />
       {expanded && (
         <>
+          <Separator className="bg-border-subtle" />
+          <SlotDetailList
+            slots={result.loadout.slots}
+            atlanteanChoices={result.atlanteanChoices}
+          />
           <Separator className="bg-border-subtle" />
           <StatBreakdown
             stats={result.stats}
@@ -218,6 +233,200 @@ function AugmentBadges({
         </Badge>
       )}
     </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SlotDetailList — per-slot breakdown (expanded view)
+// ---------------------------------------------------------------------------
+
+function SlotDetailList({
+  slots,
+  atlanteanChoices,
+}: {
+  readonly slots: SearchResult["loadout"]["slots"];
+  readonly atlanteanChoices?: ReadonlyMap<number, StatName> | undefined;
+}): React.JSX.Element {
+  return (
+    <div className="px-4 py-3 space-y-3">
+      <h4 className="text-xs font-semibold text-accent-gold">
+        Slot Details
+      </h4>
+      {slots.map((slot, i) => (
+        <SlotDetail
+          key={i}
+          slot={slot}
+          slotIndex={i}
+          atlanteanChoice={atlanteanChoices?.get(i)}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SlotDetail — single slot detail
+// ---------------------------------------------------------------------------
+
+function SlotDetail({
+  slot,
+  slotIndex,
+  atlanteanChoice,
+}: {
+  readonly slot: EquippedSlot;
+  readonly slotIndex: number;
+  readonly atlanteanChoice?: StatName | undefined;
+}): React.JSX.Element {
+  const slotStats = computeSlotStats(slot);
+  const hasEnhancements =
+    slot.enchantment != null || slot.modifier != null || slot.gems.length > 0;
+
+  return (
+    <div className="rounded-md border border-border-subtle bg-bg-base p-2 space-y-1">
+      <SlotDetailHeader slot={slot} slotIndex={slotIndex} />
+      {hasEnhancements && (
+        <SlotEnhancementLines slot={slot} atlanteanChoice={atlanteanChoice} />
+      )}
+      <SlotStatSummary stats={slotStats} atlanteanChoice={atlanteanChoice} slot={slot} />
+    </div>
+  );
+}
+
+function SlotDetailHeader({
+  slot,
+  slotIndex,
+}: {
+  readonly slot: EquippedSlot;
+  readonly slotIndex: number;
+}): React.JSX.Element {
+  return (
+    <div className="flex items-center gap-2">
+      <Badge
+        variant="outline"
+        className="px-1.5 py-0 text-[10px] font-medium text-text-secondary min-w-[4.5rem] justify-center"
+      >
+        {SLOT_LABELS[slot.piece.slot]}
+      </Badge>
+      <span className="text-text-primary text-xs font-semibold">
+        {slot.piece.name}
+      </span>
+      <span className="text-text-muted text-[10px] ml-auto">
+        Slot {String(slotIndex + 1)}
+      </span>
+    </div>
+  );
+}
+
+function SlotEnhancementLines({
+  slot,
+  atlanteanChoice,
+}: {
+  readonly slot: EquippedSlot;
+  readonly atlanteanChoice?: StatName | undefined;
+}): React.JSX.Element {
+  return (
+    <div className="pl-2 space-y-0.5">
+      {slot.enchantment != null && (
+        <DetailLine
+          label="Enchant"
+          value={slot.enchantment.name}
+          stats={slot.enchantment.stats}
+        />
+      )}
+      {slot.modifier != null && (
+        <DetailLine
+          label="Modifier"
+          value={slot.modifier.name}
+          stats={slot.modifier.stats}
+        />
+      )}
+      {atlanteanChoice != null && (
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-text-muted min-w-[3.5rem]">Atlantean</span>
+          <span className="text-accent-amber">
+            +{String(ATLANTEAN_BONUS_VALUES[atlanteanChoice])} {atlanteanChoice}
+          </span>
+        </div>
+      )}
+      {slot.gems.length > 0 && (
+        <div className="flex items-center gap-2 text-[10px]">
+          <span className="text-text-muted min-w-[3.5rem]">Gems</span>
+          <span className="text-text-secondary">
+            {slot.gems.map((g) => g.name).join(", ")}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DetailLine — label + value + stat summary
+// ---------------------------------------------------------------------------
+
+function DetailLine({
+  label,
+  value,
+  stats,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly stats: Partial<Record<StatName, number>>;
+}): React.JSX.Element {
+  const statParts = STAT_NAMES.filter((s) => (stats[s] ?? 0) !== 0)
+    .map((s) => `${s[0]?.toUpperCase() ?? ""}${s.slice(1)} +${String(stats[s] ?? 0)}`);
+
+  return (
+    <div className="flex items-center gap-2 text-[10px]">
+      <span className="text-text-muted min-w-[3.5rem]">{label}</span>
+      <span className="text-text-primary">{value}</span>
+      {statParts.length > 0 && (
+        <span className="text-text-muted">
+          ({statParts.join(", ")})
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SlotStatSummary — per-slot total stats
+// ---------------------------------------------------------------------------
+
+function SlotStatSummary({
+  stats,
+  atlanteanChoice,
+  slot,
+}: {
+  readonly stats: Partial<Record<StatName, number>>;
+  readonly atlanteanChoice?: StatName | undefined;
+  readonly slot: EquippedSlot;
+}): React.JSX.Element {
+  // Add atlantean bonus to slot stats for display
+  let displayStats = { ...stats };
+  if (atlanteanChoice != null && slot.modifier?.atlanteanBehavior != null) {
+    const bonus = resolveAtlanteanBonus(slot, atlanteanChoice);
+    for (const key of STAT_NAMES) {
+      const current = displayStats[key] ?? 0;
+      const bonusVal = bonus[key] ?? 0;
+      if (bonusVal !== 0) {
+        displayStats = { ...displayStats, [key]: current + bonusVal };
+      }
+    }
+  }
+
+  const nonZero = STAT_NAMES.filter((s) => (displayStats[s] ?? 0) !== 0);
+  if (nonZero.length === 0) return <></>;
+
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-0.5 pt-0.5">
+      {nonZero.map((s) => (
+        <span key={s} className="text-[10px] text-text-secondary">
+          <span className="text-text-muted">{s}:</span>{" "}
+          <span className="font-stat">{String(displayStats[s] ?? 0)}</span>
+        </span>
+      ))}
+    </div>
   );
 }
 

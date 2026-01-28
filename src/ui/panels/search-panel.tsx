@@ -17,7 +17,7 @@ import {
   loadModifiers,
   loadGems,
 } from "@/data/loaders";
-import type { GearPool, SearchResult, SoftConstraint } from "@/models/types";
+import type { EnhancementMode, GearPool, SearchResult, SoftConstraint } from "@/models/types";
 import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
@@ -142,6 +142,7 @@ interface LaunchConfig {
   readonly gearPool: GearPool;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
+  readonly enhancementMode: EnhancementMode;
 }
 
 function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
@@ -151,7 +152,10 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
     gearPool: config.gearPool,
     constraints: DEFAULT_HARD_CONSTRAINTS,
     fitness: [...config.fitness],
-    options: { maxResults: config.maxResults },
+    options: {
+      maxResults: config.maxResults,
+      enhancementMode: config.enhancementMode,
+    },
   };
   worker.postMessage(request);
   return worker;
@@ -172,7 +176,7 @@ interface WorkerHookResult {
   readonly warning: string | null;
 }
 
-function useSearchWorker(maxResults: number): WorkerHookResult {
+function useSearchWorker(maxResults: number, enhancementMode: EnhancementMode): WorkerHookResult {
   const startSearch = useSearchStore((s) => s.startSearch);
   const setResults = useSearchStore((s) => s.setResults);
   const setError = useSearchStore((s) => s.setError);
@@ -204,14 +208,14 @@ function useSearchWorker(maxResults: number): WorkerHookResult {
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
     workerRef.current = launchWorker(
-      { gearPool, fitness: constraints, maxResults },
+      { gearPool, fitness: constraints, maxResults, enhancementMode },
       {
         onProgress: (c, t, b) => { setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b })); },
         onComplete: (r) => { setResults(r); workerRef.current = null; },
         onError: (m) => { setError(m); workerRef.current = null; },
       },
     );
-  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, startSearch, setResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, startSearch, setResults, setError]);
 
   const stop = useCallback(() => {
     const w = workerRef.current;
@@ -237,7 +241,8 @@ export function SearchPanel(): React.JSX.Element {
   const error = useSearchStore((s) => s.error);
 
   const [maxResults, setMaxResults] = useState(10);
-  const { controls, progress, warning } = useSearchWorker(maxResults);
+  const [enhancementMode, setEnhancementMode] = useState<EnhancementMode>("greedy");
+  const { controls, progress, warning } = useSearchWorker(maxResults, enhancementMode);
 
   const canStart = status === "idle" || status === "complete" || status === "error";
 
@@ -246,6 +251,7 @@ export function SearchPanel(): React.JSX.Element {
       <h2 className="text-lg font-bold text-text-primary">Search Controls</h2>
 
       <MaxResultsSlider value={maxResults} onChange={setMaxResults} />
+      <EnhancementModeSelect value={enhancementMode} onChange={setEnhancementMode} />
       <Separator className="bg-border-subtle" />
 
       <SearchButton
@@ -297,6 +303,48 @@ function MaxResultsSlider({
       <div className="flex justify-between text-xs text-text-muted">
         <span>5</span>
         <span>50</span>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// EnhancementModeSelect
+// ---------------------------------------------------------------------------
+
+const ENHANCEMENT_MODE_LABELS: Record<EnhancementMode, string> = {
+  none: "None (bare equipment)",
+  greedy: "Greedy (recommended)",
+  "budget-aware": "Budget-Aware",
+};
+
+function EnhancementModeSelect({
+  value,
+  onChange,
+}: {
+  readonly value: EnhancementMode;
+  readonly onChange: (v: EnhancementMode) => void;
+}): React.JSX.Element {
+  return (
+    <div className="space-y-2">
+      <span className="text-sm font-semibold text-accent-gold">
+        Enhancement Mode
+      </span>
+      <div className="flex gap-2">
+        {(["none", "greedy", "budget-aware"] as const).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
+              value === mode
+                ? "border-accent-gold bg-accent-gold/10 text-accent-gold font-semibold"
+                : "border-border-default text-text-secondary hover:border-text-muted"
+            }`}
+            onClick={() => { onChange(mode); }}
+          >
+            {ENHANCEMENT_MODE_LABELS[mode]}
+          </button>
+        ))}
       </div>
     </div>
   );

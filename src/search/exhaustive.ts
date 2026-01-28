@@ -2,9 +2,10 @@
  * Exhaustive search strategy — enumerates all valid equipment
  * combinations and scores each against soft constraints.
  *
- * MVP scope: equipment-only enumeration (chest x legs x accessory
- * triplets). Enhancement enumeration (enchants/modifiers/gems)
- * is deferred to a follow-up task.
+ * Supports enhancement assignment modes:
+ * - "none": bare equipment only (MVP behavior)
+ * - "greedy": greedy per-slot enhancement assignment
+ * - "budget-aware": greedy with insanity/drawback budget tracking
  */
 
 import type {
@@ -17,12 +18,19 @@ import type {
   SearchResult,
   SearchStrategy,
   SoftConstraint,
+  StatName,
   Stats,
 } from "@/models/types";
 
 import { computeLoadoutStats } from "./stats";
 import { validateLoadout } from "./constraints";
 import { computeFitness } from "./fitness";
+import {
+  budgetAwareAssign,
+  greedyAssignEnhancements,
+} from "./enhance";
+import type { EnhancedLoadoutResult } from "./enhance";
+import type { EnhancementMode } from "./enhance";
 
 // ---------------------------------------------------------------------------
 // Async yield helper
@@ -181,19 +189,20 @@ interface ScoreInput {
   readonly loadout: Loadout;
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
+  readonly atlanteanChoices?: ReadonlyMap<number, StatName> | undefined;
 }
 
 /** Validate and score a loadout. Returns null if invalid or disqualified. */
 function scoreLoadout(input: ScoreInput): SearchResult | null {
-  const { loadout, constraints, fitness } = input;
+  const { loadout, constraints, fitness, atlanteanChoices } = input;
   const validation = validateLoadout(loadout, constraints);
   if (!validation.valid) return null;
 
-  const stats: Stats = computeLoadoutStats(loadout);
+  const stats: Stats = computeLoadoutStats(loadout, atlanteanChoices);
   const score = computeFitness(stats, fitness);
   if (score === -Infinity) return null;
 
-  return { loadout, score, stats };
+  return { loadout, score, stats, atlanteanChoices };
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +215,29 @@ interface CancellationToken {
 }
 
 // ---------------------------------------------------------------------------
+// Enhancement wrapper
+// ---------------------------------------------------------------------------
+
+interface EnhanceConfig {
+  readonly pool: GearPool;
+  readonly constraints: HardConstraints;
+  readonly fitness: readonly SoftConstraint[];
+  readonly mode: EnhancementMode;
+}
+
+function enhanceLoadout(
+  loadout: Loadout,
+  config: EnhanceConfig,
+): EnhancedLoadoutResult | null {
+  if (config.mode === "none") return null;
+  const { pool, constraints, fitness } = config;
+  if (config.mode === "budget-aware") {
+    return budgetAwareAssign(loadout, pool, constraints, fitness);
+  }
+  return greedyAssignEnhancements(loadout, pool, constraints, fitness);
+}
+
+// ---------------------------------------------------------------------------
 // Search loop (extracted to satisfy max-lines-per-function)
 // ---------------------------------------------------------------------------
 
@@ -213,6 +245,7 @@ interface SearchLoopParams {
   readonly gearPool: GearPool;
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
+  readonly enhancementMode: EnhancementMode;
 }
 
 interface SearchLoopConfig {
@@ -222,33 +255,46 @@ interface SearchLoopConfig {
   readonly total: number;
 }
 
+/** Score one equipment combo and insert into tracker if viable. */
+function processCombo(
+  bareLoadout: Loadout,
+  enhanceConfig: EnhanceConfig,
+  tracker: TopNTracker,
+): void {
+  const enhanced = enhanceLoadout(bareLoadout, enhanceConfig);
+  const finalLoadout = enhanced?.loadout ?? bareLoadout;
+  const result = scoreLoadout({
+    loadout: finalLoadout,
+    constraints: enhanceConfig.constraints,
+    fitness: enhanceConfig.fitness,
+    atlanteanChoices: enhanced?.atlanteanChoices,
+  });
+  if (result != null) tracker.tryInsert(result);
+}
+
 /** Run the main search loop, yielding periodically. */
 async function runSearchLoop(
   params: SearchLoopParams,
   config: SearchLoopConfig,
   onProgress: ((checked: number, total: number, best: number) => void) | undefined,
 ): Promise<void> {
-  const { gearPool, constraints, fitness } = params;
+  const { gearPool, constraints, fitness, enhancementMode } = params;
   const { tracker, token, deadline, total } = config;
+  const enhanceConfig: EnhanceConfig = {
+    pool: gearPool, constraints, fitness, mode: enhancementMode,
+  };
   let checked = 0;
-  const interval = 1000;
 
   for (const chest of gearPool.chestplates) {
     for (const legs of gearPool.leggings) {
-      const accGen = generateAccessoryCombinations(
-        gearPool.accessories,
-        constraints,
-      );
+      const accGen = generateAccessoryCombinations(gearPool.accessories, constraints);
       for (const acc of accGen) {
-        if (token.cancelled) return;
-        if (deadline != null && Date.now() > deadline) return;
+        if (token.cancelled || (deadline != null && Date.now() > deadline)) return;
 
-        const loadout = buildBareLoadout(chest, legs, acc);
-        const result = scoreLoadout({ loadout, constraints, fitness });
-        if (result != null) tracker.tryInsert(result);
+        processCombo(buildBareLoadout(chest, legs, acc), enhanceConfig, tracker);
 
         checked++;
-        if (checked % interval === 0) {
+        if (checked % 1000 === 0) {
           emitProgress(onProgress, checked, total, tracker);
           await yieldToEventLoop();
         }
@@ -302,8 +348,10 @@ export class ExhaustiveSearch implements SearchStrategy {
       ? Date.now() + options.timeout
       : undefined;
 
+    const enhancementMode: EnhancementMode = options.enhancementMode ?? "none";
+
     await runSearchLoop(
-      { gearPool, constraints, fitness },
+      { gearPool, constraints, fitness, enhancementMode },
       { tracker, token: this.token, deadline, total },
       this.onProgress,
     );

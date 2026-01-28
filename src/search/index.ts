@@ -1,6 +1,6 @@
 /**
  * Search module — constraint validation, stats computation, fitness scoring,
- * and strategies.
+ * enhancement assignment, and strategies.
  */
 
 export type { ConstraintViolation, ValidationResult } from "./constraints";
@@ -27,3 +27,6 @@ export {
 } from "./fitness";
 
 export { ExhaustiveSearch } from "./exhaustive";
+
+export type { EnhancementMode, EnhancedLoadoutResult } from "./enhance";
+export { greedyAssignEnhancements, budgetAwareAssign } from "./enhance";
