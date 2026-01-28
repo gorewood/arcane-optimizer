@@ -8,37 +8,53 @@
   {
     "id": "archaic",
     "name": "Archaic",
-    "stats": { "size": 24 }
+    "stats": {
+      "size": 24
+    }
   },
   {
     "id": "blasted",
     "name": "Blasted",
-    "stats": { "power": 8 }
+    "stats": {
+      "power": 8
+    }
   },
   {
     "id": "crystalline",
     "name": "Crystalline",
-    "stats": { "dexterity": 24 }
+    "stats": {
+      "dexterity": 24
+    }
   },
   {
     "id": "drowned",
     "name": "Drowned",
-    "stats": { "defense": 39, "size": 14 }
+    "stats": {
+      "defense": 39,
+      "size": 14
+    }
   },
   {
     "id": "frozen",
     "name": "Frozen",
-    "stats": { "defense": 76 }
+    "stats": {
+      "defense": 76
+    }
   },
   {
     "id": "sandy",
     "name": "Sandy",
-    "stats": { "size": 38 }
+    "stats": {
+      "haste": 24
+    }
   },
   {
     "id": "superheated",
     "name": "Superheated",
-    "stats": { "power": 15, "size": 24 }
+    "stats": {
+      "power": 4,
+      "haste": 14
+    }
   },
   {
     "id": "atlantean",
@@ -46,7 +62,14 @@
     "stats": {},
     "atlanteanBehavior": {
       "insanity": 1,
-      "possibleBonusStats": ["power", "defense", "size", "dexterity", "range", "haste"]
+      "possibleBonusStats": [
+        "power",
+        "defense",
+        "size",
+        "dexterity",
+        "range",
+        "haste"
+      ]
     }
   }
 ]
