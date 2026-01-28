@@ -30,6 +30,8 @@ export interface SearchState {
   status: SearchStatus;
   progress: number;
   results: readonly SearchResult[];
+  /** Preview results shown during search (swapped as better ones are found) */
+  previewResults: readonly SearchResult[];
   error: string | null;
   algorithm: Algorithm;
   enhancementMode: EnhancementMode;
@@ -40,6 +42,7 @@ export interface SearchState {
 export interface SearchActions {
   startSearch: () => void;
   setProgress: (progress: number) => void;
+  setPreviewResults: (results: readonly SearchResult[]) => void;
   setResults: (results: readonly SearchResult[], exitMetadata?: ExitMetadata) => void;
   setError: (error: string) => void;
   reset: () => void;
@@ -62,6 +65,7 @@ const INITIAL_STATE: SearchState = {
   status: "idle",
   progress: 0,
   results: [],
+  previewResults: [],
   error: null,
   algorithm: "exhaustive",
   enhancementMode: "budget-aware",
@@ -77,11 +81,15 @@ export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
   ...INITIAL_STATE,
 
   startSearch: (): void => {
-    set({ status: "running", progress: 0, results: [], error: null });
+    set({ status: "running", progress: 0, results: [], previewResults: [], error: null });
   },
 
   setProgress: (progress: number): void => {
     set({ progress });
+  },
+
+  setPreviewResults: (previewResults: readonly SearchResult[]): void => {
+    set({ previewResults });
   },
 
   setResults: (results: readonly SearchResult[], exitMetadata?: ExitMetadata): void => {

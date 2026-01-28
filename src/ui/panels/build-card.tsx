@@ -106,10 +106,12 @@ export function BuildCard({
   rank,
   result,
   constraints,
+  disabled = false,
 }: {
   readonly rank: number;
   readonly result: SearchResult;
   readonly constraints: readonly SoftConstraint[];
+  readonly disabled?: boolean;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -120,6 +122,7 @@ export function BuildCard({
   }
 
   const handleCopy = useCallback(() => {
+    if (disabled) return;
     const text = formatBuildText(rank, result);
     void navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -127,19 +130,25 @@ export function BuildCard({
         setCopied(false);
       }, 1500);
     });
-  }, [rank, result]);
+  }, [rank, result, disabled]);
+
+  const handleToggle = useCallback(() => {
+    if (disabled) return;
+    setExpanded((prev) => !prev);
+  }, [disabled]);
 
   return (
-    <Card className="border-border-default bg-bg-surface py-0 gap-0 transition-colors hover:border-border-accent/50">
+    <Card className={`border-border-default bg-bg-surface py-0 gap-0 transition-colors ${disabled ? "opacity-80" : "hover:border-border-accent/50"}`}>
       {/* Collapsed header row */}
       <CollapsedHeader
         rank={rank}
         result={result}
         constraints={constraints}
         expanded={expanded}
-        onToggle={() => { setExpanded((prev) => !prev); }}
+        onToggle={handleToggle}
         onCopy={handleCopy}
         copied={copied}
+        disabled={disabled}
       />
 
       {/* Collapsed: compact slot list */}
@@ -171,6 +180,7 @@ function CollapsedHeader({
   onToggle,
   onCopy,
   copied,
+  disabled,
 }: {
   readonly rank: number;
   readonly result: SearchResult;
@@ -179,10 +189,15 @@ function CollapsedHeader({
   readonly onToggle: () => void;
   readonly onCopy: () => void;
   readonly copied: boolean;
+  readonly disabled: boolean;
 }): React.JSX.Element {
+  const clickableClass = disabled
+    ? "cursor-default"
+    : "cursor-pointer hover:bg-border-subtle/30";
+
   return (
     <div
-      className="flex items-center gap-2 px-3 py-2 flex-wrap cursor-pointer rounded-t-lg transition-colors hover:bg-border-subtle/30"
+      className={`flex items-center gap-2 px-3 py-2 flex-wrap rounded-t-lg transition-colors ${clickableClass}`}
       onClick={onToggle}
     >
       <span className="text-accent-gold font-bold text-base min-w-[1.5rem]">
@@ -191,7 +206,7 @@ function CollapsedHeader({
       <CompactScore score={result.score} stats={result.stats} constraints={constraints} />
       <ConstraintPips stats={result.stats} constraints={constraints} />
       <KeyStatsDisplay stats={result.stats} />
-      <HeaderActions expanded={expanded} onCopy={onCopy} copied={copied} />
+      {!disabled && <HeaderActions expanded={expanded} onCopy={onCopy} copied={copied} />}
     </div>
   );
 }

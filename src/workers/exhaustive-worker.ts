@@ -42,6 +42,7 @@ export type ExhaustiveWorkerResponse =
       readonly checked: number;
       readonly total: number;
       readonly bestScore: number;
+      readonly topResults: readonly SearchResult[];
     }
   | {
       readonly type: "complete";
@@ -94,13 +95,14 @@ async function runPartitionedSearch(
   const search = new ExhaustiveSearch();
   const total = countPartitionCombinations(assignedChests, gearPool.leggings, gearPool.accessories);
 
-  search.onProgress = (checked, _total, bestScore) => {
+  search.onProgress = (checked, _total, bestScore, topResults) => {
     const response: ExhaustiveWorkerResponse = {
       type: "progress",
       workerId,
       checked,
       total,
       bestScore,
+      topResults,
     };
     postMessage(response);
   };

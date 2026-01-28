@@ -68,7 +68,7 @@ function mergeResults(
 // ---------------------------------------------------------------------------
 
 export interface CoordinatorCallbacks {
-  readonly onProgress: (checked: number, total: number, bestScore: number) => void;
+  readonly onProgress: (checked: number, total: number, bestScore: number, topResults: readonly SearchResult[]) => void;
   readonly onComplete: (results: readonly SearchResult[]) => void;
   readonly onError: (message: string) => void;
 }
@@ -87,7 +87,7 @@ export interface CoordinatorConfig {
 
 export class ExhaustiveCoordinator {
   private workers: Worker[] = [];
-  private workerProgress = new Map<number, { checked: number; total: number; bestScore: number }>();
+  private workerProgress = new Map<number, { checked: number; total: number; bestScore: number; topResults: readonly SearchResult[] }>();
   private workerResults = new Map<number, readonly SearchResult[]>();
   private completedCount = 0;
   private expectedWorkerCount = 0;
@@ -117,7 +117,7 @@ export class ExhaustiveCoordinator {
       const assigned = partitions[workerId];
       if (assigned == null || assigned.length === 0) continue;
 
-      this.workerProgress.set(workerId, { checked: 0, total: 0, bestScore: -Infinity });
+      this.workerProgress.set(workerId, { checked: 0, total: 0, bestScore: -Infinity, topResults: [] });
       this.spawnWorker(workerId, assigned, config);
     }
   }
@@ -182,6 +182,7 @@ export class ExhaustiveCoordinator {
       checked: msg.checked,
       total: msg.total,
       bestScore: msg.bestScore,
+      topResults: msg.topResults,
     });
     this.emitAggregatedProgress();
   }
@@ -190,10 +191,10 @@ export class ExhaustiveCoordinator {
     this.workerResults.set(msg.workerId, msg.results);
     this.completedCount++;
 
-    // Update progress to show this worker as done
+    // Update progress to show this worker as done with final results
     const progress = this.workerProgress.get(msg.workerId);
     if (progress != null) {
-      this.workerProgress.set(msg.workerId, { ...progress, checked: progress.total });
+      this.workerProgress.set(msg.workerId, { ...progress, checked: progress.total, topResults: msg.results });
     }
     this.emitAggregatedProgress();
 
@@ -207,14 +208,20 @@ export class ExhaustiveCoordinator {
     let totalChecked = 0;
     let totalTotal = 0;
     let bestScore = -Infinity;
+    const allTopResults: SearchResult[][] = [];
 
     for (const p of this.workerProgress.values()) {
       totalChecked += p.checked;
       totalTotal += p.total;
       if (p.bestScore > bestScore) bestScore = p.bestScore;
+      if (p.topResults.length > 0) {
+        allTopResults.push([...p.topResults]);
+      }
     }
 
-    this.callbacks?.onProgress(totalChecked, totalTotal, bestScore);
+    // Merge top results from all workers
+    const aggregatedResults = mergeResults(allTopResults, this.config?.maxResults ?? 20);
+    this.callbacks?.onProgress(totalChecked, totalTotal, bestScore, aggregatedResults);
   }
 
   private finalizeResults(): void {

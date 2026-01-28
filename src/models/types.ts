@@ -201,5 +201,5 @@ export interface SearchStrategy {
     fitness: readonly SoftConstraint[],
     options: SearchOptions,
   ): Promise<readonly SearchResult[]>;
-  onProgress?: ((checked: number, total: number, bestScore: number) => void) | undefined;
+  onProgress?: ((checked: number, total: number, bestScore: number, results: readonly SearchResult[]) => void) | undefined;
 }

@@ -50,6 +50,7 @@ export type WorkerResponse =
       readonly checked: number;
       readonly total: number;
       readonly bestScore: number;
+      readonly topResults: readonly SearchResult[];
     }
   | {
       readonly type: "complete";
@@ -76,12 +77,13 @@ function handleStart(msg: WorkerRequest & { type: "start" }): void {
     activeSearch = new ExhaustiveSearch();
   }
 
-  activeSearch.onProgress = (checked, total, bestScore) => {
+  activeSearch.onProgress = (checked, total, bestScore, topResults) => {
     const response: WorkerResponse = {
       type: "progress",
       checked,
       total,
       bestScore,
+      topResults,
     };
     postMessage(response);
   };

@@ -95,7 +95,7 @@ function buildFilteredGearPool(ids: EnabledIds): GearPool {
 // ---------------------------------------------------------------------------
 
 interface WorkerCallbacks {
-  readonly onProgress: (checked: number, total: number, bestScore: number) => void;
+  readonly onProgress: (checked: number, total: number, bestScore: number, topResults: readonly SearchResult[]) => void;
   readonly onComplete: (results: readonly SearchResult[], exitMetadata: ExitMetadata | undefined) => void;
   readonly onError: (message: string) => void;
 }
@@ -109,7 +109,7 @@ function createSearchWorker(cb: WorkerCallbacks): Worker {
   worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
     const msg = event.data;
     switch (msg.type) {
-      case "progress": cb.onProgress(msg.checked, msg.total, msg.bestScore); break;
+      case "progress": cb.onProgress(msg.checked, msg.total, msg.bestScore, msg.topResults); break;
       case "complete": cb.onComplete(msg.results, msg.exitMetadata); worker.terminate(); break;
       case "error": cb.onError(msg.message); worker.terminate(); break;
     }
@@ -170,7 +170,7 @@ interface CoordinatorLaunchConfig {
 }
 
 interface CoordinatorCallbacks {
-  readonly onProgress: (checked: number, total: number, bestScore: number) => void;
+  readonly onProgress: (checked: number, total: number, bestScore: number, topResults: readonly SearchResult[]) => void;
   readonly onComplete: (results: readonly SearchResult[]) => void;
   readonly onError: (message: string) => void;
 }
@@ -207,6 +207,7 @@ export interface WorkerHookResult {
 export function useSearchWorker(maxResults: number): WorkerHookResult {
   const startSearch = useSearchStore((s) => s.startSearch);
   const setResults = useSearchStore((s) => s.setResults);
+  const setPreviewResults = useSearchStore((s) => s.setPreviewResults);
   const setError = useSearchStore((s) => s.setError);
   const reset = useSearchStore((s) => s.reset);
   const enhancementMode = useSearchStore((s) => s.enhancementMode);
@@ -240,22 +241,23 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     startSearch();
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
-    const progressCb = (c: number, t: number, b: number): void => {
+    const onProg = (c: number, t: number, b: number, r: readonly SearchResult[]): void => {
       setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b }));
+      setPreviewResults(r);
     };
 
     if (algorithm === "exhaustive") {
       coordinatorRef.current = launchCoordinator(
         { gearPool, fitness: constraints, maxResults, enhancementMode },
-        { onProgress: progressCb, onComplete: (r) => { setResults(r, undefined); }, onError: setError },
+        { onProgress: onProg, onComplete: (r) => { setResults(r, undefined); }, onError: setError },
       );
     } else {
       workerRef.current = launchWorker(
         { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm, gaParams },
-        { onProgress: progressCb, onComplete: setResults, onError: setError },
+        { onProgress: onProg, onComplete: setResults, onError: setError },
       );
     }
-  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, gaParams, startSearch, setResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;

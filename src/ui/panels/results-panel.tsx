@@ -15,27 +15,31 @@ import { BuildCard } from "./build-card";
 
 export function ResultsPanel(): React.JSX.Element {
   const results = useSearchStore((s) => s.results);
+  const previewResults = useSearchStore((s) => s.previewResults);
   const status = useSearchStore((s) => s.status);
   const constraints = useFitnessStore((s) => s.constraints);
+
+  const isRunning = status === "running";
+  const displayResults = isRunning ? previewResults : results;
 
   return (
     <div className="space-y-4 p-6">
       <h2 className="text-lg font-bold text-text-primary">
         Search Results
-        {results.length > 0 && (
+        {displayResults.length > 0 && (
           <span className="ml-2 text-sm text-text-muted font-normal">
-            ({String(results.length)} builds)
+            ({String(displayResults.length)} builds{isRunning ? " so far" : ""})
           </span>
         )}
       </h2>
 
-      {status === "running" && <RunningIndicator />}
+      {isRunning && <RunningIndicator />}
       {status === "error" && <ErrorMessage />}
 
-      {results.length === 0 && status !== "running" ? (
+      {displayResults.length === 0 && !isRunning ? (
         <EmptyState />
       ) : (
-        <ResultsList results={results} constraints={constraints} />
+        <ResultsList results={displayResults} constraints={constraints} disabled={isRunning} />
       )}
     </div>
   );
@@ -103,11 +107,13 @@ function ErrorMessage(): React.JSX.Element {
 function ResultsList({
   results,
   constraints,
+  disabled = false,
 }: {
   readonly results: ReturnType<typeof useSearchStore.getState>["results"];
   readonly constraints: ReturnType<
     typeof useFitnessStore.getState
   >["constraints"];
+  readonly disabled?: boolean;
 }): React.JSX.Element {
   return (
     <div className="space-y-3">
@@ -117,6 +123,7 @@ function ResultsList({
           rank={i + 1}
           result={result}
           constraints={constraints}
+          disabled={disabled}
         />
       ))}
     </div>

@@ -311,14 +311,15 @@ async function runSearchLoop(
 
 /** Emit progress if callback is defined. */
 function emitProgress(
-  cb: ((checked: number, total: number, best: number) => void) | undefined,
+  cb: ((checked: number, total: number, best: number, results: readonly SearchResult[]) => void) | undefined,
   checked: number,
   total: number,
   tracker: TopNTracker,
 ): void {
   if (cb == null) return;
-  const best = tracker.getResults()[0];
-  cb(checked, total, best?.score ?? -Infinity);
+  const results = tracker.getResults();
+  const best = results[0];
+  cb(checked, total, best?.score ?? -Infinity, results);
 }
 
 // ---------------------------------------------------------------------------
@@ -329,7 +330,7 @@ function emitProgress(
 export class ExhaustiveSearch implements SearchStrategy {
   readonly name = "exhaustive";
   onProgress?:
-    | ((checked: number, total: number, bestScore: number) => void)
+    | ((checked: number, total: number, bestScore: number, results: readonly SearchResult[]) => void)
     | undefined;
 
   private readonly token: CancellationToken = { cancelled: false };

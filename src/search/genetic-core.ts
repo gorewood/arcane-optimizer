@@ -187,8 +187,9 @@ interface LoopState {
 interface LoopConfig {
   readonly evolveParams: EvolveParams;
   readonly generations: number;
+  readonly maxResults: number;
   readonly token: CancellationToken;
-  readonly onProgress: ((checked: number, total: number, bestScore: number) => void) | undefined;
+  readonly onProgress: ((checked: number, total: number, bestScore: number, results: readonly SearchResult[]) => void) | undefined;
 }
 
 /** Max diversity injections before final stagnation exit. */
@@ -202,7 +203,7 @@ async function runEvolutionLoop(
   config: LoopConfig,
   state: LoopState,
 ): Promise<void> {
-  const { evolveParams, generations, token, onProgress } = config;
+  const { evolveParams, generations, maxResults, token, onProgress } = config;
   for (let gen = 0; gen < generations; gen++) {
     if (token.cancelled) {
       state.finalGeneration = gen;
@@ -212,7 +213,8 @@ async function runEvolutionLoop(
 
     state.population = evolveOneGeneration(evolveParams, state.population);
     updateStagnation(state);
-    onProgress?.(gen + 1, generations, state.bestScore);
+    const currentResults = extractResults(state.population, maxResults);
+    onProgress?.(gen + 1, generations, state.bestScore, currentResults);
 
     if (shouldInjectDiversity(state)) {
       injectDiversity(state, evolveParams);
@@ -233,7 +235,8 @@ async function runEvolutionLoop(
     }
   }
   // Report 100% completion so progress bar reaches the end
-  onProgress?.(generations, generations, state.bestScore);
+  const finalResults = extractResults(state.population, maxResults);
+  onProgress?.(generations, generations, state.bestScore, finalResults);
 }
 
 function shouldInjectDiversity(state: LoopState): boolean {
@@ -275,7 +278,7 @@ export type GAExitReason = "complete" | "stagnation" | "cancelled";
 
 export class GeneticSearch implements SearchStrategy {
   readonly name = "genetic";
-  onProgress?: ((checked: number, total: number, bestScore: number) => void) | undefined;
+  onProgress?: ((checked: number, total: number, bestScore: number, results: readonly SearchResult[]) => void) | undefined;
   private readonly token: CancellationToken = { cancelled: false };
 
   /** Exit reason from last search (available after search completes) */
@@ -319,7 +322,7 @@ export class GeneticSearch implements SearchStrategy {
     };
 
     await runEvolutionLoop(
-      { evolveParams, generations, token: this.token, onProgress: this.onProgress },
+      { evolveParams, generations, maxResults: options.maxResults, token: this.token, onProgress: this.onProgress },
       state,
     );
 
