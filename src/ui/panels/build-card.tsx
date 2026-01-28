@@ -130,18 +130,14 @@ export function BuildCard({
   }, [rank, result]);
 
   return (
-    <Card
-      className="cursor-pointer border-border-default bg-bg-surface py-0 gap-0 transition-colors hover:border-border-accent/50"
-      onClick={() => {
-        setExpanded((prev) => !prev);
-      }}
-    >
+    <Card className="border-border-default bg-bg-surface py-0 gap-0 transition-colors hover:border-border-accent/50">
       {/* Collapsed header row */}
       <CollapsedHeader
         rank={rank}
         result={result}
         constraints={constraints}
         expanded={expanded}
+        onToggle={() => { setExpanded((prev) => !prev); }}
         onCopy={handleCopy}
         copied={copied}
       />
@@ -172,6 +168,7 @@ function CollapsedHeader({
   result,
   constraints,
   expanded,
+  onToggle,
   onCopy,
   copied,
 }: {
@@ -179,11 +176,15 @@ function CollapsedHeader({
   readonly result: SearchResult;
   readonly constraints: readonly SoftConstraint[];
   readonly expanded: boolean;
+  readonly onToggle: () => void;
   readonly onCopy: () => void;
   readonly copied: boolean;
 }): React.JSX.Element {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
+    <div
+      className="flex items-center gap-2 px-3 py-2 flex-wrap cursor-pointer"
+      onClick={onToggle}
+    >
       <span className="text-accent-gold font-bold text-base min-w-[1.5rem]">
         #{String(rank)}
       </span>
@@ -237,7 +238,7 @@ function HeaderActions({
 }
 
 // ---------------------------------------------------------------------------
-// CompactSlotList — single-line slot summary
+// CompactSlotList — slot summary with full item names
 // ---------------------------------------------------------------------------
 
 function CompactSlotList({
@@ -246,20 +247,23 @@ function CompactSlotList({
   readonly result: SearchResult;
 }): React.JSX.Element {
   return (
-    <div className="px-3 pb-2 flex flex-wrap gap-x-3 gap-y-1">
+    <div className="px-3 pb-2 space-y-0.5">
       {result.loadout.slots.map((slot, i) => (
-        <span key={i} className="text-[10px]">
-          <Badge
-            variant="outline"
-            className="px-1 py-0 text-[9px] mr-1"
-          >
+        <div key={i} className="flex items-center gap-1.5 text-[11px]">
+          <Badge variant="outline" className="px-1.5 py-0 text-[9px] shrink-0 w-10 justify-center">
             {SLOT_LABELS[slot.piece.slot]}
           </Badge>
-          <span className="text-text-secondary">{slot.piece.name}</span>
+          <span className="text-text-primary">{slot.piece.name}</span>
           {slot.enchantment != null && (
-            <span className="text-text-muted ml-1">[{slot.enchantment.name}]</span>
+            <span className="text-accent-amber">[{slot.enchantment.name}]</span>
           )}
-        </span>
+          {slot.modifier != null && (
+            <span className="text-text-muted">({slot.modifier.name})</span>
+          )}
+          {slot.gems.length > 0 && (
+            <span className="text-accent-ember">{slot.gems.length} gem{slot.gems.length > 1 ? "s" : ""}</span>
+          )}
+        </div>
       ))}
     </div>
   );
