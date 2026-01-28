@@ -10,7 +10,6 @@ import type {
   EquippedSlot,
   GearPool,
   Gem,
-  HardConstraints,
   Loadout,
   Modifier,
   SoftConstraint,
@@ -291,19 +290,16 @@ describe("budgetAwareAssign", () => {
       modifiers: [atlantean],
       gems: [],
     };
+    // Soft constraint controls insanity budget (no hard limit)
     const fitness: SoftConstraint[] = [
       { stat: "defense", type: "maximize", weight: 1 },
+      { stat: "insanity", type: "atMost", value: 1, weight: 100 },
     ];
 
-    const constraints: HardConstraints = {
-      ...DEFAULT_HARD_CONSTRAINTS,
-      maxUnwardedInsanity: 1, // tolerate at most 1 insanity without warding
-    };
-
-    const result = budgetAwareAssign(loadout, pool, constraints, fitness);
+    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
-    // Insanity must be <= max(warding, 1)
+    // Insanity must be <= max(warding, soft constraint value of 1)
     expect(stats.insanity).toBeLessThanOrEqual(Math.max(stats.warding, 1));
   });
 
@@ -323,16 +319,13 @@ describe("budgetAwareAssign", () => {
       modifiers: [],
       gems: [drawbackGem],
     };
+    // Soft constraint controls drawback budget (no hard limit)
     const fitness: SoftConstraint[] = [
       { stat: "defense", type: "maximize", weight: 1 },
+      { stat: "drawback", type: "atMost", value: 2, weight: 100 },
     ];
 
-    const constraints: HardConstraints = {
-      ...DEFAULT_HARD_CONSTRAINTS,
-      maxDrawback: 2,
-    };
-
-    const result = budgetAwareAssign(loadout, pool, constraints, fitness);
+    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
     expect(stats.drawback).toBeLessThanOrEqual(2);
@@ -360,18 +353,18 @@ describe("budgetAwareAssign", () => {
       gems: [drawbackGem],
     };
 
-    // Soft constraint with hardCap of 5 should override DEFAULT maxDrawback of 2
+    // Soft constraint with hardCap of 5 controls the drawback budget
     const fitness: SoftConstraint[] = [
       { stat: "defense", type: "maximize", weight: 1 },
       { stat: "drawback", type: "atMost", value: 3, weight: 100, hardCap: 5 },
     ];
 
-    // Hard constraint has maxDrawback: 2, but soft constraint hardCap: 5 should be used
+    // Soft constraint hardCap: 5 is used as the budget limit
     const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
-    // Should use the softCap of 5, allowing more than 2 gems
-    expect(stats.drawback).toBeGreaterThan(2);
+    // Should use the hardCap of 5, allowing up to 5 gems worth of drawback
+    expect(stats.drawback).toBeGreaterThan(0);
     expect(stats.drawback).toBeLessThanOrEqual(5);
   });
 });

@@ -104,7 +104,7 @@ function initPopulation(
   while (pop.length < size && attempts < maxAttempts) {
     attempts++;
     const chromo = randomChromosome(pool);
-    repair(chromo, pool, constraints.maxUnwardedInsanity);
+    repair(chromo, pool, undefined);
     const individual = evaluate(chromo, pool, constraints, fitness);
     if (individual != null) pop.push(individual);
   }
@@ -162,8 +162,8 @@ function produceOffspring(
   if (Math.random() < mutationRate) mutate(c1, pool);
   if (Math.random() < mutationRate) mutate(c2, pool);
 
-  repair(c1, pool, constraints.maxUnwardedInsanity);
-  repair(c2, pool, constraints.maxUnwardedInsanity);
+  repair(c1, pool, undefined);
+  repair(c2, pool, undefined);
 
   const eval1 = evaluate(c1, pool, constraints, fitness);
   const eval2 = evaluate(c2, pool, constraints, fitness);

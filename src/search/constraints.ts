@@ -39,8 +39,6 @@ export const DEFAULT_HARD_CONSTRAINTS: HardConstraints = {
   maxAmuletAccessories: 1,
   totalAccessories: 3,
   atlanteanIncompatibleWith: ["virtuous"],
-  maxUnwardedInsanity: 1,
-  maxDrawback: 2,
   noDuplicateItems: true,
 };
 
@@ -224,47 +222,9 @@ function checkGemCount(
   return violations;
 }
 
-/**
- * Rule 8: Insanity must be covered by warding or be within tolerable level.
- *
- * Game mechanic: warding >= insanity fully negates effects.
- * Insanity at or below `maxUnwardedInsanity` (default 1) is tolerable without warding.
- * Constraint: insanity <= max(warding, maxUnwardedInsanity).
- */
-function checkInsanity(
-  loadout: Loadout,
-  constraints: HardConstraints,
-): readonly ConstraintViolation[] {
-  const totals = sumAllSlotStats(loadout);
-  const insanity = totals.insanity ?? 0;
-  const warding = totals.warding ?? 0;
-  const limit = Math.max(warding, constraints.maxUnwardedInsanity);
-  if (insanity > limit) {
-    return [violation(
-      "insanity",
-      `Insanity ${String(insanity)} exceeds warding ${String(warding)} (max unguarded: ${String(constraints.maxUnwardedInsanity)})`,
-    )];
-  }
-  return [];
-}
-
-/** Rule 9: Total drawback within limit. */
-function checkDrawbackCap(
-  loadout: Loadout,
-  constraints: HardConstraints,
-): readonly ConstraintViolation[] {
-  const totals = sumAllSlotStats(loadout);
-  const drawback = totals.drawback ?? 0;
-  if (drawback > constraints.maxDrawback) {
-    return [violation("drawback-cap", `Total drawback ${String(drawback)} exceeds max ${String(constraints.maxDrawback)}`)];
-  }
-  return [];
-}
-
-/** Sum stats across all slots in a loadout. */
-function sumAllSlotStats(loadout: Loadout): Partial<Stats> {
-  return sumStatBlocks(loadout.slots.map(computeSlotStats));
-}
+// Note: Insanity/warding and drawback are no longer hard constraints.
+// Users can set soft constraints through the goal system to penalize
+// builds that exceed their preferred tolerances for these stats.
 
 // ---------------------------------------------------------------------------
 // Main validator
@@ -286,8 +246,6 @@ export function validateLoadout(
     ...checkAtlanteanConflict(loadout, constraints),
     ...checkSingleEnchantment(loadout),
     ...checkGemCount(loadout),
-    ...checkInsanity(loadout, constraints),
-    ...checkDrawbackCap(loadout, constraints),
   ];
   return { valid: violations.length === 0, violations };
 }

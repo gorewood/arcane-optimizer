@@ -393,14 +393,15 @@ interface BudgetCaps {
 
 /**
  * Extract insanity and drawback caps from user's soft constraints.
- * Uses hardCap from "atMost" constraints, falling back to hard constraint defaults.
+ * Uses hardCap from "atMost" constraints, falling back to Infinity (no limit).
+ * Users control these limits through the goal system's soft constraints.
  */
 function extractBudgetCaps(
   fitness: readonly SoftConstraint[],
-  hardConstraints: HardConstraints,
+  _hardConstraints: HardConstraints,
 ): BudgetCaps {
-  let maxDrawback = hardConstraints.maxDrawback;
-  let maxInsanity = hardConstraints.maxUnwardedInsanity;
+  let maxDrawback = Infinity;
+  let maxInsanity = Infinity;
 
   for (const c of fitness) {
     if (c.stat === "drawback" && c.type === "atMost") {

@@ -302,104 +302,8 @@ describe("validateLoadout", () => {
     });
   });
 
-  // ---- Rule 8: Insanity / warding ----
-
-  describe("insanity constraint", () => {
-    it("rejects insanity exceeding warding and tolerable level", () => {
-      const loadout = makeLoadout([
-        makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 3 } }),
-        }),
-        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
-      ]);
-      // insanity 3 > max(warding 0, tolerable 1)
-      const result = validateLoadout(loadout, defaults);
-      expect(result.valid).toBe(false);
-      expect(result.violations.some((v) => v.rule === "insanity")).toBe(true);
-    });
-
-    it("passes when insanity at tolerable level without warding", () => {
-      const loadout = makeLoadout([
-        makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 1 } }),
-        }),
-        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
-      ]);
-      // insanity 1 <= max(warding 0, tolerable 1) = 1
-      const result = validateLoadout(loadout, defaults);
-      expect(result.violations.some((v) => v.rule === "insanity")).toBe(false);
-    });
-
-    it("passes when warding covers insanity", () => {
-      const loadout = makeLoadout([
-        makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 3, warding: 3 } }),
-        }),
-        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
-      ]);
-      // insanity 3 <= max(warding 3, tolerable 1) = 3
-      const result = validateLoadout(loadout, defaults);
-      expect(result.violations.some((v) => v.rule === "insanity")).toBe(false);
-    });
-
-    it("rejects when insanity exceeds warding by 1 (above tolerable)", () => {
-      const loadout = makeLoadout([
-        makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 4, warding: 3 } }),
-        }),
-        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
-      ]);
-      // insanity 4 > max(warding 3, tolerable 1) = 3 — NOT safe
-      const result = validateLoadout(loadout, defaults);
-      expect(result.valid).toBe(false);
-      expect(result.violations.some((v) => v.rule === "insanity")).toBe(true);
-    });
-  });
-
-  // ---- Rule 9: Drawback cap ----
-
-  describe("drawback cap", () => {
-    it("rejects when drawback exceeds limit", () => {
-      const loadout = makeLoadout([
-        makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { drawback: 3 } }),
-        }),
-        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
-      ]);
-      const result = validateLoadout(loadout, defaults);
-      expect(result.valid).toBe(false);
-      expect(result.violations.some((v) => v.rule === "drawback-cap")).toBe(true);
-    });
-
-    it("passes when drawback exactly at limit", () => {
-      const loadout = makeLoadout([
-        makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { drawback: 2 } }),
-        }),
-        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
-        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
-      ]);
-      const result = validateLoadout(loadout, defaults);
-      expect(result.violations.some((v) => v.rule === "drawback-cap")).toBe(false);
-    });
-  });
+  // Note: Insanity/warding and drawback are no longer hard constraints.
+  // Users control these through soft constraints in the goal system.
 
   // ---- Multiple violations ----
 
@@ -407,7 +311,7 @@ describe("validateLoadout", () => {
     it("reports all violations simultaneously", () => {
       const loadout = makeLoadout([
         makeSlot({
-          piece: makeEquipment({ id: "same", slot: "chestplate", baseStats: { insanity: 5, drawback: 5 } }),
+          piece: makeEquipment({ id: "same", slot: "chestplate" }),
           gems: [makeGem({ id: "g1" }), makeGem({ id: "g2" }), makeGem({ id: "g3" })],
         }),
         makeSlot({ piece: makeEquipment({ id: "same", slot: "chestplate" }) }),
@@ -426,11 +330,7 @@ describe("validateLoadout", () => {
       expect(rules.has("helmet-limit")).toBe(true);
       // gem-count (3 gems, 2 sockets)
       expect(rules.has("gem-count")).toBe(true);
-      // insanity (5 > max(0, 1))
-      expect(rules.has("insanity")).toBe(true);
-      // drawback-cap (5 > 2)
-      expect(rules.has("drawback-cap")).toBe(true);
-      expect(result.violations.length).toBeGreaterThanOrEqual(6);
+      expect(result.violations.length).toBeGreaterThanOrEqual(4);
     });
   });
 });

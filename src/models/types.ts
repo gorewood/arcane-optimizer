@@ -133,8 +133,6 @@ export interface HardConstraints {
   readonly maxAmuletAccessories: number;
   readonly totalAccessories: number;
   readonly atlanteanIncompatibleWith: readonly string[];
-  readonly maxUnwardedInsanity: number;
-  readonly maxDrawback: number;
   readonly noDuplicateItems: boolean;
 }
 
