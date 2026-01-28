@@ -289,7 +289,11 @@ async function runSearchLoop(
     for (const legs of gearPool.leggings) {
       const accGen = generateAccessoryCombinations(gearPool.accessories, constraints);
       for (const acc of accGen) {
-        if (token.cancelled || (deadline != null && Date.now() > deadline)) return;
+        if (token.cancelled || (deadline != null && Date.now() > deadline)) {
+          // Report final progress before early exit so bar reaches end
+          emitProgress(onProgress, total, total, tracker);
+          return;
+        }
 
         processCombo(buildBareLoadout(chest, legs, acc), enhanceConfig, tracker);
 
@@ -302,7 +306,7 @@ async function runSearchLoop(
     }
   }
 
-  emitProgress(onProgress, checked, total, tracker);
+  emitProgress(onProgress, total, total, tracker);
 }
 
 /** Emit progress if callback is defined. */

@@ -218,6 +218,8 @@ async function runEvolutionLoop(
       await new Promise<void>((r) => { setTimeout(r, 0); });
     }
   }
+  // Report 100% completion so progress bar reaches the end
+  onProgress?.(generations, generations, state.bestScore);
 }
 
 function shouldInjectDiversity(state: LoopState): boolean {
