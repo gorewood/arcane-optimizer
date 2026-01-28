@@ -240,7 +240,7 @@ describe("integration: fitness scoring", () => {
 
     // Build stats that satisfy the Mage preset constraints:
     // defense >= 700, power >= 100, dexterity ~ 300, size ~ 300,
-    // insanity exactly 1, drawback atMost 2
+    // insanity atMost 1, drawback atMost 2
     const stats = makeStats({
       defense: 800,
       power: 120,
@@ -257,27 +257,22 @@ describe("integration: fitness scoring", () => {
     // 2. power atLeast 100 w=90:   above by 20 -> (20)*90*0.1 = 180
     // 3. dexterity target 300 w=80 hardCap=330: at target -> 0
     // 4. size target 300 w=70 hardCap=330: at target -> 0
-    // 5. insanity exactly 1 w=100: matches -> 0
-    // 6. drawback atMost 2 w=100: within -> 0
+    // 5. insanity atMost 1 w=100: 1 <= 1 -> 0
+    // 6. drawback atMost 2 w=100: 1 <= 2 -> 0
     // Total = 1180
     expect(score).toBe(1180);
   });
 
   it("disqualifies loadout failing exactly constraint", () => {
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    if (magePreset == null) return;
+    const exactConstraints: SoftConstraint[] = [
+      { stat: "insanity", type: "exactly", value: 1, weight: 100 },
+    ];
 
-    // insanity = 0, but Mage requires exactly 1
-    const stats = makeStats({
-      defense: 800,
-      power: 120,
-      dexterity: 300,
-      size: 300,
-      insanity: 0,
-      drawback: 1,
-    });
+    const stats = makeStats({ insanity: 0 });
+    expect(computeFitness(stats, exactConstraints)).toBe(-Infinity);
 
-    expect(computeFitness(stats, magePreset)).toBe(-Infinity);
+    const matching = makeStats({ insanity: 1 });
+    expect(computeFitness(matching, exactConstraints)).toBe(0);
   });
 });
 
@@ -615,8 +610,8 @@ describe("integration: full pipeline round-trip", () => {
     // power atLeast 100 w=90:   above by 10 -> 10*90*0.1 = 90
     // dexterity target 300 w=80: at target -> 0
     // size target 300 w=70: at target -> 0
-    // insanity exactly 1 w=100: matches -> 0
-    // drawback atMost 2 w=100:  drawback=0 <= 2 -> 0
+    // insanity atMost 1 w=100: 1 <= 1 -> 0
+    // drawback atMost 2 w=100: 0 <= 2 -> 0
     // Total = 590
     expect(score).toBe(590);
   });

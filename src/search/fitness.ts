@@ -117,7 +117,7 @@ export const FITNESS_PRESETS: Readonly<Record<string, readonly SoftConstraint[]>
     { stat: "power", type: "atLeast", value: 100, weight: 90 },
     { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
     { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
-    { stat: "insanity", type: "exactly", value: 1, weight: 100 },
+    { stat: "insanity", type: "atMost", value: 1, weight: 100 },
     { stat: "drawback", type: "atMost", value: 2, weight: 100 },
   ],
   "Warrior Build": [
