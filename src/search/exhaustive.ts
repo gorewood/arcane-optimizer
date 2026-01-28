@@ -276,7 +276,7 @@ function processCombo(
 async function runSearchLoop(
   params: SearchLoopParams,
   config: SearchLoopConfig,
-  onProgress: ((checked: number, total: number, best: number) => void) | undefined,
+  onProgress: ((checked: number, total: number, best: number, results: readonly SearchResult[]) => void) | undefined,
 ): Promise<void> {
   const { gearPool, constraints, fitness, enhancementMode } = params;
   const { tracker, token, deadline, total } = config;
