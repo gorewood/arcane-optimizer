@@ -117,7 +117,7 @@ export function ConstraintRow({ constraint, index, onUpdate, onRemove }: Constra
   const handleHardCap = useHardCapHandler(constraint, index, onUpdate, statMax);
 
   return (
-    <div className="grid grid-cols-[7rem_3.5rem_4.5rem_6rem_1fr_9rem_1.5rem] items-center gap-1.5 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
+    <div className="grid grid-cols-[8rem_7.5rem_4.5rem_6rem_1fr_9rem_1.5rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
       <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
       <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
       <div>{showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} max={statMax} />}</div>
@@ -239,7 +239,7 @@ function TypeSelect({
         if (isConstraintType(v)) onChange(v);
       }}
     >
-      <SelectTrigger size="sm" className="w-16 text-xs font-stat">
+      <SelectTrigger size="sm" className="w-full text-xs font-stat">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
