@@ -262,7 +262,7 @@
     "id": "theugrist-hat",
     "name": "Theugrist Hat",
     "setName": "Theugrist",
-    "slot": "accessory-H",
+    "slot": "accessory",
     "baseStats": {
       "dexterity": 42,
       "warding": 1
@@ -382,7 +382,7 @@
     "id": "sopharagos-hood",
     "name": "Sopharagos Hood",
     "setName": "Sopharagos",
-    "slot": "accessory-H",
+    "slot": "accessory",
     "baseStats": {
       "power": 48,
       "defense": -141
