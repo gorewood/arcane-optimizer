@@ -14,8 +14,8 @@ interface TabDef {
 }
 
 const TABS: readonly TabDef[] = [
-  { id: "gear", label: "Gear Pool" },
   { id: "optimizer", label: "Optimizer" },
+  { id: "gear", label: "Gear Pool" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ export function AppShell(): React.JSX.Element {
       <header className="border-b border-border-default bg-bg-secondary">
         <div className="mx-auto max-w-5xl px-4 py-3">
           <h1 className="text-lg font-bold text-accent-gold">
-            AO Armor Optimizer
+            Arcane Odyssey Armor Optimizer
           </h1>
         </div>
       </header>
