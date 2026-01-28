@@ -84,8 +84,8 @@ function createSetStorage(): ReturnType<typeof createJSONStorage<GearPoolState>>
 
 function mergePersistedState(
   persisted: unknown,
-  current: GearPoolState,
-): GearPoolState {
+  current: GearPoolState & GearPoolActions,
+): GearPoolState & GearPoolActions {
   if (persisted == null || typeof persisted !== "object") {
     return current;
   }
