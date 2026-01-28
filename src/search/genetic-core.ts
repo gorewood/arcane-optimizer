@@ -180,6 +180,8 @@ interface LoopState {
   bestScore: number;
   stagnation: number;
   injections: number;
+  finalGeneration: number;
+  exitReason: "complete" | "stagnation" | "cancelled";
 }
 
 interface LoopConfig {
@@ -202,7 +204,11 @@ async function runEvolutionLoop(
 ): Promise<void> {
   const { evolveParams, generations, token, onProgress } = config;
   for (let gen = 0; gen < generations; gen++) {
-    if (token.cancelled) break;
+    if (token.cancelled) {
+      state.finalGeneration = gen;
+      state.exitReason = "cancelled";
+      break;
+    }
 
     state.population = evolveOneGeneration(evolveParams, state.population);
     updateStagnation(state);
@@ -211,11 +217,19 @@ async function runEvolutionLoop(
     if (shouldInjectDiversity(state)) {
       injectDiversity(state, evolveParams);
     } else if (state.stagnation > STAGNATION_LIMIT) {
+      state.finalGeneration = gen + 1;
+      state.exitReason = "stagnation";
       break;
     }
 
     if (gen % 10 === 0) {
       await new Promise<void>((r) => { setTimeout(r, 0); });
+    }
+
+    // Mark complete if we finish all generations
+    if (gen === generations - 1) {
+      state.finalGeneration = generations;
+      state.exitReason = "complete";
     }
   }
   // Report 100% completion so progress bar reaches the end
@@ -256,10 +270,20 @@ function updateStagnation(state: LoopState): void {
 // GeneticSearch
 // ---------------------------------------------------------------------------
 
+/** Exit reason for GA search */
+export type GAExitReason = "complete" | "stagnation" | "cancelled";
+
 export class GeneticSearch implements SearchStrategy {
   readonly name = "genetic";
   onProgress?: ((checked: number, total: number, bestScore: number) => void) | undefined;
   private readonly token: CancellationToken = { cancelled: false };
+
+  /** Exit reason from last search (available after search completes) */
+  exitReason: GAExitReason = "complete";
+  /** Final generation reached (available after search completes) */
+  finalGeneration = 0;
+  /** Total generations configured (available after search completes) */
+  totalGenerations = 0;
 
   cancel(): void {
     this.token.cancelled = true;
@@ -278,6 +302,8 @@ export class GeneticSearch implements SearchStrategy {
     const mutationRate = options.mutationRate ?? 0.15;
     const crossoverRate = options.crossoverRate ?? 0.8;
 
+    this.totalGenerations = generations;
+
     const population = initPopulation(pool, constraints, fitness, populationSize);
     const evolveParams: EvolveParams = {
       pool, constraints, fitness, populationSize, mutationRate, crossoverRate,
@@ -288,12 +314,18 @@ export class GeneticSearch implements SearchStrategy {
       bestScore: population[0]?.score ?? -Infinity,
       stagnation: 0,
       injections: 0,
+      finalGeneration: 0,
+      exitReason: "complete",
     };
 
     await runEvolutionLoop(
       { evolveParams, generations, token: this.token, onProgress: this.onProgress },
       state,
     );
+
+    // Expose exit metadata
+    this.exitReason = state.exitReason;
+    this.finalGeneration = state.finalGeneration;
 
     return extractResults(state.population, options.maxResults);
   }

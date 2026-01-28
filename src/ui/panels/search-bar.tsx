@@ -17,7 +17,7 @@ import {
 import { useSearchStore, type Algorithm, type GAParams } from "@/stores/search-store";
 import type { EnhancementMode } from "@/models/types";
 import type { ProgressState } from "@/ui/hooks/use-search-worker";
-import { WarningMessage, ProgressDisplay, ErrorDisplay } from "./search-feedback";
+import { WarningMessage, ProgressDisplay, ErrorDisplay, ResultsSummary } from "./search-feedback";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -52,6 +52,8 @@ export function SearchBar({
   const setEnhancementMode = useSearchStore((s) => s.setEnhancementMode);
   const setGAParams = useSearchStore((s) => s.setGAParams);
   const error = useSearchStore((s) => s.error);
+  const results = useSearchStore((s) => s.results);
+  const exitMetadata = useSearchStore((s) => s.exitMetadata);
 
   const isRunning = status === "running";
   const canStart = status === "idle" || status === "complete" || status === "error";
@@ -76,6 +78,7 @@ export function SearchBar({
       {/* Feedback area */}
       {warning != null && <WarningMessage message={warning} />}
       {isRunning && <ProgressDisplay progress={progress} />}
+      {status === "complete" && <ResultsSummary results={results} exitMetadata={exitMetadata} />}
       {status === "error" && error != null && <ErrorDisplay message={error} />}
     </div>
   );

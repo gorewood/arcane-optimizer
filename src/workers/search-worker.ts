@@ -36,6 +36,13 @@ export type WorkerRequest =
     }
   | { readonly type: "stop" };
 
+/** Exit reason metadata for search completion */
+export interface ExitMetadata {
+  readonly reason: "complete" | "stagnation" | "cancelled" | "timeout";
+  readonly finalGeneration?: number;
+  readonly totalGenerations?: number;
+}
+
 /** Messages this worker sends back to the main thread. */
 export type WorkerResponse =
   | {
@@ -47,6 +54,7 @@ export type WorkerResponse =
   | {
       readonly type: "complete";
       readonly results: readonly SearchResult[];
+      readonly exitMetadata: ExitMetadata | undefined;
     }
   | {
       readonly type: "error";
@@ -81,7 +89,16 @@ function handleStart(msg: WorkerRequest & { type: "start" }): void {
   activeSearch
     .search(msg.gearPool, msg.constraints, msg.fitness, msg.options)
     .then((results) => {
-      const response: WorkerResponse = { type: "complete", results };
+      // Include exit metadata for genetic search
+      let exitMetadata: ExitMetadata | undefined;
+      if (activeSearch instanceof GeneticSearch) {
+        exitMetadata = {
+          reason: activeSearch.exitReason,
+          finalGeneration: activeSearch.finalGeneration,
+          totalGenerations: activeSearch.totalGenerations,
+        };
+      }
+      const response: WorkerResponse = { type: "complete", results, exitMetadata };
       postMessage(response);
       activeSearch = null;
     })

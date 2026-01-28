@@ -19,6 +19,13 @@ export interface GAParams {
   mutationRate: number;
 }
 
+/** Exit metadata from search completion */
+export interface ExitMetadata {
+  reason: "complete" | "stagnation" | "cancelled" | "timeout";
+  finalGeneration?: number;
+  totalGenerations?: number;
+}
+
 export interface SearchState {
   status: SearchStatus;
   progress: number;
@@ -27,12 +34,13 @@ export interface SearchState {
   algorithm: Algorithm;
   enhancementMode: EnhancementMode;
   gaParams: GAParams;
+  exitMetadata: ExitMetadata | null;
 }
 
 export interface SearchActions {
   startSearch: () => void;
   setProgress: (progress: number) => void;
-  setResults: (results: readonly SearchResult[]) => void;
+  setResults: (results: readonly SearchResult[], exitMetadata?: ExitMetadata) => void;
   setError: (error: string) => void;
   reset: () => void;
   setAlgorithm: (algorithm: Algorithm) => void;
@@ -58,6 +66,7 @@ const INITIAL_STATE: SearchState = {
   algorithm: "exhaustive",
   enhancementMode: "budget-aware",
   gaParams: DEFAULT_GA_PARAMS,
+  exitMetadata: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -75,8 +84,8 @@ export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
     set({ progress });
   },
 
-  setResults: (results: readonly SearchResult[]): void => {
-    set({ status: "complete", results });
+  setResults: (results: readonly SearchResult[], exitMetadata?: ExitMetadata): void => {
+    set({ status: "complete", results, exitMetadata: exitMetadata ?? null });
   },
 
   setError: (error: string): void => {

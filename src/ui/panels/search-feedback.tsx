@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import type { SearchResult } from "@/models/types";
+import type { ExitMetadata } from "@/stores/search-store";
 
 // ---------------------------------------------------------------------------
 // ProgressState (shared with SearchPanel)
@@ -111,14 +112,23 @@ export function ErrorDisplay({ message }: { readonly message: string }): React.J
 
 export function ResultsSummary({
   results,
+  exitMetadata,
 }: {
   readonly results: readonly SearchResult[];
+  readonly exitMetadata: ExitMetadata | null;
 }): React.JSX.Element {
   const bestScore = results.length > 0 ? results[0]?.score ?? 0 : 0;
 
   return (
     <Card className="border-stat-positive/40 bg-stat-positive/5 p-4 space-y-1">
-      <p className="text-sm font-semibold text-stat-positive">Search Complete</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-stat-positive">Search Complete</p>
+        {exitMetadata?.reason === "stagnation" && exitMetadata.finalGeneration != null && (
+          <span className="text-xs text-text-muted">
+            Converged early (gen {String(exitMetadata.finalGeneration)}/{String(exitMetadata.totalGenerations ?? "?")})
+          </span>
+        )}
+      </div>
       <p className="text-sm text-text-secondary">
         Found{" "}
         <span className="font-stat text-text-primary">{String(results.length)}</span>

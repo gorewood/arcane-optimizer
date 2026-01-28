@@ -18,7 +18,7 @@ import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore, type GAParams } from "@/stores/search-store";
-import type { WorkerRequest, WorkerResponse } from "@/workers/search-worker";
+import type { ExitMetadata, WorkerRequest, WorkerResponse } from "@/workers/search-worker";
 
 // ---------------------------------------------------------------------------
 // Progress state type
@@ -95,7 +95,7 @@ function buildFilteredGearPool(ids: EnabledIds): GearPool {
 
 interface WorkerCallbacks {
   readonly onProgress: (checked: number, total: number, bestScore: number) => void;
-  readonly onComplete: (results: readonly SearchResult[]) => void;
+  readonly onComplete: (results: readonly SearchResult[], exitMetadata: ExitMetadata | undefined) => void;
   readonly onError: (message: string) => void;
 }
 
@@ -109,7 +109,7 @@ function createSearchWorker(cb: WorkerCallbacks): Worker {
     const msg = event.data;
     switch (msg.type) {
       case "progress": cb.onProgress(msg.checked, msg.total, msg.bestScore); break;
-      case "complete": cb.onComplete(msg.results); worker.terminate(); break;
+      case "complete": cb.onComplete(msg.results, msg.exitMetadata); worker.terminate(); break;
       case "error": cb.onError(msg.message); worker.terminate(); break;
     }
   };
@@ -205,7 +205,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
       { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm, gaParams },
       {
         onProgress: (c, t, b) => { setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b })); },
-        onComplete: (r) => { setResults(r); workerRef.current = null; },
+        onComplete: (r, meta) => { setResults(r, meta); workerRef.current = null; },
         onError: (m) => { setError(m); workerRef.current = null; },
       },
     );
