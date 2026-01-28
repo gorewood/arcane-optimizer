@@ -14,14 +14,12 @@ import type {
 import {
   buildIndexedPool,
   evaluate,
-  extractResults,
   mutate,
   randomChromosome,
-  repair,
-  tournamentSelect,
   uniformCrossover,
 } from "./genetic-chromosome";
 import type { EvaluatedIndividual, IndexedPool } from "./genetic-chromosome";
+import { repair } from "./genetic-repair";
 
 // ---------------------------------------------------------------------------
 // Cancellation token
@@ -29,6 +27,62 @@ import type { EvaluatedIndividual, IndexedPool } from "./genetic-chromosome";
 
 interface CancellationToken {
   cancelled: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Random helpers
+// ---------------------------------------------------------------------------
+
+function randInt(max: number): number {
+  return Math.floor(Math.random() * max);
+}
+
+// ---------------------------------------------------------------------------
+// Selection: tournament (k=3)
+// ---------------------------------------------------------------------------
+
+function tournamentSelect(
+  pop: readonly EvaluatedIndividual[],
+): EvaluatedIndividual {
+  let best = pop[randInt(pop.length)];
+  for (let i = 1; i < 3; i++) {
+    const candidate = pop[randInt(pop.length)];
+    if (candidate != null && (best == null || candidate.score > best.score)) {
+      best = candidate;
+    }
+  }
+  const fallback = pop[0];
+  if (best != null) return best;
+  if (fallback != null) return fallback;
+  throw new Error("tournamentSelect called with empty population");
+}
+
+// ---------------------------------------------------------------------------
+// Extract results from population
+// ---------------------------------------------------------------------------
+
+export function extractResults(
+  population: readonly EvaluatedIndividual[],
+  maxResults: number,
+): readonly SearchResult[] {
+  const sorted = [...population].sort((a, b) => b.score - a.score);
+  const seen = new Set<string>();
+  const results: SearchResult[] = [];
+
+  for (const ind of sorted) {
+    const key = ind.loadout.slots.map((s) => s.piece.id).join(",");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    results.push({
+      loadout: ind.loadout,
+      score: ind.score,
+      stats: ind.stats,
+      atlanteanChoices: ind.atlanteanMap,
+    });
+    if (results.length >= maxResults) break;
+  }
+
+  return results;
 }
 
 // ---------------------------------------------------------------------------
@@ -48,7 +102,7 @@ function initPopulation(
   while (pop.length < size && attempts < maxAttempts) {
     attempts++;
     const chromo = randomChromosome(pool);
-    repair(chromo, pool);
+    repair(chromo, pool, constraints.maxUnwardedInsanity);
     const individual = evaluate(chromo, pool, constraints, fitness);
     if (individual != null) pop.push(individual);
   }
@@ -106,8 +160,8 @@ function produceOffspring(
   if (Math.random() < mutationRate) mutate(c1, pool);
   if (Math.random() < mutationRate) mutate(c2, pool);
 
-  repair(c1, pool);
-  repair(c2, pool);
+  repair(c1, pool, constraints.maxUnwardedInsanity);
+  repair(c2, pool, constraints.maxUnwardedInsanity);
 
   const eval1 = evaluate(c1, pool, constraints, fitness);
   const eval2 = evaluate(c2, pool, constraints, fitness);

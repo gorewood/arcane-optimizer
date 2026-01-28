@@ -1,6 +1,6 @@
 /**
  * GA chromosome representation, decoding, random generation,
- * crossover, mutation, and repair.
+ * crossover, and mutation.
  */
 
 import type {
@@ -12,7 +12,6 @@ import type {
   HardConstraints,
   Loadout,
   Modifier,
-  SearchResult,
   SoftConstraint,
   StatName,
   Stats,
@@ -20,6 +19,7 @@ import type {
 
 import { validateLoadout } from "./constraints";
 import { computeFitness } from "./fitness";
+import { getPieceForSlot } from "./genetic-repair";
 import { computeLoadoutStats, getValidAtlanteanChoices } from "./stats";
 
 // ---------------------------------------------------------------------------
@@ -90,16 +90,6 @@ function randInt(max: number): number {
 // ---------------------------------------------------------------------------
 // Set-piece modifier constraint helpers
 // ---------------------------------------------------------------------------
-
-function getPieceForSlot(
-  chromo: Chromosome,
-  slotIdx: number,
-  pool: IndexedPool,
-): EquipmentPiece | undefined {
-  if (slotIdx === 0) return pool.chestplates[chromo.chestIdx];
-  if (slotIdx === 1) return pool.leggings[chromo.legsIdx];
-  return pool.accessories[chromo.accIndices[slotIdx - 2] ?? 0];
-}
 
 function pickRandomModIdx(
   piece: EquipmentPiece | undefined,
@@ -317,27 +307,6 @@ export function randomChromosome(pool: IndexedPool): Chromosome {
 }
 
 // ---------------------------------------------------------------------------
-// Selection: tournament (k=3)
-// ---------------------------------------------------------------------------
-
-export function tournamentSelect(
-  pop: readonly EvaluatedIndividual[],
-): EvaluatedIndividual {
-  let best = pop[randInt(pop.length)];
-  for (let i = 1; i < 3; i++) {
-    const candidate = pop[randInt(pop.length)];
-    if (candidate != null && (best == null || candidate.score > best.score)) {
-      best = candidate;
-    }
-  }
-  // Fallback (should never happen with non-empty pop)
-  const fallback = pop[0];
-  if (best != null) return best;
-  if (fallback != null) return fallback;
-  throw new Error("tournamentSelect called with empty population");
-}
-
-// ---------------------------------------------------------------------------
 // Crossover: uniform
 // ---------------------------------------------------------------------------
 
@@ -415,84 +384,3 @@ function mutateSlotGene(chromo: Chromosome, gene: number, pool: IndexedPool): vo
   }
 }
 
-// ---------------------------------------------------------------------------
-// Repair
-// ---------------------------------------------------------------------------
-
-function clamp(v: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, v));
-}
-
-export function repair(chromo: Chromosome, pool: IndexedPool): void {
-  chromo.chestIdx = clamp(chromo.chestIdx, 0, pool.chestplates.length - 1);
-  chromo.legsIdx = clamp(chromo.legsIdx, 0, pool.leggings.length - 1);
-  repairAccessories(chromo, pool);
-  for (let i = 0; i < 5; i++) {
-    repairSlotIndices(chromo, i, pool);
-  }
-}
-
-function repairAccessories(chromo: Chromosome, pool: IndexedPool): void {
-  for (let i = 0; i < 3; i++) {
-    chromo.accIndices[i] = clamp(chromo.accIndices[i] ?? 0, 0, pool.accessories.length - 1);
-  }
-  const accSet = new Set<number>();
-  for (let i = 0; i < 3; i++) {
-    let idx = chromo.accIndices[i] ?? 0;
-    while (accSet.has(idx)) { idx = (idx + 1) % pool.accessories.length; }
-    chromo.accIndices[i] = idx;
-    accSet.add(idx);
-  }
-}
-
-function repairSetModifier(chromo: Chromosome, i: number, pool: IndexedPool): void {
-  const piece = getPieceForSlot(chromo, i, pool);
-  if (piece?.atlanteanOnly === false) return;
-  const modIdx = chromo.modIndices[i] ?? -1;
-  if (modIdx < 0) return;
-  const mod = pool.modifiers[modIdx];
-  if (mod != null && mod.atlanteanBehavior == null) {
-    chromo.modIndices[i] = pool.setModifierIndices[0] ?? -1;
-  }
-}
-
-function repairSlotIndices(chromo: Chromosome, i: number, pool: IndexedPool): void {
-  const enchPool = getEnchantPool(i, pool);
-  chromo.enchantIndices[i] = clamp(chromo.enchantIndices[i] ?? -1, -1, enchPool.length - 1);
-  chromo.modIndices[i] = clamp(chromo.modIndices[i] ?? -1, -1, pool.modifiers.length - 1);
-  repairSetModifier(chromo, i, pool);
-  const slotGems = chromo.gemIndices[i];
-  if (slotGems != null) {
-    for (let s = 0; s < slotGems.length; s++) {
-      slotGems[s] = clamp(slotGems[s] ?? -1, -1, pool.gems.length - 1);
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Extract results from population
-// ---------------------------------------------------------------------------
-
-export function extractResults(
-  population: readonly EvaluatedIndividual[],
-  maxResults: number,
-): readonly SearchResult[] {
-  const sorted = [...population].sort((a, b) => b.score - a.score);
-  const seen = new Set<string>();
-  const results: SearchResult[] = [];
-
-  for (const ind of sorted) {
-    const key = ind.loadout.slots.map((s) => s.piece.id).join(",");
-    if (seen.has(key)) continue;
-    seen.add(key);
-    results.push({
-      loadout: ind.loadout,
-      score: ind.score,
-      stats: ind.stats,
-      atlanteanChoices: ind.atlanteanMap,
-    });
-    if (results.length >= maxResults) break;
-  }
-
-  return results;
-}
