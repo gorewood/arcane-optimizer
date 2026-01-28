@@ -82,6 +82,10 @@ function createSetStorage(): ReturnType<typeof createJSONStorage<GearPoolState>>
   });
 }
 
+/**
+ * Merge persisted IDs with current, adding any new items from game data.
+ * This ensures new equipment added to JSON is automatically enabled.
+ */
 function mergePersistedState(
   persisted: unknown,
   current: GearPoolState & GearPoolActions,
@@ -90,20 +94,35 @@ function mergePersistedState(
     return current;
   }
   const raw = persisted as Partial<GearPoolSerialized>;
+  const allEquipmentIds = new Set(loadEquipment().map((e) => e.id));
+  const allEnchantmentIds = new Set(loadEnchantments().map((e) => e.id));
+  const allModifierIds = new Set(loadModifiers().map((m) => m.id));
+  const allGemIds = new Set(loadGems().map((g) => g.id));
+
+  // Merge persisted IDs, adding any new items not in persisted set
+  const mergeIds = (
+    persistedIds: string[] | undefined,
+    allIds: Set<string>,
+  ): Set<string> => {
+    if (!Array.isArray(persistedIds)) return allIds;
+    const persisted = new Set<string>(persistedIds);
+    // Add any new IDs that weren't in the persisted set
+    for (const id of allIds) {
+      if (!persisted.has(id)) persisted.add(id);
+    }
+    // Remove IDs that no longer exist
+    for (const id of persisted) {
+      if (!allIds.has(id)) persisted.delete(id);
+    }
+    return persisted;
+  };
+
   return {
     ...current,
-    enabledEquipmentIds: Array.isArray(raw.enabledEquipmentIds)
-      ? new Set<string>(raw.enabledEquipmentIds)
-      : current.enabledEquipmentIds,
-    enabledEnchantmentIds: Array.isArray(raw.enabledEnchantmentIds)
-      ? new Set<string>(raw.enabledEnchantmentIds)
-      : current.enabledEnchantmentIds,
-    enabledModifierIds: Array.isArray(raw.enabledModifierIds)
-      ? new Set<string>(raw.enabledModifierIds)
-      : current.enabledModifierIds,
-    enabledGemIds: Array.isArray(raw.enabledGemIds)
-      ? new Set<string>(raw.enabledGemIds)
-      : current.enabledGemIds,
+    enabledEquipmentIds: mergeIds(raw.enabledEquipmentIds, allEquipmentIds),
+    enabledEnchantmentIds: mergeIds(raw.enabledEnchantmentIds, allEnchantmentIds),
+    enabledModifierIds: mergeIds(raw.enabledModifierIds, allModifierIds),
+    enabledGemIds: mergeIds(raw.enabledGemIds, allGemIds),
   };
 }
 

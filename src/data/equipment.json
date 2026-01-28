@@ -540,12 +540,11 @@
     "atlanteanOnly": false
   },
   {
-    "id": "glass-arcsphere",
-    "name": "Glass Arcsphere",
+    "id": "arcsphere",
+    "name": "Arcsphere",
     "slot": "accessory",
     "baseStats": {
-      "power": 33,
-      "defense": -39
+      "power": 9
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -554,26 +553,96 @@
     ],
     "atlanteanOnly": false,
     "variants": {
-      "acid": { "power": 9, "pierce": 42 },
-      "ash": { "power": 12, "size": 31 },
-      "crystal": { "power": 9, "defense": 77, "haste": 20 },
-      "earth": { "power": 9, "defense": 115, "size": 10 },
-      "explosion": { "power": 9, "size": 42 },
-      "fire": { "power": 23 },
-      "glass": { "power": 26, "defense": -38 },
-      "ice": { "power": 9, "defense": 38, "resistance": 31 },
-      "light": { "power": 9, "size": -10, "dexterity": 51 },
-      "lightning": { "power": 9, "range": 10, "dexterity": 31 },
-      "magma": { "power": 16, "size": 20 },
-      "metal": { "power": 9, "defense": 154, "range": -10, "resistance": 10 },
-      "plasma": { "power": 19, "haste": 10 },
-      "poison": { "power": 19, "pierce": 10 },
-      "sand": { "power": 9, "haste": 42 },
-      "shadow": { "power": 16, "dexterity": 20 },
-      "snow": { "power": 9, "size": 31, "dexterity": 10 },
-      "water": { "power": 9, "size": 31, "haste": 10 },
-      "wind": { "power": 9, "range": 10, "size": 10, "dexterity": 20 },
-      "wood": { "power": 12, "defense": 115 }
+      "acid": {
+        "power": 0,
+        "pierce": 42
+      },
+      "ash": {
+        "power": 3,
+        "size": 31
+      },
+      "crystal": {
+        "power": 0,
+        "defense": 77,
+        "haste": 20
+      },
+      "earth": {
+        "power": 0,
+        "defense": 115,
+        "size": 10
+      },
+      "explosion": {
+        "power": 0,
+        "size": 42
+      },
+      "fire": {
+        "power": 14
+      },
+      "glass": {
+        "power": 24,
+        "defense": -39
+      },
+      "ice": {
+        "power": 0,
+        "defense": 38,
+        "resistance": 31
+      },
+      "light": {
+        "power": 0,
+        "size": -10,
+        "dexterity": 51
+      },
+      "lightning": {
+        "power": 0,
+        "range": 10,
+        "dexterity": 31
+      },
+      "magma": {
+        "power": 7,
+        "size": 20
+      },
+      "metal": {
+        "power": 0,
+        "defense": 154,
+        "range": -10,
+        "resistance": 10
+      },
+      "plasma": {
+        "power": 10,
+        "haste": 10
+      },
+      "poison": {
+        "power": 10,
+        "pierce": 10
+      },
+      "sand": {
+        "power": 0,
+        "haste": 42
+      },
+      "shadow": {
+        "power": 7,
+        "dexterity": 20
+      },
+      "snow": {
+        "power": 0,
+        "size": 31,
+        "dexterity": 10
+      },
+      "water": {
+        "power": 0,
+        "size": 31,
+        "haste": 10
+      },
+      "wind": {
+        "power": 0,
+        "range": 10,
+        "size": 10,
+        "dexterity": 20
+      },
+      "wood": {
+        "power": 3,
+        "defense": 115
+      }
     }
   }
 ]

@@ -5,7 +5,7 @@
  * and a remove button. Compact game-UI feel.
  */
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { ConstraintType, SoftConstraint, StatName } from "@/models/types";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -125,8 +125,8 @@ export function ConstraintRow({ constraint, index, onUpdate, onRemove }: Constra
       </div>
       {/* Row 2 on narrow, continues row 1 on wide: value, cap, weight, remove */}
       <div className="flex flex-1 items-center gap-2 min-w-[16rem]">
-        <div className="w-[4.5rem]">{showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} max={statMax} />}</div>
-        <div className="w-24">{showHardCap && <CapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "to" : "cap"} max={statMax} />}</div>
+        <div className="w-[4.5rem]">{showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} max={statMax} resetKey={`${constraint.stat}-${constraint.type}`} />}</div>
+        <div className="w-24">{showHardCap && <CapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "to" : "cap"} max={statMax} resetKey={`${constraint.stat}-${constraint.type}`} />}</div>
         <div className="flex-1" />
         <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
         <RemoveButton index={index} onRemove={onRemove} />
@@ -261,35 +261,51 @@ function TypeSelect({
 }
 
 // ---------------------------------------------------------------------------
-// ValueInput — clean number input without label
+// ValueInput — uses local state during editing, commits on blur/Enter
 // ---------------------------------------------------------------------------
 
 function ValueInput({
   value,
   onChange,
   max,
+  resetKey,
 }: {
   readonly value: number;
   readonly onChange: (value: number) => void;
   readonly max?: number | undefined;
+  readonly resetKey?: string | undefined;
 }): React.JSX.Element {
+  // Use resetKey to force re-initialization when external value changes
+  const [localValue, setLocalValue] = useState(String(value));
+  const [lastResetKey, setLastResetKey] = useState(resetKey);
+
+  // Reset local state when resetKey changes (e.g., preset load or stat change)
+  if (resetKey !== lastResetKey) {
+    setLocalValue(String(value));
+    setLastResetKey(resetKey);
+  }
+
+  const commit = useCallback(() => {
+    const parsed = Number(localValue);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      setLocalValue(String(value)); // Reset to last valid
+      return;
+    }
+    const normalized = Math.max(0, Math.round(parsed));
+    const clamped = max != null ? Math.min(normalized, max) : normalized;
+    setLocalValue(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  }, [localValue, value, max, onChange]);
+
   return (
     <input
       type="number"
-      value={value}
+      value={localValue}
       min={0}
       max={max}
-      onChange={(e) => {
-        const parsed = Number(e.target.value);
-        if (!Number.isNaN(parsed) && parsed >= 0) {
-          onChange(max != null ? Math.min(parsed, max) : parsed);
-        }
-      }}
-      onBlur={() => {
-        const normalized = Math.max(0, Math.round(value));
-        const clamped = max != null ? Math.min(normalized, max) : normalized;
-        if (clamped !== value) onChange(clamped);
-      }}
+      onChange={(e) => { setLocalValue(e.target.value); }}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
       className="w-full rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold"
       title={max != null ? `Value (max: ${String(max)})` : "Target value"}
     />
@@ -328,7 +344,7 @@ function WeightControl({
 }
 
 // ---------------------------------------------------------------------------
-// CapInput — labeled cap/max input
+// CapInput — uses local state during editing, commits on blur/Enter
 // ---------------------------------------------------------------------------
 
 function CapInput({
@@ -336,35 +352,51 @@ function CapInput({
   onChange,
   label,
   max,
+  resetKey,
 }: {
   readonly value: number | undefined;
   readonly onChange: (value: number | undefined) => void;
   readonly label: string;
   readonly max?: number | undefined;
+  readonly resetKey?: string | undefined;
 }): React.JSX.Element {
+  const [localValue, setLocalValue] = useState(value != null ? String(value) : "");
+  const [lastResetKey, setLastResetKey] = useState(resetKey);
+
+  // Reset local state when resetKey changes
+  if (resetKey !== lastResetKey) {
+    setLocalValue(value != null ? String(value) : "");
+    setLastResetKey(resetKey);
+  }
+
+  const commit = useCallback(() => {
+    if (localValue === "") {
+      if (value !== undefined) onChange(undefined);
+      return;
+    }
+    const parsed = Number(localValue);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      setLocalValue(value != null ? String(value) : ""); // Reset to last valid
+      return;
+    }
+    const normalized = Math.max(0, Math.round(parsed));
+    const clamped = max != null ? Math.min(normalized, max) : normalized;
+    setLocalValue(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  }, [localValue, value, max, onChange]);
+
   return (
     <div className="flex items-center gap-1">
       <span className="text-[10px] text-text-muted shrink-0">{label}</span>
       <input
         type="number"
-        value={value ?? ""}
+        value={localValue}
         placeholder="—"
         min={0}
         max={max}
-        onChange={(e) => {
-          const raw = e.target.value;
-          if (raw === "") { onChange(undefined); return; }
-          const parsed = Number(raw);
-          if (!Number.isNaN(parsed) && parsed >= 0) {
-            onChange(max != null ? Math.min(parsed, max) : parsed);
-          }
-        }}
-        onBlur={() => {
-          if (value == null) return;
-          const normalized = Math.max(0, Math.round(value));
-          const clamped = max != null ? Math.min(normalized, max) : normalized;
-          if (clamped !== value) onChange(clamped);
-        }}
+        onChange={(e) => { setLocalValue(e.target.value); }}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === "Enter") commit(); }}
         className="w-12 rounded-md border border-border-default bg-bg-elevated px-1 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold placeholder:text-text-muted"
         title={max != null ? `${label} (max: ${String(max)})` : `${label} (optional)`}
       />
