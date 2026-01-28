@@ -15,20 +15,18 @@ import { BuildCard } from "./build-card";
 
 export function ResultsPanel(): React.JSX.Element {
   const results = useSearchStore((s) => s.results);
-  const previewResults = useSearchStore((s) => s.previewResults);
   const status = useSearchStore((s) => s.status);
   const constraints = useFitnessStore((s) => s.constraints);
 
   const isRunning = status === "running";
-  const displayResults = isRunning ? previewResults : results;
 
   return (
     <div className="space-y-4 p-6">
       <h2 className="text-lg font-bold text-text-primary">
         Search Results
-        {displayResults.length > 0 && (
+        {results.length > 0 && (
           <span className="ml-2 text-sm text-text-muted font-normal">
-            ({String(displayResults.length)} builds{isRunning ? " so far" : ""})
+            ({String(results.length)} builds{isRunning ? " so far" : ""})
           </span>
         )}
       </h2>
@@ -36,10 +34,10 @@ export function ResultsPanel(): React.JSX.Element {
       {isRunning && <RunningIndicator />}
       {status === "error" && <ErrorMessage />}
 
-      {displayResults.length === 0 && !isRunning ? (
+      {results.length === 0 && !isRunning ? (
         <EmptyState />
       ) : (
-        <ResultsList results={displayResults} constraints={constraints} disabled={isRunning} />
+        <ResultsList results={results} constraints={constraints} disabled={isRunning} />
       )}
     </div>
   );

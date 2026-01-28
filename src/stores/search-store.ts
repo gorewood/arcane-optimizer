@@ -89,7 +89,8 @@ export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
   },
 
   setPreviewResults: (previewResults: readonly SearchResult[]): void => {
-    set({ previewResults });
+    // Update both previewResults and results so UI shows live updates
+    set({ previewResults, results: previewResults });
   },
 
   setResults: (results: readonly SearchResult[], exitMetadata?: ExitMetadata): void => {
