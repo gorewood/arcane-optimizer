@@ -76,7 +76,7 @@ export function ConstraintRow({
   const showHardCap = HARDCAP_TYPES.has(constraint.type);
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
       <StatSelect
         value={constraint.stat}
         onChange={(stat) => {
@@ -194,7 +194,7 @@ function StatSelect({
         if (isStatName(v)) onChange(v);
       }}
     >
-      <SelectTrigger size="sm" className="w-28 text-xs">
+      <SelectTrigger size="sm" className="w-32 text-xs">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -280,7 +280,7 @@ function WeightControl({
   readonly onChange: (weight: number) => void;
 }): React.JSX.Element {
   return (
-    <div className="flex items-center gap-1 min-w-[5.5rem]">
+    <div className="flex items-center gap-1.5 min-w-[8rem]">
       <span className="text-[10px] text-text-muted shrink-0">W:</span>
       <Slider
         min={1}
