@@ -33,6 +33,22 @@
   --color-stat-warning: #fbbf24;
   --color-stat-negative: #f87171;
 
+  /* Rarity tier colors */
+  --color-rarity-common: #9ca3af;
+  --color-rarity-uncommon: #4ade80;
+  --color-rarity-rare: #60a5fa;
+  --color-rarity-legendary: #a78bfa;
+  --color-rarity-mystic: #f472b6;
+
+  /* Glow effects */
+  --glow-gold: 0 0 12px rgba(201, 149, 42, 0.4);
+  --glow-ember: 0 0 12px rgba(224, 115, 64, 0.4);
+
+  /* Transition timing */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
   --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
@@ -126,5 +142,67 @@
   }
   #root {
     min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  /* Stat value coloring */
+  .text-stat-positive {
+    color: var(--color-stat-positive);
+  }
+  .text-stat-warning {
+    color: var(--color-stat-warning);
+  }
+  .text-stat-negative {
+    color: var(--color-stat-negative);
+  }
+
+  /* Glow effects */
+  .glow-gold {
+    box-shadow: var(--glow-gold);
+  }
+  .glow-ember {
+    box-shadow: var(--glow-ember);
+  }
+
+  /* Tabular stat display */
+  .font-stat {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Game card surface */
+  .card-game {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Stat progress bar track */
+  .stat-bar {
+    height: 6px;
+    background: var(--color-bg-elevated);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  /* Stat progress bar fill */
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width var(--duration-normal) ease;
+  }
+
+  /* Rarity badge pill */
+  .badge-rarity {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 }
