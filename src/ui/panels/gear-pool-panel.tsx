@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   loadEquipment,
   loadEnchantments,
@@ -37,21 +37,33 @@ export function GearPoolPanel(): React.JSX.Element {
   const disableAll = useGearPoolStore((s) => s.disableAll);
 
   return (
-    <div className="space-y-4 p-4 max-w-4xl">
+    <div className="space-y-4 p-4">
       <PanelHeader
         filter={filter}
         onFilterChange={setFilter}
         onEnableAll={enableAll}
         onDisableAll={disableAll}
       />
-      <Separator className="bg-border-subtle" />
-      <EquipmentSection equipment={equipment} filter={filter} />
-      <Separator className="bg-border-subtle" />
-      <EnchantmentSection enchantments={enchantments} filter={filter} />
-      <Separator className="bg-border-subtle" />
-      <ModifierSection modifiers={modifiers} filter={filter} />
-      <Separator className="bg-border-subtle" />
-      <GemSection gems={gems} filter={filter} />
+      <Tabs defaultValue="equipment">
+        <TabsList variant="line">
+          <TabsTrigger value="equipment">Equipment</TabsTrigger>
+          <TabsTrigger value="enchantments">Enchantments</TabsTrigger>
+          <TabsTrigger value="modifiers">Modifiers</TabsTrigger>
+          <TabsTrigger value="gems">Gems</TabsTrigger>
+        </TabsList>
+        <TabsContent value="equipment">
+          <EquipmentSection equipment={equipment} filter={filter} />
+        </TabsContent>
+        <TabsContent value="enchantments">
+          <EnchantmentSection enchantments={enchantments} filter={filter} />
+        </TabsContent>
+        <TabsContent value="modifiers">
+          <ModifierSection modifiers={modifiers} filter={filter} />
+        </TabsContent>
+        <TabsContent value="gems">
+          <GemSection gems={gems} filter={filter} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

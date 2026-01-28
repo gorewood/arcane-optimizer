@@ -70,8 +70,8 @@ interface GearPoolSerialized {
 // Custom storage adapter: Set <-> Array conversion
 // ---------------------------------------------------------------------------
 
-function createSetStorage(): ReturnType<typeof createJSONStorage<GearPoolState & GearPoolActions>> {
-  return createJSONStorage<GearPoolState & GearPoolActions>(() => localStorage, {
+function createSetStorage(): ReturnType<typeof createJSONStorage<GearPoolState>> {
+  return createJSONStorage<GearPoolState>(() => localStorage, {
     replacer: (_key: string, value: unknown): unknown => {
       if (value instanceof Set) {
         return [...value];
@@ -84,8 +84,8 @@ function createSetStorage(): ReturnType<typeof createJSONStorage<GearPoolState &
 
 function mergePersistedState(
   persisted: unknown,
-  current: GearPoolState & GearPoolActions,
-): GearPoolState & GearPoolActions {
+  current: GearPoolState,
+): GearPoolState {
   if (persisted == null || typeof persisted !== "object") {
     return current;
   }
@@ -179,8 +179,10 @@ export const useGearPoolStore = create<GearPoolState & GearPoolActions>()(
     }),
     {
       name: "ao-gear-pool",
+      version: 1,
       storage: createSetStorage(),
       merge: mergePersistedState,
+      migrate: () => buildAllEnabledState(),
     },
   ),
 );

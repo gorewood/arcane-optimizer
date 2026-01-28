@@ -242,7 +242,7 @@ export function SearchPanel(): React.JSX.Element {
   const canStart = status === "idle" || status === "complete" || status === "error";
 
   return (
-    <div className="space-y-4 p-6 max-w-4xl">
+    <div className="space-y-4 p-6">
       <h2 className="text-lg font-bold text-text-primary">Search Controls</h2>
 
       <MaxResultsSlider value={maxResults} onChange={setMaxResults} />

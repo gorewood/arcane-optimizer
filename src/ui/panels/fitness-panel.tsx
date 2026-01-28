@@ -37,7 +37,7 @@ export function FitnessPanel(): React.JSX.Element {
   const removeConstraint = useFitnessStore((s) => s.removeConstraint);
 
   return (
-    <div className="space-y-4 p-4 max-w-4xl">
+    <div className="space-y-4 p-4">
       <h2 className="text-lg font-bold text-text-primary">
         Fitness Configuration
       </h2>

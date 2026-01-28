@@ -31,26 +31,30 @@ export function AppShell(): React.JSX.Element {
   return (
     <div className="flex min-h-screen flex-col bg-bg-primary">
       {/* Header */}
-      <header className="border-b border-border-default bg-bg-secondary px-4 py-3">
-        <h1 className="text-lg font-bold text-accent-gold">
-          AO Armor Optimizer
-        </h1>
+      <header className="border-b border-border-default bg-bg-secondary">
+        <div className="mx-auto max-w-5xl px-4 py-3">
+          <h1 className="text-lg font-bold text-accent-gold">
+            AO Armor Optimizer
+          </h1>
+        </div>
       </header>
 
       {/* Tab bar */}
-      <nav className="flex flex-wrap gap-1 border-b border-border-default bg-bg-secondary px-4">
-        {TABS.map((tab) => (
-          <TabButton
-            key={tab.id}
-            tab={tab}
-            isActive={activePanel === tab.id}
-            onSelect={setActivePanel}
-          />
-        ))}
+      <nav className="border-b border-border-default bg-bg-secondary">
+        <div className="mx-auto max-w-5xl flex flex-wrap gap-1 px-4">
+          {TABS.map((tab) => (
+            <TabButton
+              key={tab.id}
+              tab={tab}
+              isActive={activePanel === tab.id}
+              onSelect={setActivePanel}
+            />
+          ))}
+        </div>
       </nav>
 
       {/* Panel content */}
-      <main className="flex-1">
+      <main className="mx-auto max-w-5xl w-full flex-1">
         <PanelContent panel={activePanel} />
       </main>
     </div>
