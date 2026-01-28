@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GearPoolPanel, FitnessPanel } from "@/ui/panels";
+import { GearPoolPanel, FitnessPanel, SearchPanel, ResultsPanel } from "@/ui/panels";
 import { useUIStore } from "@/stores/ui-store";
 import type { UIState } from "@/stores/ui-store";
 
@@ -89,15 +89,8 @@ function TabButton({
 }
 
 // ---------------------------------------------------------------------------
-// Panel placeholder
+// Panel content
 // ---------------------------------------------------------------------------
-
-const PANEL_TITLES: Record<UIState["activePanel"], string> = {
-  gear: "Gear Pool",
-  fitness: "Fitness",
-  search: "Search",
-  results: "Results",
-};
 
 function PanelContent({
   panel,
@@ -112,12 +105,9 @@ function PanelContent({
     return <FitnessPanel />;
   }
 
-  const title = PANEL_TITLES[panel];
+  if (panel === "search") {
+    return <SearchPanel />;
+  }
 
-  return (
-    <div className="p-6">
-      <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-      <p className="text-text-muted">Panel content coming soon...</p>
-    </div>
-  );
+  return <ResultsPanel />;
 }
