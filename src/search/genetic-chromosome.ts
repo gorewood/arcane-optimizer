@@ -20,7 +20,7 @@ import type {
 import { validateLoadout } from "./constraints";
 import { computeFitness } from "./fitness";
 import { getPieceForSlot } from "./genetic-repair";
-import { computeLoadoutStats, getValidAtlanteanChoices } from "./stats";
+import { computeLoadoutStats, getAtlanteanBonusStat } from "./stats";
 
 // ---------------------------------------------------------------------------
 // Chromosome
@@ -33,7 +33,6 @@ export interface Chromosome {
   enchantIndices: [number, number, number, number, number];
   modIndices: [number, number, number, number, number];
   gemIndices: number[][];
-  atlanteanChoices: number[];
 }
 
 export interface EvaluatedIndividual {
@@ -133,7 +132,7 @@ function resolveSlot(
   const gems = resolveGems(piece, modifier, chromo.gemIndices[slotIdx] ?? [], pool);
   const slot: EquippedSlot = { piece, enchantment, modifier, gems };
 
-  resolveAtlanteanSlot(slot, slotIdx, chromo, atlanteanMap);
+  resolveAtlanteanSlot(slot, slotIdx, atlanteanMap);
   return slot;
 }
 
@@ -158,16 +157,10 @@ function resolveGems(
 function resolveAtlanteanSlot(
   slot: EquippedSlot,
   slotIdx: number,
-  chromo: Chromosome,
   atlanteanMap: Map<number, StatName>,
 ): void {
-  if (slot.modifier?.atlanteanBehavior == null) return;
-  const validChoices = getValidAtlanteanChoices(slot);
-  const choiceIdx = chromo.atlanteanChoices[slotIdx] ?? -1;
-  if (choiceIdx >= 0 && choiceIdx < validChoices.length) {
-    const chosen = validChoices[choiceIdx];
-    if (chosen != null) atlanteanMap.set(slotIdx, chosen);
-  }
+  const chosen = getAtlanteanBonusStat(slot);
+  if (chosen != null) atlanteanMap.set(slotIdx, chosen);
 }
 
 function resolvePieces(
@@ -260,7 +253,7 @@ function randomSlotGenes(
   piece: EquipmentPiece | undefined,
   slotIdx: number,
   pool: IndexedPool,
-): { enchIdx: number; modIdx: number; gems: number[]; atlChoice: number } {
+): { enchIdx: number; modIdx: number; gems: number[] } {
   const enchPool = getEnchantPool(slotIdx, pool);
   const enchIdx = randInt(enchPool.length + 1) - 1;
   const modIdx = pickRandomModIdx(piece, pool);
@@ -272,8 +265,7 @@ function randomSlotGenes(
     gems.push(pool.gems.length > 0 ? randInt(pool.gems.length) : -1);
   }
 
-  const atlChoice = mod?.atlanteanBehavior != null ? randInt(6) : -1;
-  return { enchIdx, modIdx, gems, atlChoice };
+  return { enchIdx, modIdx, gems };
 }
 
 export function randomChromosome(pool: IndexedPool): Chromosome {
@@ -285,7 +277,6 @@ export function randomChromosome(pool: IndexedPool): Chromosome {
   const enchantIndices: [number, number, number, number, number] = [0, 0, 0, 0, 0];
   const modIndices: [number, number, number, number, number] = [0, 0, 0, 0, 0];
   const gemIndices: number[][] = [];
-  const atlanteanChoices: number[] = [];
 
   const pieces = [
     pool.chestplates[chestIdx],
@@ -300,10 +291,9 @@ export function randomChromosome(pool: IndexedPool): Chromosome {
     enchantIndices[i] = sg.enchIdx;
     modIndices[i] = sg.modIdx;
     gemIndices.push(sg.gems);
-    atlanteanChoices.push(sg.atlChoice);
   }
 
-  return { chestIdx, legsIdx, accIndices, enchantIndices, modIndices, gemIndices, atlanteanChoices };
+  return { chestIdx, legsIdx, accIndices, enchantIndices, modIndices, gemIndices };
 }
 
 // ---------------------------------------------------------------------------
@@ -360,7 +350,7 @@ function swapSlotGenes(
 // ---------------------------------------------------------------------------
 
 export function mutate(chromo: Chromosome, pool: IndexedPool): void {
-  const gene = randInt(7);
+  const gene = randInt(6);
   if (gene === 0) { chromo.chestIdx = randInt(pool.chestplates.length); return; }
   if (gene === 1) { chromo.legsIdx = randInt(pool.leggings.length); return; }
   if (gene === 2) { chromo.accIndices[randInt(3)] = randInt(pool.accessories.length); return; }
@@ -374,12 +364,10 @@ function mutateSlotGene(chromo: Chromosome, gene: number, pool: IndexedPool): vo
   } else if (gene === 4) {
     const piece = getPieceForSlot(chromo, slot, pool);
     chromo.modIndices[slot] = pickRandomModIdx(piece, pool);
-  } else if (gene === 5) {
+  } else {
     const slotGems = chromo.gemIndices[slot];
     if (slotGems != null && slotGems.length > 0) {
       slotGems[randInt(slotGems.length)] = pool.gems.length > 0 ? randInt(pool.gems.length) : -1;
     }
-  } else {
-    chromo.atlanteanChoices[slot] = randInt(7) - 1;
   }
 }

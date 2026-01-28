@@ -24,7 +24,7 @@ import { computeFitness } from "./fitness";
 import {
   ATLANTEAN_BONUS_VALUES,
   emptyStats,
-  getValidAtlanteanChoices,
+  getAtlanteanBonusStat,
   STAT_NAMES,
   sumStats,
 } from "./stats";
@@ -181,36 +181,6 @@ function computeLoadoutStatsWithSlot(
 }
 
 // ---------------------------------------------------------------------------
-// Best Atlantean choice for a slot
-// ---------------------------------------------------------------------------
-
-function pickBestAtlanteanChoice(
-  slot: EquippedSlot,
-  otherSlotStats: Stats,
-  fitness: readonly SoftConstraint[],
-): StatName | null {
-  const choices = getValidAtlanteanChoices(slot);
-  if (choices.length === 0) return null;
-
-  let bestChoice: StatName | null = null;
-  let bestScore = computeFitness(
-    computeLoadoutStatsWithSlot(otherSlotStats, slot, null),
-    fitness,
-  );
-
-  for (const choice of choices) {
-    const stats = computeLoadoutStatsWithSlot(otherSlotStats, slot, choice);
-    const score = computeFitness(stats, fitness);
-    if (score > bestScore) {
-      bestScore = score;
-      bestChoice = choice;
-    }
-  }
-
-  return bestChoice;
-}
-
-// ---------------------------------------------------------------------------
 // Score an enhanced slot candidate
 // ---------------------------------------------------------------------------
 
@@ -257,9 +227,7 @@ function evaluateEnchantModPair(
     gems,
   };
 
-  const atlanteanChoice = modifier?.atlanteanBehavior != null
-    ? pickBestAtlanteanChoice(fullSlot, ctx.otherSlotStats, ctx.fitness)
-    : null;
+  const atlanteanChoice = getAtlanteanBonusStat(fullSlot);
 
   const finalStats = computeLoadoutStatsWithSlot(
     ctx.otherSlotStats, fullSlot, atlanteanChoice,

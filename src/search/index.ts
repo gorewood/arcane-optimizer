@@ -14,6 +14,7 @@ export {
   ATLANTEAN_BONUS_VALUES,
   computeLoadoutStats,
   emptyStats,
+  getAtlanteanBonusStat,
   getValidAtlanteanChoices,
   resolveAtlanteanBonus,
   STAT_NAMES,

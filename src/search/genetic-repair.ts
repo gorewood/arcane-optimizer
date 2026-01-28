@@ -143,7 +143,6 @@ function repairInsanity(
   for (const entry of atlanteanSlots) {
     if (totalInsanity <= maxUnwarded) break;
     chromo.modIndices[entry.slot] = -1;
-    chromo.atlanteanChoices[entry.slot] = -1;
     totalInsanity -= entry.insanity;
   }
 }

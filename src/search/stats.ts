@@ -97,7 +97,8 @@ function hasNonZeroStat(block: Partial<Stats>, name: StatName): boolean {
  * Get which stats are valid Atlantean bonus targets for a slot.
  *
  * A stat is valid if it appears in the modifier's `possibleBonusStats`
- * AND is NOT present (non-zero) on the base item or any socketed gem.
+ * AND is NOT already applied (non-zero) by the base item, any socketed
+ * gem, or the enchantment.
  */
 export function getValidAtlanteanChoices(
   slot: EquippedSlot,
@@ -107,8 +108,23 @@ export function getValidAtlanteanChoices(
 
   return config.possibleBonusStats.filter((stat) => {
     if (hasNonZeroStat(slot.piece.baseStats, stat)) return false;
+    if (slot.enchantment != null && hasNonZeroStat(slot.enchantment.stats, stat)) return false;
     return !slot.gems.some((gem) => hasNonZeroStat(gem.stats, stat));
   });
+}
+
+/**
+ * Get the deterministic Atlantean bonus stat for a slot.
+ *
+ * The game assigns the first stat from the priority list that isn't
+ * already applied by the item's base stats, enchantment, or gems.
+ * Returns null if no valid stat is available.
+ */
+export function getAtlanteanBonusStat(
+  slot: EquippedSlot,
+): StatName | null {
+  const choices = getValidAtlanteanChoices(slot);
+  return choices[0] ?? null;
 }
 
 /**
