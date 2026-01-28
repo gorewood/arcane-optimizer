@@ -19,3 +19,9 @@ export {
   STAT_NAMES,
   sumStats,
 } from "./stats";
+
+export {
+  computeFitness,
+  FITNESS_PRESETS,
+  PRESET_NAMES,
+} from "./fitness";
