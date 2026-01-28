@@ -16,9 +16,8 @@ import type {
 } from "@/models/types";
 
 import { DEFAULT_HARD_CONSTRAINTS } from "./constraints";
-import { greedyAssignEnhancements, budgetAwareAssign } from "./enhance";
+import { budgetAwareAssign } from "./enhance";
 import { computeLoadoutStats } from "./stats";
-import { computeFitness } from "./fitness";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,129 +65,13 @@ const HARD_ENCHANT: Enchantment = {
   id: "hard", name: "Hard", tier: 1, applicableTo: ["armor"], stats: { defense: 50 },
 };
 
-const POWERFUL_ENCHANT: Enchantment = {
-  id: "powerful", name: "Powerful", tier: 2, applicableTo: ["armor", "accessory"], stats: { power: 14 },
-};
-
-const GILDED: Modifier = {
-  id: "gilded", name: "Gilded", stats: {}, grantsSocket: true,
-};
-
 const FROZEN: Modifier = {
   id: "frozen", name: "Frozen", stats: { defense: 76 },
-};
-
-const DEF_GEM: Gem = {
-  id: "def-gem", name: "Defense Gem", tier: 1, stats: { defense: 10 },
 };
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-
-describe("greedyAssignEnhancements", () => {
-  it("assigns enchantments to improve score", () => {
-    const loadout = makeLoadout([CHEST, LEGS, ACC1, ACC2, ACC3]);
-    const pool: GearPool = {
-      chestplates: [CHEST], leggings: [LEGS], accessories: [ACC1, ACC2, ACC3],
-      enchantments: [HARD_ENCHANT],
-      modifiers: [],
-      gems: [],
-    };
-    const fitness: SoftConstraint[] = [
-      { stat: "defense", type: "maximize", weight: 1 },
-    ];
-
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
-
-    // Should assign Hard enchantment to armor slots (chest + legs)
-    const enhancedStats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
-    expect(enhancedStats.defense).toBeGreaterThan(420); // base is 420
-  });
-
-  it("assigns modifiers to improve score", () => {
-    const loadout = makeLoadout([CHEST, LEGS, ACC1, ACC2, ACC3]);
-    const pool: GearPool = {
-      chestplates: [CHEST], leggings: [LEGS], accessories: [ACC1, ACC2, ACC3],
-      enchantments: [],
-      modifiers: [FROZEN],
-      gems: [],
-    };
-    const fitness: SoftConstraint[] = [
-      { stat: "defense", type: "maximize", weight: 1 },
-    ];
-
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
-    const enhancedStats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
-
-    // Frozen gives +76 defense; should be assigned to multiple slots
-    expect(enhancedStats.defense).toBeGreaterThan(420);
-  });
-
-  it("assigns gems via greedy per-socket", () => {
-    const socketed = makeEquipment({
-      id: "c-sock", name: "Socketed Chest", slot: "chestplate",
-      baseStats: { defense: 200 }, socketCount: 2,
-    });
-    const loadout = makeLoadout([socketed, LEGS, ACC1, ACC2, ACC3]);
-    const pool: GearPool = {
-      chestplates: [socketed], leggings: [LEGS], accessories: [ACC1, ACC2, ACC3],
-      enchantments: [],
-      modifiers: [],
-      gems: [DEF_GEM],
-    };
-    const fitness: SoftConstraint[] = [
-      { stat: "defense", type: "maximize", weight: 1 },
-    ];
-
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
-    const enhancedStats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
-
-    // Chest has 2 sockets, should get 2 defense gems (+20 total)
-    expect(enhancedStats.defense).toBeGreaterThanOrEqual(440);
-  });
-
-  it("returns loadout with no enhancements when pool is empty", () => {
-    const loadout = makeLoadout([CHEST, LEGS, ACC1, ACC2, ACC3]);
-    const pool: GearPool = {
-      chestplates: [CHEST], leggings: [LEGS], accessories: [ACC1, ACC2, ACC3],
-      enchantments: [],
-      modifiers: [],
-      gems: [],
-    };
-    const fitness: SoftConstraint[] = [
-      { stat: "defense", type: "maximize", weight: 1 },
-    ];
-
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
-    const enhancedStats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
-
-    // Same as bare loadout
-    expect(enhancedStats.defense).toBe(420);
-  });
-
-  it("enhanced loadout scores better than bare on maximize", () => {
-    const loadout = makeLoadout([CHEST, LEGS, ACC1, ACC2, ACC3]);
-    const pool: GearPool = {
-      chestplates: [CHEST], leggings: [LEGS], accessories: [ACC1, ACC2, ACC3],
-      enchantments: [HARD_ENCHANT, POWERFUL_ENCHANT],
-      modifiers: [FROZEN, GILDED],
-      gems: [DEF_GEM],
-    };
-    const fitness: SoftConstraint[] = [
-      { stat: "defense", type: "maximize", weight: 1 },
-    ];
-
-    const bareStats = computeLoadoutStats(loadout);
-    const bareScore = computeFitness(bareStats, fitness);
-
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
-    const enhancedStats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
-    const enhancedScore = computeFitness(enhancedStats, fitness);
-
-    expect(enhancedScore).toBeGreaterThan(bareScore);
-  });
-});
 
 describe("atlanteanOnly modifier constraint", () => {
   const ATLANTEAN: Modifier = {
@@ -233,7 +116,7 @@ describe("atlanteanOnly modifier constraint", () => {
       { stat: "defense", type: "maximize", weight: 1 },
     ];
 
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
 
     // Set pieces (slots 0-2) should not have Frozen modifier
     const [s0, s1, s2] = result.loadout.slots;
@@ -257,7 +140,7 @@ describe("atlanteanOnly modifier constraint", () => {
       { stat: "defense", type: "maximize", weight: 1 },
     ];
 
-    const result = greedyAssignEnhancements(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
 
     const [s0, s1, s2, s3, s4] = result.loadout.slots;
 

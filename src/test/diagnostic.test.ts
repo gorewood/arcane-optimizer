@@ -66,26 +66,8 @@ describe("diagnostic: real data produces results", () => {
     expect(validCount).toBeGreaterThan(0);
   });
 
-  it.each(Object.entries(FITNESS_PRESETS))(
-    "preset '%s' produces non-zero results with real data",
-    async (name, preset) => {
-      const search = new ExhaustiveSearch();
-      const results = await search.search(pool, constraints, preset, {
-        maxResults: 10,
-      });
-
-      // Every preset should find at least one result with full gear pool
-      expect(
-        results.length,
-        `Preset "${name}" returned 0 results — likely has an overly ` +
-          `restrictive constraint (e.g., "exactly" on a stat no bare ` +
-          `loadout can match)`,
-      ).toBeGreaterThan(0);
-    },
-  );
-
-  // Enhanced search tests use a subset pool to stay within test timeout.
-  // Full pool + enhancement is too slow for unit tests (~10s+ per preset).
+  // Uses subset pool since budget-aware enhancement is always on.
+  // Full pool + enhancement is too slow for unit tests (~15s+ per preset).
   const smallPool = {
     chestplates: pool.chestplates.slice(0, 3),
     leggings: pool.leggings.slice(0, 3),
@@ -101,15 +83,14 @@ describe("diagnostic: real data produces results", () => {
       const search = new ExhaustiveSearch();
       const results = await search.search(smallPool, constraints, preset, {
         maxResults: 5,
-        enhancementMode: "greedy",
       });
 
       expect(
         results.length,
-        `Enhanced search for "${name}" returned 0 results`,
+        `Search for "${name}" returned 0 results`,
       ).toBeGreaterThan(0);
 
-      // Enhanced search should produce non-disqualified scores
+      // Search should produce non-disqualified scores
       const best = results[0];
       if (best != null) {
         expect(best.score).toBeGreaterThan(-Infinity);
@@ -117,55 +98,36 @@ describe("diagnostic: real data produces results", () => {
     },
   );
 
-  it("enhanced search produces better scores than bare search", async () => {
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    if (magePreset == null) return;
+  it(
+    "GA converges on small pool",
+    async () => {
+      const search = new GeneticSearch();
+      const fitness = FITNESS_PRESETS["Warrior Build"];
+      if (fitness == null) return;
 
-    const bareSearch = new ExhaustiveSearch();
-    const bareResults = await bareSearch.search(smallPool, constraints, magePreset, {
-      maxResults: 5,
-      enhancementMode: "none",
-    });
+      const results = await search.search(
+        smallPool,
+        constraints,
+        fitness,
+        {
+          maxResults: 5,
+          populationSize: 30,
+          generations: 20,
+        },
+      );
 
-    const enhancedSearch = new ExhaustiveSearch();
-    const enhancedResults = await enhancedSearch.search(smallPool, constraints, magePreset, {
-      maxResults: 5,
-      enhancementMode: "greedy",
-    });
+      expect(results.length).toBeGreaterThan(0);
+    },
+    15_000,
+  );
 
-    const bareScore = bareResults[0]?.score ?? -Infinity;
-    const enhancedScore = enhancedResults[0]?.score ?? -Infinity;
-
-    expect(enhancedScore).toBeGreaterThan(bareScore);
-  });
-
-  it("GA converges on small pool", async () => {
-    const search = new GeneticSearch();
-    const fitness = FITNESS_PRESETS["Warrior Build"];
-    if (fitness == null) return;
-
-    const results = await search.search(
-      smallPool,
-      constraints,
-      fitness,
-      {
-        maxResults: 5,
-        populationSize: 30,
-        generations: 20,
-      },
-    );
-
-    expect(results.length).toBeGreaterThan(0);
-  });
-
-  it("budget-aware respects insanity/drawback limits", async () => {
+  it("search respects insanity/drawback soft constraints", async () => {
     const search = new ExhaustiveSearch();
     const magePreset = FITNESS_PRESETS["Mage Build"];
     if (magePreset == null) return;
 
     const results = await search.search(smallPool, constraints, magePreset, {
       maxResults: 5,
-      enhancementMode: "budget-aware",
     });
 
     for (const r of results) {

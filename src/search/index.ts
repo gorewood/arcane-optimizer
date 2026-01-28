@@ -30,5 +30,5 @@ export {
 export { ExhaustiveSearch } from "./exhaustive";
 export { GeneticSearch } from "./genetic";
 
-export type { EnhancementMode, EnhancedLoadoutResult } from "./enhance";
-export { greedyAssignEnhancements, budgetAwareAssign } from "./enhance";
+export type { EnhancedLoadoutResult } from "./enhance";
+export { budgetAwareAssign } from "./enhance";

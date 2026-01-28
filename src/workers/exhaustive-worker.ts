@@ -14,7 +14,6 @@ import type {
 } from "@/models/types";
 
 import { ExhaustiveSearch } from "@/search/exhaustive";
-import type { EnhancementMode } from "@/search/enhance";
 
 // ---------------------------------------------------------------------------
 // Message protocol
@@ -28,7 +27,6 @@ export interface PartitionedSearchRequest {
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
-  readonly enhancementMode: EnhancementMode;
 }
 
 export type ExhaustiveWorkerRequest =
@@ -65,7 +63,6 @@ interface PartitionConfig {
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
-  readonly enhancementMode: EnhancementMode;
 }
 
 function countPartitionCombinations(
@@ -84,7 +81,7 @@ async function runPartitionedSearch(
   config: PartitionConfig,
   workerId: number,
 ): Promise<readonly SearchResult[]> {
-  const { gearPool, assignedChests, constraints, fitness, maxResults, enhancementMode } = config;
+  const { gearPool, assignedChests, constraints, fitness, maxResults } = config;
 
   // Use existing ExhaustiveSearch logic via a modified gear pool
   const partitionedPool: GearPool = {
@@ -114,7 +111,6 @@ async function runPartitionedSearch(
 
   const results = await search.search(partitionedPool, constraints, fitness, {
     maxResults,
-    enhancementMode,
   });
 
   return results;
@@ -138,7 +134,6 @@ function handleStart(msg: PartitionedSearchRequest): void {
       constraints: msg.constraints,
       fitness: msg.fitness,
       maxResults: msg.maxResults,
-      enhancementMode: msg.enhancementMode,
     },
     msg.workerId,
   )

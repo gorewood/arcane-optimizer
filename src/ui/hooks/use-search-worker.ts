@@ -13,7 +13,7 @@ import {
   loadModifiers,
   loadGems,
 } from "@/data/loaders";
-import type { EnhancementMode, GearPool, SearchResult, SoftConstraint } from "@/models/types";
+import type { GearPool, SearchResult, SoftConstraint } from "@/models/types";
 import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
@@ -133,7 +133,6 @@ interface LaunchConfig {
   readonly gearPool: GearPool;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
-  readonly enhancementMode: EnhancementMode;
   readonly algorithm: Algorithm;
   readonly gaParams: GAParams;
 }
@@ -147,7 +146,6 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
     fitness: [...config.fitness],
     options: {
       maxResults: config.maxResults,
-      enhancementMode: config.enhancementMode,
       populationSize: config.gaParams.populationSize,
       generations: config.gaParams.generations,
       mutationRate: config.gaParams.mutationRate,
@@ -166,7 +164,6 @@ interface CoordinatorLaunchConfig {
   readonly gearPool: GearPool;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
-  readonly enhancementMode: EnhancementMode;
 }
 
 interface CoordinatorCallbacks {
@@ -183,7 +180,6 @@ function launchCoordinator(config: CoordinatorLaunchConfig, cb: CoordinatorCallb
       constraints: DEFAULT_HARD_CONSTRAINTS,
       fitness: config.fitness,
       maxResults: config.maxResults,
-      enhancementMode: config.enhancementMode,
     },
     {
       onProgress: cb.onProgress,
@@ -210,7 +206,6 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const setPreviewResults = useSearchStore((s) => s.setPreviewResults);
   const setError = useSearchStore((s) => s.setError);
   const reset = useSearchStore((s) => s.reset);
-  const enhancementMode = useSearchStore((s) => s.enhancementMode);
   const algorithm = useSearchStore((s) => s.algorithm);
   const gaParams = useSearchStore((s) => s.gaParams);
   const constraints = useFitnessStore((s) => s.constraints);
@@ -248,16 +243,16 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
 
     if (algorithm === "exhaustive") {
       coordinatorRef.current = launchCoordinator(
-        { gearPool, fitness: constraints, maxResults, enhancementMode },
+        { gearPool, fitness: constraints, maxResults },
         { onProgress: onProg, onComplete: (r) => { setResults(r, undefined); }, onError: setError },
       );
     } else {
       workerRef.current = launchWorker(
-        { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm, gaParams },
+        { gearPool, fitness: constraints, maxResults, algorithm, gaParams },
         { onProgress: onProg, onComplete: setResults, onError: setError },
       );
     }
-  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;

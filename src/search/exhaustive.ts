@@ -2,10 +2,8 @@
  * Exhaustive search strategy — enumerates all valid equipment
  * combinations and scores each against soft constraints.
  *
- * Supports enhancement assignment modes:
- * - "none": bare equipment only (MVP behavior)
- * - "greedy": greedy per-slot enhancement assignment
- * - "budget-aware": greedy with insanity/drawback budget tracking
+ * Always uses budget-aware enhancement assignment which respects
+ * user-defined insanity/drawback constraints from the goal system.
  */
 
 import type {
@@ -25,12 +23,8 @@ import type {
 import { computeLoadoutStats } from "./stats";
 import { validateLoadout } from "./constraints";
 import { computeFitness } from "./fitness";
-import {
-  budgetAwareAssign,
-  greedyAssignEnhancements,
-} from "./enhance";
+import { budgetAwareAssign } from "./enhance";
 import type { EnhancedLoadoutResult } from "./enhance";
-import type { EnhancementMode } from "./enhance";
 
 // ---------------------------------------------------------------------------
 // Async yield helper
@@ -222,19 +216,14 @@ interface EnhanceConfig {
   readonly pool: GearPool;
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
-  readonly mode: EnhancementMode;
 }
 
 function enhanceLoadout(
   loadout: Loadout,
   config: EnhanceConfig,
-): EnhancedLoadoutResult | null {
-  if (config.mode === "none") return null;
+): EnhancedLoadoutResult {
   const { pool, constraints, fitness } = config;
-  if (config.mode === "budget-aware") {
-    return budgetAwareAssign(loadout, pool, constraints, fitness);
-  }
-  return greedyAssignEnhancements(loadout, pool, constraints, fitness);
+  return budgetAwareAssign(loadout, pool, constraints, fitness);
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +234,6 @@ interface SearchLoopParams {
   readonly gearPool: GearPool;
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
-  readonly enhancementMode: EnhancementMode;
 }
 
 interface SearchLoopConfig {
@@ -262,12 +250,11 @@ function processCombo(
   tracker: TopNTracker,
 ): void {
   const enhanced = enhanceLoadout(bareLoadout, enhanceConfig);
-  const finalLoadout = enhanced?.loadout ?? bareLoadout;
   const result = scoreLoadout({
-    loadout: finalLoadout,
+    loadout: enhanced.loadout,
     constraints: enhanceConfig.constraints,
     fitness: enhanceConfig.fitness,
-    atlanteanChoices: enhanced?.atlanteanChoices,
+    atlanteanChoices: enhanced.atlanteanChoices,
   });
   if (result != null) tracker.tryInsert(result);
 }
@@ -278,10 +265,10 @@ async function runSearchLoop(
   config: SearchLoopConfig,
   onProgress: ((checked: number, total: number, best: number, results: readonly SearchResult[]) => void) | undefined,
 ): Promise<void> {
-  const { gearPool, constraints, fitness, enhancementMode } = params;
+  const { gearPool, constraints, fitness } = params;
   const { tracker, token, deadline, total } = config;
   const enhanceConfig: EnhanceConfig = {
-    pool: gearPool, constraints, fitness, mode: enhancementMode,
+    pool: gearPool, constraints, fitness,
   };
   let checked = 0;
 
@@ -353,10 +340,8 @@ export class ExhaustiveSearch implements SearchStrategy {
       ? Date.now() + options.timeout
       : undefined;
 
-    const enhancementMode: EnhancementMode = options.enhancementMode ?? "none";
-
     await runSearchLoop(
-      { gearPool, constraints, fitness, enhancementMode },
+      { gearPool, constraints, fitness },
       { tracker, token: this.token, deadline, total },
       this.onProgress,
     );

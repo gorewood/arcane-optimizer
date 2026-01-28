@@ -4,7 +4,7 @@
  */
 
 import { create } from "zustand";
-import type { EnhancementMode, SearchResult } from "@/models/types";
+import type { SearchResult } from "@/models/types";
 
 // ---------------------------------------------------------------------------
 // State & Action Types
@@ -34,7 +34,6 @@ export interface SearchState {
   previewResults: readonly SearchResult[];
   error: string | null;
   algorithm: Algorithm;
-  enhancementMode: EnhancementMode;
   gaParams: GAParams;
   exitMetadata: ExitMetadata | null;
 }
@@ -47,7 +46,6 @@ export interface SearchActions {
   setError: (error: string) => void;
   reset: () => void;
   setAlgorithm: (algorithm: Algorithm) => void;
-  setEnhancementMode: (mode: EnhancementMode) => void;
   setGAParams: (params: Partial<GAParams>) => void;
 }
 
@@ -68,7 +66,6 @@ const INITIAL_STATE: SearchState = {
   previewResults: [],
   error: null,
   algorithm: "exhaustive",
-  enhancementMode: "budget-aware",
   gaParams: DEFAULT_GA_PARAMS,
   exitMetadata: null,
 };
@@ -107,10 +104,6 @@ export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
 
   setAlgorithm: (algorithm: Algorithm): void => {
     set({ algorithm });
-  },
-
-  setEnhancementMode: (mode: EnhancementMode): void => {
-    set({ enhancementMode: mode });
   },
 
   setGAParams: (params: Partial<GAParams>): void => {

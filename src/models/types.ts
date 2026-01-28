@@ -168,14 +168,10 @@ export interface GearPool {
   readonly gems: readonly Gem[];
 }
 
-/** Enhancement assignment mode for search. */
-export type EnhancementMode = "none" | "greedy" | "budget-aware";
-
 /** Configuration options for a search run. */
 export interface SearchOptions {
   readonly maxResults: number;
   readonly timeout?: number | undefined;
-  readonly enhancementMode?: EnhancementMode | undefined;
   readonly populationSize?: number | undefined;
   readonly generations?: number | undefined;
   readonly mutationRate?: number | undefined;

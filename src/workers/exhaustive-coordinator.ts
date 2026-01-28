@@ -11,7 +11,6 @@ import type {
   SearchResult,
   SoftConstraint,
 } from "@/models/types";
-import type { EnhancementMode } from "@/search/enhance";
 import type {
   ExhaustiveWorkerRequest,
   ExhaustiveWorkerResponse,
@@ -82,7 +81,6 @@ export interface CoordinatorConfig {
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
-  readonly enhancementMode: EnhancementMode;
 }
 
 export class ExhaustiveCoordinator {
@@ -157,7 +155,6 @@ export class ExhaustiveCoordinator {
       constraints: config.constraints,
       fitness: [...config.fitness],
       maxResults: config.maxResults,
-      enhancementMode: config.enhancementMode,
     };
     worker.postMessage(request);
   }

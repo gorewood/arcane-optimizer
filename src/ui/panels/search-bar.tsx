@@ -1,8 +1,8 @@
 /**
  * SearchBar — dense search controls with GA parameter tuning.
  *
- * Compact bar with algorithm toggle, enhancement mode toggle, max results,
- * and GA params (visible when genetic selected). Progress strip appears below.
+ * Compact bar with algorithm toggle, max results, and GA params
+ * (visible when genetic selected). Progress strip appears below.
  */
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSearchStore, type Algorithm, type GAParams } from "@/stores/search-store";
-import type { EnhancementMode } from "@/models/types";
 import type { ProgressState } from "@/ui/hooks/use-search-worker";
 import { WarningMessage, ProgressDisplay, ErrorDisplay, ResultsSummary } from "./search-feedback";
 
@@ -46,10 +45,8 @@ export function SearchBar({
 }: SearchBarProps): React.JSX.Element {
   const status = useSearchStore((s) => s.status);
   const algorithm = useSearchStore((s) => s.algorithm);
-  const enhancementMode = useSearchStore((s) => s.enhancementMode);
   const gaParams = useSearchStore((s) => s.gaParams);
   const setAlgorithm = useSearchStore((s) => s.setAlgorithm);
-  const setEnhancementMode = useSearchStore((s) => s.setEnhancementMode);
   const setGAParams = useSearchStore((s) => s.setGAParams);
   const error = useSearchStore((s) => s.error);
   const results = useSearchStore((s) => s.results);
@@ -64,7 +61,6 @@ export function SearchBar({
       {/* Main controls row */}
       <div className="flex items-center gap-2 flex-wrap">
         <AlgorithmToggle value={algorithm} onChange={setAlgorithm} disabled={isRunning} />
-        <EnhancementToggle value={enhancementMode} onChange={setEnhancementMode} disabled={isRunning} />
         <MaxResultsSelect value={maxResults} onChange={onMaxResultsChange} disabled={isRunning} />
         <div className="flex-1" />
         <SearchButton isRunning={isRunning} canStart={canStart} onStart={onStart} onStop={onStop} />
@@ -101,28 +97,6 @@ function AlgorithmToggle({
     <div className="flex rounded-md border border-border-default overflow-hidden">
       <ToggleOption label="Exhaust" selected={value === "exhaustive"} onClick={() => { onChange("exhaustive"); }} disabled={disabled} />
       <ToggleOption label="Genetic" selected={value === "genetic"} onClick={() => { onChange("genetic"); }} disabled={disabled} />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// EnhancementToggle
-// ---------------------------------------------------------------------------
-
-function EnhancementToggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  readonly value: EnhancementMode;
-  readonly onChange: (v: EnhancementMode) => void;
-  readonly disabled: boolean;
-}): React.JSX.Element {
-  return (
-    <div className="flex rounded-md border border-border-default overflow-hidden">
-      <ToggleOption label="None" selected={value === "none"} onClick={() => { onChange("none"); }} disabled={disabled} />
-      <ToggleOption label="Budget" selected={value === "budget-aware"} onClick={() => { onChange("budget-aware"); }} disabled={disabled} />
-      <ToggleOption label="Greedy" selected={value === "greedy"} onClick={() => { onChange("greedy"); }} disabled={disabled} />
     </div>
   );
 }

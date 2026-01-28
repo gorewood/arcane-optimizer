@@ -30,12 +30,6 @@ import {
 } from "./stats";
 
 // ---------------------------------------------------------------------------
-// Enhancement mode type
-// ---------------------------------------------------------------------------
-
-export type EnhancementMode = "none" | "greedy" | "budget-aware";
-
-// ---------------------------------------------------------------------------
 // Slot classification
 // ---------------------------------------------------------------------------
 
@@ -249,36 +243,6 @@ interface FindBestParams {
   readonly fitness: readonly SoftConstraint[];
 }
 
-function findBestSlotEnhancement(params: FindBestParams): SlotCandidate {
-  const { slot, pool, hardConstraints, otherSlotStats, fitness } = params;
-  const category = slotCategory(slot);
-  const enchantments = getApplicableEnchantments(category, pool.enchantments);
-  const applicableMods = getApplicableModifiers(slot.piece, pool.modifiers);
-
-  const enchantOptions: readonly (Enchantment | undefined)[] = [
-    undefined, ...enchantments,
-  ];
-  const modOptions: readonly (Modifier | undefined)[] = [
-    undefined, ...applicableMods,
-  ];
-
-  const ctx: EvalContext = { slot, pool, otherSlotStats, fitness };
-  let best: SlotCandidate = {
-    enchantment: undefined, modifier: undefined,
-    gems: [], atlanteanChoice: null, score: -Infinity,
-  };
-
-  for (const ench of enchantOptions) {
-    for (const mod of modOptions) {
-      if (!isAtlanteanCompatible(ench, mod, hardConstraints)) continue;
-      const candidate = evaluateEnchantModPair(ctx, ench, mod);
-      if (candidate.score > best.score) best = candidate;
-    }
-  }
-
-  return best;
-}
-
 // ---------------------------------------------------------------------------
 // Apply enhancement to a slot
 // ---------------------------------------------------------------------------
@@ -355,31 +319,6 @@ function updateSlotState(
 export interface EnhancedLoadoutResult {
   readonly loadout: Loadout;
   readonly atlanteanChoices: ReadonlyMap<number, StatName>;
-}
-
-export function greedyAssignEnhancements(
-  loadout: Loadout,
-  pool: GearPool,
-  hardConstraints: HardConstraints,
-  fitness: readonly SoftConstraint[],
-): EnhancedLoadoutResult {
-  const state = initSlotState(loadout);
-
-  for (let i = 0; i < state.slots.length; i++) {
-    const slot = state.slots[i];
-    if (slot == null) continue;
-    const contribution = state.contributions[i];
-    if (contribution == null) continue;
-
-    const otherStats = subtractStats(state.runningTotal, contribution);
-    const best = findBestSlotEnhancement({
-      slot, pool, hardConstraints, otherSlotStats: otherStats, fitness,
-    });
-
-    updateSlotState(state, i, best);
-  }
-
-  return { loadout: { slots: state.slots }, atlanteanChoices: state.atlanteanChoices };
 }
 
 // ---------------------------------------------------------------------------
