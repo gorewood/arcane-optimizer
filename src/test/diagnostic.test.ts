@@ -14,6 +14,7 @@ import {
   ExhaustiveSearch,
   generateAccessoryCombinations,
 } from "@/search/exhaustive";
+import { GeneticSearch } from "@/search/genetic";
 
 describe("diagnostic: real data produces results", () => {
   const pool = loadGearPool();
@@ -82,6 +83,98 @@ describe("diagnostic: real data produces results", () => {
       ).toBeGreaterThan(0);
     },
   );
+
+  // Enhanced search tests use a subset pool to stay within test timeout.
+  // Full pool + enhancement is too slow for unit tests (~10s+ per preset).
+  const smallPool = {
+    chestplates: pool.chestplates.slice(0, 3),
+    leggings: pool.leggings.slice(0, 3),
+    accessories: pool.accessories.slice(0, 6),
+    enchantments: pool.enchantments.slice(0, 3),
+    modifiers: pool.modifiers.slice(0, 3),
+    gems: pool.gems.slice(0, 3),
+  };
+
+  it.each(Object.entries(FITNESS_PRESETS))(
+    "preset '%s' produces positive scores with enhanced search",
+    async (name, preset) => {
+      const search = new ExhaustiveSearch();
+      const results = await search.search(smallPool, constraints, preset, {
+        maxResults: 5,
+        enhancementMode: "greedy",
+      });
+
+      expect(
+        results.length,
+        `Enhanced search for "${name}" returned 0 results`,
+      ).toBeGreaterThan(0);
+
+      // Enhanced search should produce non-disqualified scores
+      const best = results[0];
+      if (best != null) {
+        expect(best.score).toBeGreaterThan(-Infinity);
+      }
+    },
+  );
+
+  it("enhanced search produces better scores than bare search", async () => {
+    const magePreset = FITNESS_PRESETS["Mage Build"];
+    if (magePreset == null) return;
+
+    const bareSearch = new ExhaustiveSearch();
+    const bareResults = await bareSearch.search(smallPool, constraints, magePreset, {
+      maxResults: 5,
+      enhancementMode: "none",
+    });
+
+    const enhancedSearch = new ExhaustiveSearch();
+    const enhancedResults = await enhancedSearch.search(smallPool, constraints, magePreset, {
+      maxResults: 5,
+      enhancementMode: "greedy",
+    });
+
+    const bareScore = bareResults[0]?.score ?? -Infinity;
+    const enhancedScore = enhancedResults[0]?.score ?? -Infinity;
+
+    expect(enhancedScore).toBeGreaterThan(bareScore);
+  });
+
+  it("GA converges on small pool", async () => {
+    const search = new GeneticSearch();
+    const fitness = FITNESS_PRESETS["Warrior Build"];
+    if (fitness == null) return;
+
+    const results = await search.search(
+      smallPool,
+      constraints,
+      fitness,
+      {
+        maxResults: 5,
+        populationSize: 30,
+        generations: 20,
+      },
+    );
+
+    expect(results.length).toBeGreaterThan(0);
+  });
+
+  it("budget-aware respects insanity/drawback limits", async () => {
+    const search = new ExhaustiveSearch();
+    const magePreset = FITNESS_PRESETS["Mage Build"];
+    if (magePreset == null) return;
+
+    const results = await search.search(smallPool, constraints, magePreset, {
+      maxResults: 5,
+      enhancementMode: "budget-aware",
+    });
+
+    for (const r of results) {
+      const stats = r.stats;
+      const netInsanity = stats.insanity - stats.warding;
+      expect(netInsanity).toBeLessThanOrEqual(constraints.maxNetInsanity);
+      expect(stats.drawback).toBeLessThanOrEqual(constraints.maxDrawback);
+    }
+  });
 
   it("Mage Build preset does not disqualify all loadouts", () => {
     const magePreset = FITNESS_PRESETS["Mage Build"];
