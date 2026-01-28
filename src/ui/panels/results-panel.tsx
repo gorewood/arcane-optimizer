@@ -2,11 +2,14 @@
  * ResultsPanel — displays search results as ranked build cards.
  *
  * Shows an empty state when no results are available, and a scrollable
- * list of expandable BuildCards when results exist.
+ * list of expandable BuildCards when results exist. Auto-expands the
+ * top result when search completes.
  */
 
+import { useEffect } from "react";
 import { useSearchStore } from "@/stores/search-store";
 import { useFitnessStore } from "@/stores/fitness-store";
+import { useUIStore } from "@/stores/ui-store";
 import { BuildCard } from "./build-card";
 
 // ---------------------------------------------------------------------------
@@ -17,8 +20,25 @@ export function ResultsPanel(): React.JSX.Element {
   const results = useSearchStore((s) => s.results);
   const status = useSearchStore((s) => s.status);
   const constraints = useFitnessStore((s) => s.constraints);
+  const expandedCards = useUIStore((s) => s.expandedCardIndices);
+  const toggleCardExpanded = useUIStore((s) => s.toggleCardExpanded);
+  const setExpandedCards = useUIStore((s) => s.setExpandedCards);
 
   const isRunning = status === "running";
+
+  // Expand top result when search completes (subscription pattern)
+  useEffect(() => {
+    let prevStatus = useSearchStore.getState().status;
+    const unsubscribe = useSearchStore.subscribe((state) => {
+      if (prevStatus === "running" && state.status === "complete") {
+        if (state.results.length > 0) {
+          setExpandedCards(new Set([0]));
+        }
+      }
+      prevStatus = state.status;
+    });
+    return unsubscribe;
+  }, [setExpandedCards]);
 
   return (
     <div className="space-y-4 p-6">
@@ -37,7 +57,13 @@ export function ResultsPanel(): React.JSX.Element {
       {results.length === 0 && !isRunning ? (
         <EmptyState />
       ) : (
-        <ResultsList results={results} constraints={constraints} disabled={isRunning} />
+        <ResultsList
+          results={results}
+          constraints={constraints}
+          disabled={isRunning}
+          expandedCards={expandedCards}
+          onToggleExpanded={toggleCardExpanded}
+        />
       )}
     </div>
   );
@@ -106,12 +132,16 @@ function ResultsList({
   results,
   constraints,
   disabled = false,
+  expandedCards,
+  onToggleExpanded,
 }: {
   readonly results: ReturnType<typeof useSearchStore.getState>["results"];
   readonly constraints: ReturnType<
     typeof useFitnessStore.getState
   >["constraints"];
   readonly disabled?: boolean;
+  readonly expandedCards: ReadonlySet<number>;
+  readonly onToggleExpanded: (index: number) => void;
 }): React.JSX.Element {
   return (
     <div className="space-y-3">
@@ -122,6 +152,8 @@ function ResultsList({
           result={result}
           constraints={constraints}
           disabled={disabled}
+          expanded={expandedCards.has(i)}
+          onToggleExpanded={() => { onToggleExpanded(i); }}
         />
       ))}
     </div>

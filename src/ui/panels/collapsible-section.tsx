@@ -19,6 +19,10 @@ interface CollapsibleSectionProps {
   readonly summary?: React.ReactNode;
   readonly children: React.ReactNode;
   readonly defaultOpen?: boolean;
+  /** Controlled open state (overrides internal state when provided) */
+  readonly open?: boolean;
+  /** Callback when open state changes (enables controlled mode) */
+  readonly onOpenChange?: (open: boolean) => void;
   readonly disabled?: boolean;
   readonly disabledReason?: string;
 }
@@ -61,10 +65,21 @@ export function CollapsibleSection({
   summary,
   children,
   defaultOpen = false,
+  open: controlledOpen,
+  onOpenChange,
   disabled = false,
   disabledReason,
 }: CollapsibleSectionProps): React.JSX.Element {
-  const [open, setOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const handleOpenChange = (newOpen: boolean): void => {
+    if (isControlled) {
+      onOpenChange?.(newOpen);
+    } else {
+      setInternalOpen(newOpen);
+    }
+  };
   const effectiveOpen = disabled ? false : open;
 
   const roundedClass = effectiveOpen ? "rounded-t-md" : "rounded-md";
@@ -77,7 +92,7 @@ export function CollapsibleSection({
     : "border-x border-b border-border-default rounded-b-md bg-bg-surface px-4 py-3";
 
   return (
-    <Collapsible open={effectiveOpen} onOpenChange={(o) => { if (!disabled) setOpen(o); }}>
+    <Collapsible open={effectiveOpen} onOpenChange={(o) => { if (!disabled) handleOpenChange(o); }}>
       <CollapsibleTrigger asChild disabled={disabled}>
         <button type="button" disabled={disabled} className={buttonClass}>
           <ToggleIcon disabled={disabled} open={effectiveOpen} />

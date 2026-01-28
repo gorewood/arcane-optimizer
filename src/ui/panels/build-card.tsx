@@ -37,14 +37,6 @@ const SLOT_LABELS: Record<SlotType, string> = {
   "accessory-A": "Amul",
 };
 
-// Key stats to show in collapsed view
-const COLLAPSED_STATS: readonly StatName[] = [
-  "power",
-  "defense",
-  "size",
-  "dexterity",
-  "insanity",
-];
 
 // Stats grouped for expanded view display
 type StatGroup = "combat" | "scaling" | "risk" | "defensive";
@@ -126,69 +118,60 @@ function formatBuildText(rank: number, result: SearchResult): string {
 }
 
 // ---------------------------------------------------------------------------
-// BuildCard
+// BuildCard helpers
 // ---------------------------------------------------------------------------
 
-export function BuildCard({
-  rank,
-  result,
-  constraints,
-  disabled = false,
-}: {
+function buildConstraintMap(constraints: readonly SoftConstraint[]): Map<StatName, SoftConstraint> {
+  const map = new Map<StatName, SoftConstraint>();
+  for (const c of constraints) map.set(c.stat, c);
+  return map;
+}
+
+interface BuildCardProps {
   readonly rank: number;
   readonly result: SearchResult;
   readonly constraints: readonly SoftConstraint[];
   readonly disabled?: boolean;
-}): React.JSX.Element {
-  const [expanded, setExpanded] = useState(false);
+  readonly expanded?: boolean;
+  readonly onToggleExpanded?: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// BuildCard
+// ---------------------------------------------------------------------------
+
+export function BuildCard(props: BuildCardProps): React.JSX.Element {
+  const { rank, result, constraints, disabled = false, expanded: controlledExpanded, onToggleExpanded } = props;
+  const [internalExpanded, setInternalExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const constraintMap = new Map<StatName, SoftConstraint>();
-  for (const c of constraints) {
-    constraintMap.set(c.stat, c);
-  }
+  const isControlled = controlledExpanded !== undefined;
+  const expanded = isControlled ? controlledExpanded : internalExpanded;
+  const constraintMap = buildConstraintMap(constraints);
 
   const handleCopy = useCallback(() => {
     if (disabled) return;
-    const text = formatBuildText(rank, result);
-    void navigator.clipboard.writeText(text).then(() => {
+    void navigator.clipboard.writeText(formatBuildText(rank, result)).then(() => {
       setCopied(true);
-      setTimeout(() => {
-        setCopied(false);
-      }, 1500);
+      setTimeout(() => { setCopied(false); }, 1500);
     });
   }, [rank, result, disabled]);
 
   const handleToggle = useCallback(() => {
     if (disabled) return;
-    setExpanded((prev) => !prev);
-  }, [disabled]);
+    if (isControlled && onToggleExpanded != null) onToggleExpanded();
+    else setInternalExpanded((prev) => !prev);
+  }, [disabled, isControlled, onToggleExpanded]);
 
+  const cardClass = `border-border-default bg-bg-surface py-0 gap-0 transition-colors ${disabled ? "opacity-80" : "hover:border-border-accent/50"}`;
   return (
-    <Card className={`border-border-default bg-bg-surface py-0 gap-0 transition-colors ${disabled ? "opacity-80" : "hover:border-border-accent/50"}`}>
-      {/* Collapsed header row */}
-      <CollapsedHeader
-        rank={rank}
-        result={result}
-        constraints={constraints}
-        expanded={expanded}
-        onToggle={handleToggle}
-        onCopy={handleCopy}
-        copied={copied}
-        disabled={disabled}
-      />
-
-      {/* Collapsed: compact slot list */}
+    <Card className={cardClass}>
+      <CollapsedHeader rank={rank} result={result} constraints={constraints} expanded={expanded} onToggle={handleToggle} onCopy={handleCopy} copied={copied} disabled={disabled} />
       {!expanded && <CompactSlotList result={result} />}
-
-      {/* Expanded: detailed breakdown */}
       {expanded && (
         <>
           <Separator className="bg-border-subtle" />
-          <ExpandedContent
-            result={result}
-            constraintMap={constraintMap}
-          />
+          <ExpandedContent result={result} constraintMap={constraintMap} />
         </>
       )}
     </Card>
@@ -239,18 +222,16 @@ function CollapsedHeader({
 }
 
 function KeyStatsDisplay({ stats }: { readonly stats: SearchResult["stats"] }): React.JSX.Element {
+  // Show all non-zero stats in the collapsed header
+  const nonZeroStats = STAT_NAMES.filter((stat) => stats[stat] !== 0);
   return (
-    <div className="hidden sm:flex items-center gap-2 ml-2">
-      {COLLAPSED_STATS.map((stat) => {
-        const value = stats[stat];
-        if (value === 0) return null;
-        return (
-          <span key={stat} className="text-[10px] text-text-secondary">
-            <span className="text-text-muted">{STAT_LABELS[stat]}</span>{" "}
-            <span className="font-stat">{value}</span>
-          </span>
-        );
-      })}
+    <div className="hidden sm:flex items-center gap-2 ml-2 flex-wrap">
+      {nonZeroStats.map((stat) => (
+        <span key={stat} className="text-[10px] text-text-secondary">
+          <span className="text-text-muted">{STAT_LABELS[stat]}</span>{" "}
+          <span className="font-stat">{stats[stat]}</span>
+        </span>
+      ))}
     </div>
   );
 }

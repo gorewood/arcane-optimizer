@@ -3,8 +3,10 @@
  *
  * Shows a summary in the collapsed header, expands to reveal
  * the full constraint editor. Disabled when search is running.
+ * Auto-closes when search completes.
  */
 
+import { useState, useEffect } from "react";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useSearchStore } from "@/stores/search-store";
 import { CollapsibleSection } from "./collapsible-section";
@@ -19,6 +21,20 @@ export function GoalsSection(): React.JSX.Element {
   const activePresetName = useFitnessStore((s) => s.activePresetName);
   const searchStatus = useSearchStore((s) => s.status);
 
+  const [goalsOpen, setGoalsOpen] = useState(false);
+
+  // Close goals panel when search completes (subscription pattern)
+  useEffect(() => {
+    let prevStatus = useSearchStore.getState().status;
+    const unsubscribe = useSearchStore.subscribe((state) => {
+      if (prevStatus === "running" && state.status === "complete") {
+        setGoalsOpen(false);
+      }
+      prevStatus = state.status;
+    });
+    return unsubscribe;
+  }, []);
+
   const summary = buildSummary(constraints, activePresetName);
   const isRunning = searchStatus === "running";
 
@@ -26,7 +42,8 @@ export function GoalsSection(): React.JSX.Element {
     <CollapsibleSection
       title="Goals"
       summary={summary}
-      defaultOpen={false}
+      open={goalsOpen}
+      onOpenChange={setGoalsOpen}
       disabled={isRunning}
       disabledReason="Search running..."
     >

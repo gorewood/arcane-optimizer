@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
-import type { EquippedSlot, Loadout, StatName, Stats } from "@/models/types";
+import type { EquipmentPiece, EquippedSlot, ExpandedEquipment, Loadout, StatName, Stats } from "@/models/types";
 import { computeSlotStats } from "@/search/constraints";
 import { resolveAtlanteanBonus, sumStats, ATLANTEAN_BONUS_VALUES } from "@/search/stats";
 import { STAT_LABELS } from "./stat-indicator";
@@ -30,6 +30,17 @@ const DISPLAY_STATS: readonly StatName[] = [
 ];
 
 const SLOT_LABELS = ["Chest", "Legs", "Acc 1", "Acc 2", "Acc 3"] as const;
+
+// ---------------------------------------------------------------------------
+// Variant helpers
+// ---------------------------------------------------------------------------
+
+function getAppliedVariant(piece: EquipmentPiece | ExpandedEquipment): string | undefined {
+  if ("appliedVariant" in piece) {
+    return piece.appliedVariant;
+  }
+  return undefined;
+}
 
 interface SlotContributionTableProps {
   readonly loadout: Loadout;
@@ -135,7 +146,12 @@ function SlotRows({
             {label}
           </span>
         </td>
-        <td className="py-1.5 text-left text-text-primary">{slot.piece.name}</td>
+        <td className="py-1.5 text-left text-text-primary">
+          {slot.piece.name}
+          {getAppliedVariant(slot.piece) != null && (
+            <span className="text-accent-teal ml-1 capitalize">({getAppliedVariant(slot.piece)})</span>
+          )}
+        </td>
         {DISPLAY_STATS.map((stat) => <StatCell key={stat} value={stats?.[stat] ?? 0} />)}
       </tr>
       {expanded && hasDetails && (

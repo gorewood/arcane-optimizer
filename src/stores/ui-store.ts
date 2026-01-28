@@ -18,6 +18,7 @@ export interface UIState {
 export interface UIActions {
   selectResult: (index: number | null) => void;
   toggleCardExpanded: (index: number) => void;
+  setExpandedCards: (indices: ReadonlySet<number>) => void;
   setActivePanel: (panel: UIState["activePanel"]) => void;
 }
 
@@ -52,6 +53,10 @@ export const useUIStore = create<UIState & UIActions>()((set) => ({
     set((s) => ({
       expandedCardIndices: toggleNumericSetItem(s.expandedCardIndices, index),
     }));
+  },
+
+  setExpandedCards: (indices: ReadonlySet<number>): void => {
+    set({ expandedCardIndices: indices });
   },
 
   setActivePanel: (panel: UIState["activePanel"]): void => {
