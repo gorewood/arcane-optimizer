@@ -44,6 +44,30 @@ const INITIAL_STATE: FitnessState = {
 };
 
 // ---------------------------------------------------------------------------
+// Migration — v0 → v1: change insanity "exactly" to "atMost"
+// ---------------------------------------------------------------------------
+
+function migrateFitnessState(persisted: unknown): FitnessState {
+  if (persisted == null || typeof persisted !== "object") {
+    return INITIAL_STATE;
+  }
+  const raw = persisted as Partial<FitnessState>;
+  if (!Array.isArray(raw.constraints)) {
+    return INITIAL_STATE;
+  }
+  const constraints = raw.constraints.map((c: SoftConstraint) => {
+    if (c.stat === "insanity" && c.type === "exactly") {
+      return { ...c, type: "atMost" as const };
+    }
+    return c;
+  });
+  return {
+    constraints,
+    activePresetName: raw.activePresetName ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
 
@@ -87,6 +111,8 @@ export const useFitnessStore = create<FitnessState & FitnessActions>()(
     }),
     {
       name: "ao-fitness",
+      version: 1,
+      migrate: migrateFitnessState,
     },
   ),
 );
