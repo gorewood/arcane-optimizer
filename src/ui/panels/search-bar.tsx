@@ -1,12 +1,12 @@
 /**
- * SearchBar — dense single-row search controls.
+ * SearchBar — dense search controls with GA parameter tuning.
  *
- * Compact horizontal bar with algorithm toggle, enhancement mode toggle,
- * max results dropdown, and start/stop button. Progress strip appears
- * below when search is running.
+ * Compact bar with algorithm toggle, enhancement mode toggle, max results,
+ * and GA params (visible when genetic selected). Progress strip appears below.
  */
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSearchStore, type Algorithm } from "@/stores/search-store";
+import { useSearchStore, type Algorithm, type GAParams } from "@/stores/search-store";
 import type { EnhancementMode } from "@/models/types";
 import type { ProgressState } from "@/ui/hooks/use-search-worker";
 import { WarningMessage, ProgressDisplay, ErrorDisplay } from "./search-feedback";
@@ -47,12 +47,15 @@ export function SearchBar({
   const status = useSearchStore((s) => s.status);
   const algorithm = useSearchStore((s) => s.algorithm);
   const enhancementMode = useSearchStore((s) => s.enhancementMode);
+  const gaParams = useSearchStore((s) => s.gaParams);
   const setAlgorithm = useSearchStore((s) => s.setAlgorithm);
   const setEnhancementMode = useSearchStore((s) => s.setEnhancementMode);
+  const setGAParams = useSearchStore((s) => s.setGAParams);
   const error = useSearchStore((s) => s.error);
 
   const isRunning = status === "running";
   const canStart = status === "idle" || status === "complete" || status === "error";
+  const showGAParams = algorithm === "genetic";
 
   return (
     <div className="space-y-2">
@@ -62,13 +65,13 @@ export function SearchBar({
         <EnhancementToggle value={enhancementMode} onChange={setEnhancementMode} disabled={isRunning} />
         <MaxResultsSelect value={maxResults} onChange={onMaxResultsChange} disabled={isRunning} />
         <div className="flex-1" />
-        <SearchButton
-          isRunning={isRunning}
-          canStart={canStart}
-          onStart={onStart}
-          onStop={onStop}
-        />
+        <SearchButton isRunning={isRunning} canStart={canStart} onStart={onStart} onStop={onStop} />
       </div>
+
+      {/* GA params row (only when genetic selected) */}
+      {showGAParams && (
+        <GAParamsRow params={gaParams} onChange={setGAParams} disabled={isRunning} />
+      )}
 
       {/* Feedback area */}
       {warning != null && <WarningMessage message={warning} />}
@@ -93,18 +96,8 @@ function AlgorithmToggle({
 }): React.JSX.Element {
   return (
     <div className="flex rounded-md border border-border-default overflow-hidden">
-      <ToggleOption
-        label="Exhaust"
-        selected={value === "exhaustive"}
-        onClick={() => { onChange("exhaustive"); }}
-        disabled={disabled}
-      />
-      <ToggleOption
-        label="Genetic"
-        selected={value === "genetic"}
-        onClick={() => { onChange("genetic"); }}
-        disabled={disabled}
-      />
+      <ToggleOption label="Exhaust" selected={value === "exhaustive"} onClick={() => { onChange("exhaustive"); }} disabled={disabled} />
+      <ToggleOption label="Genetic" selected={value === "genetic"} onClick={() => { onChange("genetic"); }} disabled={disabled} />
     </div>
   );
 }
@@ -124,24 +117,9 @@ function EnhancementToggle({
 }): React.JSX.Element {
   return (
     <div className="flex rounded-md border border-border-default overflow-hidden">
-      <ToggleOption
-        label="None"
-        selected={value === "none"}
-        onClick={() => { onChange("none"); }}
-        disabled={disabled}
-      />
-      <ToggleOption
-        label="Budget"
-        selected={value === "budget-aware"}
-        onClick={() => { onChange("budget-aware"); }}
-        disabled={disabled}
-      />
-      <ToggleOption
-        label="Greedy"
-        selected={value === "greedy"}
-        onClick={() => { onChange("greedy"); }}
-        disabled={disabled}
-      />
+      <ToggleOption label="None" selected={value === "none"} onClick={() => { onChange("none"); }} disabled={disabled} />
+      <ToggleOption label="Budget" selected={value === "budget-aware"} onClick={() => { onChange("budget-aware"); }} disabled={disabled} />
+      <ToggleOption label="Greedy" selected={value === "greedy"} onClick={() => { onChange("greedy"); }} disabled={disabled} />
     </div>
   );
 }
@@ -195,22 +173,102 @@ function MaxResultsSelect({
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-text-muted">Max:</span>
-      <Select
-        value={String(value)}
-        onValueChange={(v) => { onChange(Number(v)); }}
-        disabled={disabled}
-      >
+      <Select value={String(value)} onValueChange={(v) => { onChange(Number(v)); }} disabled={disabled}>
         <SelectTrigger className="h-7 w-16 text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {MAX_RESULTS_OPTIONS.map((n) => (
-            <SelectItem key={n} value={String(n)}>
-              {n}
-            </SelectItem>
+            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
           ))}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// GAParamsRow — genetic algorithm parameter controls
+// ---------------------------------------------------------------------------
+
+function GAParamsRow({
+  params,
+  onChange,
+  disabled,
+}: {
+  readonly params: GAParams;
+  readonly onChange: (p: Partial<GAParams>) => void;
+  readonly disabled: boolean;
+}): React.JSX.Element {
+  return (
+    <div className="flex items-center gap-3 flex-wrap text-xs">
+      <span className="text-text-muted">GA:</span>
+      <ParamInput
+        label="Pop"
+        value={params.populationSize}
+        onChange={(v) => { onChange({ populationSize: v }); }}
+        min={50}
+        max={500}
+        step={50}
+        disabled={disabled}
+      />
+      <ParamInput
+        label="Gens"
+        value={params.generations}
+        onChange={(v) => { onChange({ generations: v }); }}
+        min={100}
+        max={5000}
+        step={100}
+        disabled={disabled}
+      />
+      <ParamInput
+        label="Mut%"
+        value={Math.round(params.mutationRate * 100)}
+        onChange={(v) => { onChange({ mutationRate: v / 100 }); }}
+        min={5}
+        max={50}
+        step={5}
+        disabled={disabled}
+      />
+    </div>
+  );
+}
+
+function ParamInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+  disabled,
+}: {
+  readonly label: string;
+  readonly value: number;
+  readonly onChange: (v: number) => void;
+  readonly min: number;
+  readonly max: number;
+  readonly step: number;
+  readonly disabled: boolean;
+}): React.JSX.Element {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-text-muted">{label}:</span>
+      <Input
+        type="number"
+        value={value}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (!Number.isNaN(v) && v >= min && v <= max) {
+            onChange(v);
+          }
+        }}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        className="h-6 w-16 text-xs px-1.5"
+      />
     </div>
   );
 }

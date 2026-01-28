@@ -1,27 +1,36 @@
 /**
- * FitnessSection — collapsible fitness configuration wrapper.
+ * GoalsSection — collapsible optimization goals configuration wrapper.
  *
  * Shows a summary in the collapsed header, expands to reveal
- * the full constraint editor.
+ * the full constraint editor. Disabled when search is running.
  */
 
 import { useFitnessStore } from "@/stores/fitness-store";
+import { useSearchStore } from "@/stores/search-store";
 import { CollapsibleSection } from "./collapsible-section";
 import { FitnessPanel } from "./fitness-panel";
 
 // ---------------------------------------------------------------------------
-// FitnessSection
+// GoalsSection
 // ---------------------------------------------------------------------------
 
-export function FitnessSection(): React.JSX.Element {
+export function GoalsSection(): React.JSX.Element {
   const constraints = useFitnessStore((s) => s.constraints);
   const activePresetName = useFitnessStore((s) => s.activePresetName);
+  const searchStatus = useSearchStore((s) => s.status);
 
   const summary = buildSummary(constraints, activePresetName);
+  const isRunning = searchStatus === "running";
 
   return (
-    <CollapsibleSection title="Fitness" summary={summary} defaultOpen={false}>
-      <FitnessContent />
+    <CollapsibleSection
+      title="Goals"
+      summary={summary}
+      defaultOpen={false}
+      disabled={isRunning}
+      disabledReason="Search running..."
+    >
+      <GoalsContent />
     </CollapsibleSection>
   );
 }
@@ -75,12 +84,10 @@ function capitalize(s: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// FitnessContent — trimmed version without heading/summary
+// GoalsContent — trimmed version without heading/summary
 // ---------------------------------------------------------------------------
 
-function FitnessContent(): React.JSX.Element {
-  // Render FitnessPanel without wrapping div (it handles its own padding)
-  // The outer CollapsibleSection already provides padding
+function GoalsContent(): React.JSX.Element {
   return (
     <div className="-m-4">
       <FitnessPanel />

@@ -17,7 +17,7 @@ import type { EnhancementMode, GearPool, SearchResult, SoftConstraint } from "@/
 import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
-import { useSearchStore } from "@/stores/search-store";
+import { useSearchStore, type GAParams } from "@/stores/search-store";
 import type { WorkerRequest, WorkerResponse } from "@/workers/search-worker";
 
 // ---------------------------------------------------------------------------
@@ -134,6 +134,7 @@ interface LaunchConfig {
   readonly maxResults: number;
   readonly enhancementMode: EnhancementMode;
   readonly algorithm: Algorithm;
+  readonly gaParams: GAParams;
 }
 
 function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
@@ -146,6 +147,9 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
     options: {
       maxResults: config.maxResults,
       enhancementMode: config.enhancementMode,
+      populationSize: config.gaParams.populationSize,
+      generations: config.gaParams.generations,
+      mutationRate: config.gaParams.mutationRate,
     },
     algorithm: config.algorithm,
   };
@@ -170,6 +174,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const reset = useSearchStore((s) => s.reset);
   const enhancementMode = useSearchStore((s) => s.enhancementMode);
   const algorithm = useSearchStore((s) => s.algorithm);
+  const gaParams = useSearchStore((s) => s.gaParams);
   const constraints = useFitnessStore((s) => s.constraints);
 
   const eqIds = useGearPoolStore((s) => s.enabledEquipmentIds);
@@ -197,14 +202,14 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
     workerRef.current = launchWorker(
-      { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm },
+      { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm, gaParams },
       {
         onProgress: (c, t, b) => { setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b })); },
         onComplete: (r) => { setResults(r); workerRef.current = null; },
         onError: (m) => { setError(m); workerRef.current = null; },
       },
     );
-  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, startSearch, setResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, gaParams, startSearch, setResults, setError]);
 
   const stop = useCallback(() => {
     const w = workerRef.current;

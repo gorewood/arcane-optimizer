@@ -5,7 +5,7 @@ export { ResultsPanel } from "./results-panel";
 export { OptimizerPage } from "./optimizer-page";
 
 // Sub-components
-export { FitnessSection } from "./fitness-section";
+export { GoalsSection } from "./fitness-section";
 export { SearchBar } from "./search-bar";
 export { CollapsibleSection } from "./collapsible-section";
 

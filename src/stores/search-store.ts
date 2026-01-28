@@ -13,6 +13,12 @@ import type { EnhancementMode, SearchResult } from "@/models/types";
 export type SearchStatus = "idle" | "running" | "complete" | "error";
 export type Algorithm = "exhaustive" | "genetic";
 
+export interface GAParams {
+  populationSize: number;
+  generations: number;
+  mutationRate: number;
+}
+
 export interface SearchState {
   status: SearchStatus;
   progress: number;
@@ -20,6 +26,7 @@ export interface SearchState {
   error: string | null;
   algorithm: Algorithm;
   enhancementMode: EnhancementMode;
+  gaParams: GAParams;
 }
 
 export interface SearchActions {
@@ -30,11 +37,18 @@ export interface SearchActions {
   reset: () => void;
   setAlgorithm: (algorithm: Algorithm) => void;
   setEnhancementMode: (mode: EnhancementMode) => void;
+  setGAParams: (params: Partial<GAParams>) => void;
 }
 
 // ---------------------------------------------------------------------------
-// Store
+// Defaults
 // ---------------------------------------------------------------------------
+
+const DEFAULT_GA_PARAMS: GAParams = {
+  populationSize: 200,
+  generations: 1000,  // Increased from 500 for longer search
+  mutationRate: 0.15,
+};
 
 const INITIAL_STATE: SearchState = {
   status: "idle",
@@ -43,7 +57,12 @@ const INITIAL_STATE: SearchState = {
   error: null,
   algorithm: "exhaustive",
   enhancementMode: "budget-aware",
+  gaParams: DEFAULT_GA_PARAMS,
 };
+
+// ---------------------------------------------------------------------------
+// Store
+// ---------------------------------------------------------------------------
 
 export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
   ...INITIAL_STATE,
@@ -74,5 +93,9 @@ export const useSearchStore = create<SearchState & SearchActions>()((set) => ({
 
   setEnhancementMode: (mode: EnhancementMode): void => {
     set({ enhancementMode: mode });
+  },
+
+  setGAParams: (params: Partial<GAParams>): void => {
+    set((s) => ({ gaParams: { ...s.gaParams, ...params } }));
   },
 }));

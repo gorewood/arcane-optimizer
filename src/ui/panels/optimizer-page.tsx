@@ -13,7 +13,7 @@ import { useState } from "react";
 import { useSearchStore } from "@/stores/search-store";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useSearchWorker } from "@/ui/hooks/use-search-worker";
-import { FitnessSection } from "./fitness-section";
+import { GoalsSection } from "./fitness-section";
 import { SearchBar } from "./search-bar";
 import { BuildCard } from "./build-card";
 
@@ -28,7 +28,7 @@ export function OptimizerPage(): React.JSX.Element {
   return (
     <div className="space-y-4 p-4">
       {/* Collapsible fitness section */}
-      <FitnessSection />
+      <GoalsSection />
 
       {/* Search controls bar */}
       <SearchBar
