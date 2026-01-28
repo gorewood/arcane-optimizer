@@ -177,6 +177,7 @@ interface LoopState {
   population: EvaluatedIndividual[];
   bestScore: number;
   stagnation: number;
+  injections: number;
 }
 
 interface LoopConfig {
@@ -185,6 +186,13 @@ interface LoopConfig {
   readonly token: CancellationToken;
   readonly onProgress: ((checked: number, total: number, bestScore: number) => void) | undefined;
 }
+
+/** Max diversity injections before final stagnation exit. */
+const MAX_INJECTIONS = 2;
+/** Stagnation threshold that triggers diversity injection. */
+const INJECTION_THRESHOLD = 25;
+/** Stagnation threshold for final exit (after all injections used). */
+const STAGNATION_LIMIT = 50;
 
 async function runEvolutionLoop(
   config: LoopConfig,
@@ -198,11 +206,36 @@ async function runEvolutionLoop(
     updateStagnation(state);
     onProgress?.(gen + 1, generations, state.bestScore);
 
-    if (state.stagnation > 50) break;
+    if (shouldInjectDiversity(state)) {
+      injectDiversity(state, evolveParams);
+    } else if (state.stagnation > STAGNATION_LIMIT) {
+      break;
+    }
+
     if (gen % 10 === 0) {
       await new Promise<void>((r) => { setTimeout(r, 0); });
     }
   }
+}
+
+function shouldInjectDiversity(state: LoopState): boolean {
+  return state.stagnation > INJECTION_THRESHOLD
+    && state.injections < MAX_INJECTIONS;
+}
+
+function injectDiversity(state: LoopState, params: EvolveParams): void {
+  const { pool, constraints, fitness, populationSize } = params;
+  const sorted = [...state.population].sort((a, b) => b.score - a.score);
+  const keepCount = Math.floor(populationSize * 0.8);
+  const survivors = sorted.slice(0, keepCount);
+
+  const freshIndividuals = initPopulation(
+    pool, constraints, fitness, populationSize - keepCount,
+  );
+
+  state.population = [...survivors, ...freshIndividuals];
+  state.stagnation = 0;
+  state.injections++;
 }
 
 function updateStagnation(state: LoopState): void {
@@ -238,7 +271,7 @@ export class GeneticSearch implements SearchStrategy {
     const pool = buildIndexedPool(gearPool);
     const populationSize = options.populationSize ?? 200;
     const generations = options.generations ?? 500;
-    const mutationRate = options.mutationRate ?? 0.05;
+    const mutationRate = options.mutationRate ?? 0.15;
     const crossoverRate = options.crossoverRate ?? 0.8;
 
     const population = initPopulation(pool, constraints, fitness, populationSize);
@@ -250,6 +283,7 @@ export class GeneticSearch implements SearchStrategy {
       population,
       bestScore: population[0]?.score ?? -Infinity,
       stagnation: 0,
+      injections: 0,
     };
 
     await runEvolutionLoop(
