@@ -27,6 +27,7 @@ export {
 } from "./fitness";
 
 export { ExhaustiveSearch } from "./exhaustive";
+export { GeneticSearch } from "./genetic";
 
 export type { EnhancementMode, EnhancedLoadoutResult } from "./enhance";
 export { greedyAssignEnhancements, budgetAwareAssign } from "./enhance";

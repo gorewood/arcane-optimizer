@@ -1,5 +1,5 @@
 /**
- * Web Worker for running ExhaustiveSearch off the main thread.
+ * Web Worker for running search strategies off the main thread.
  *
  * Loaded via Vite's worker pattern:
  *   new Worker(new URL('./workers/search-worker.ts', import.meta.url), { type: 'module' })
@@ -18,6 +18,7 @@ import type {
 } from "@/models/types";
 
 import { ExhaustiveSearch } from "@/search/exhaustive";
+import { GeneticSearch } from "@/search/genetic";
 
 // ---------------------------------------------------------------------------
 // Message protocol types
@@ -31,6 +32,7 @@ export type WorkerRequest =
       readonly constraints: HardConstraints;
       readonly fitness: SoftConstraint[];
       readonly options: SearchOptions;
+      readonly algorithm?: "exhaustive" | "genetic" | undefined;
     }
   | { readonly type: "stop" };
 
@@ -55,10 +57,16 @@ export type WorkerResponse =
 // Worker implementation
 // ---------------------------------------------------------------------------
 
-let activeSearch: ExhaustiveSearch | null = null;
+let activeSearch: ExhaustiveSearch | GeneticSearch | null = null;
 
 function handleStart(msg: WorkerRequest & { type: "start" }): void {
-  activeSearch = new ExhaustiveSearch();
+  const algorithm = msg.algorithm ?? "exhaustive";
+
+  if (algorithm === "genetic") {
+    activeSearch = new GeneticSearch();
+  } else {
+    activeSearch = new ExhaustiveSearch();
+  }
 
   activeSearch.onProgress = (checked, total, bestScore) => {
     const response: WorkerResponse = {

@@ -8,7 +8,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -23,24 +22,14 @@ import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore } from "@/stores/search-store";
 import type { WorkerRequest, WorkerResponse } from "@/workers/search-worker";
-
-// ---------------------------------------------------------------------------
-// Progress state tracked locally (not in global store)
-// ---------------------------------------------------------------------------
-
-interface ProgressState {
-  readonly checked: number;
-  readonly total: number;
-  readonly bestScore: number;
-  readonly startTime: number;
-}
-
-const INITIAL_PROGRESS: ProgressState = {
-  checked: 0,
-  total: 0,
-  bestScore: 0,
-  startTime: 0,
-};
+import {
+  ErrorDisplay,
+  INITIAL_PROGRESS,
+  ProgressDisplay,
+  ResultsSummary,
+  WarningMessage,
+} from "./search-feedback";
+import type { ProgressState } from "./search-feedback";
 
 // ---------------------------------------------------------------------------
 // Validation
@@ -112,17 +101,9 @@ function createSearchWorker(cb: WorkerCallbacks): Worker {
   worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
     const msg = event.data;
     switch (msg.type) {
-      case "progress":
-        cb.onProgress(msg.checked, msg.total, msg.bestScore);
-        break;
-      case "complete":
-        cb.onComplete(msg.results);
-        worker.terminate();
-        break;
-      case "error":
-        cb.onError(msg.message);
-        worker.terminate();
-        break;
+      case "progress": cb.onProgress(msg.checked, msg.total, msg.bestScore); break;
+      case "complete": cb.onComplete(msg.results); worker.terminate(); break;
+      case "error": cb.onError(msg.message); worker.terminate(); break;
     }
   };
 
@@ -138,11 +119,14 @@ function createSearchWorker(cb: WorkerCallbacks): Worker {
 // Worker launch helper
 // ---------------------------------------------------------------------------
 
+type Algorithm = "exhaustive" | "genetic";
+
 interface LaunchConfig {
   readonly gearPool: GearPool;
   readonly fitness: readonly SoftConstraint[];
   readonly maxResults: number;
   readonly enhancementMode: EnhancementMode;
+  readonly algorithm: Algorithm;
 }
 
 function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
@@ -156,6 +140,7 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
       maxResults: config.maxResults,
       enhancementMode: config.enhancementMode,
     },
+    algorithm: config.algorithm,
   };
   worker.postMessage(request);
   return worker;
@@ -165,18 +150,17 @@ function launchWorker(config: LaunchConfig, cb: WorkerCallbacks): Worker {
 // useSearchWorker hook
 // ---------------------------------------------------------------------------
 
-interface WorkerControls {
-  readonly start: () => void;
-  readonly stop: () => void;
-}
-
 interface WorkerHookResult {
-  readonly controls: WorkerControls;
+  readonly controls: { readonly start: () => void; readonly stop: () => void };
   readonly progress: ProgressState;
   readonly warning: string | null;
 }
 
-function useSearchWorker(maxResults: number, enhancementMode: EnhancementMode): WorkerHookResult {
+function useSearchWorker(
+  maxResults: number,
+  enhancementMode: EnhancementMode,
+  algorithm: Algorithm,
+): WorkerHookResult {
   const startSearch = useSearchStore((s) => s.startSearch);
   const setResults = useSearchStore((s) => s.setResults);
   const setError = useSearchStore((s) => s.setError);
@@ -208,14 +192,14 @@ function useSearchWorker(maxResults: number, enhancementMode: EnhancementMode): 
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
     workerRef.current = launchWorker(
-      { gearPool, fitness: constraints, maxResults, enhancementMode },
+      { gearPool, fitness: constraints, maxResults, enhancementMode, algorithm },
       {
         onProgress: (c, t, b) => { setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b })); },
         onComplete: (r) => { setResults(r); workerRef.current = null; },
         onError: (m) => { setError(m); workerRef.current = null; },
       },
     );
-  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, startSearch, setResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, enhancementMode, algorithm, startSearch, setResults, setError]);
 
   const stop = useCallback(() => {
     const w = workerRef.current;
@@ -242,25 +226,19 @@ export function SearchPanel(): React.JSX.Element {
 
   const [maxResults, setMaxResults] = useState(10);
   const [enhancementMode, setEnhancementMode] = useState<EnhancementMode>("greedy");
-  const { controls, progress, warning } = useSearchWorker(maxResults, enhancementMode);
+  const [algorithm, setAlgorithm] = useState<Algorithm>("exhaustive");
+  const { controls, progress, warning } = useSearchWorker(maxResults, enhancementMode, algorithm);
 
   const canStart = status === "idle" || status === "complete" || status === "error";
 
   return (
     <div className="space-y-4 p-6">
       <h2 className="text-lg font-bold text-text-primary">Search Controls</h2>
-
       <MaxResultsSlider value={maxResults} onChange={setMaxResults} />
       <EnhancementModeSelect value={enhancementMode} onChange={setEnhancementMode} />
+      <AlgorithmSelect value={algorithm} onChange={setAlgorithm} />
       <Separator className="bg-border-subtle" />
-
-      <SearchButton
-        canStart={canStart}
-        isRunning={status === "running"}
-        onStart={controls.start}
-        onStop={controls.stop}
-      />
-
+      <SearchButton canStart={canStart} isRunning={status === "running"} onStart={controls.start} onStop={controls.stop} />
       {warning != null && <WarningMessage message={warning} />}
       {status === "running" && <ProgressDisplay progress={progress} />}
       {status === "error" && error != null && <ErrorDisplay message={error} />}
@@ -283,22 +261,12 @@ function MaxResultsSlider({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-accent-gold">
-          Max Results
-        </span>
-        <span className="text-sm font-stat text-text-primary">
-          {String(value)}
-        </span>
+        <span className="text-sm font-semibold text-accent-gold">Max Results</span>
+        <span className="text-sm font-stat text-text-primary">{String(value)}</span>
       </div>
       <Slider
-        min={5}
-        max={50}
-        step={5}
-        value={[value]}
-        onValueChange={(vals) => {
-          const first = vals[0];
-          if (first !== undefined) onChange(first);
-        }}
+        min={5} max={50} step={5} value={[value]}
+        onValueChange={(vals) => { const first = vals[0]; if (first !== undefined) onChange(first); }}
       />
       <div className="flex justify-between text-xs text-text-muted">
         <span>5</span>
@@ -327,26 +295,73 @@ function EnhancementModeSelect({
 }): React.JSX.Element {
   return (
     <div className="space-y-2">
-      <span className="text-sm font-semibold text-accent-gold">
-        Enhancement Mode
-      </span>
+      <span className="text-sm font-semibold text-accent-gold">Enhancement Mode</span>
       <div className="flex gap-2">
         {(["none", "greedy", "budget-aware"] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
-              value === mode
-                ? "border-accent-gold bg-accent-gold/10 text-accent-gold font-semibold"
-                : "border-border-default text-text-secondary hover:border-text-muted"
-            }`}
-            onClick={() => { onChange(mode); }}
-          >
+          <OptionButton key={mode} selected={value === mode} onClick={() => { onChange(mode); }}>
             {ENHANCEMENT_MODE_LABELS[mode]}
-          </button>
+          </OptionButton>
         ))}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AlgorithmSelect
+// ---------------------------------------------------------------------------
+
+const ALGORITHM_LABELS: Record<Algorithm, string> = {
+  exhaustive: "Exhaustive (recommended)",
+  genetic: "Genetic Algorithm",
+};
+
+function AlgorithmSelect({
+  value,
+  onChange,
+}: {
+  readonly value: Algorithm;
+  readonly onChange: (v: Algorithm) => void;
+}): React.JSX.Element {
+  return (
+    <div className="space-y-2">
+      <span className="text-sm font-semibold text-accent-gold">Algorithm</span>
+      <div className="flex gap-2">
+        {(["exhaustive", "genetic"] as const).map((algo) => (
+          <OptionButton key={algo} selected={value === algo} onClick={() => { onChange(algo); }}>
+            {ALGORITHM_LABELS[algo]}
+          </OptionButton>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared option button
+// ---------------------------------------------------------------------------
+
+function OptionButton({
+  selected,
+  onClick,
+  children,
+}: {
+  readonly selected: boolean;
+  readonly onClick: () => void;
+  readonly children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
+        selected
+          ? "border-accent-gold bg-accent-gold/10 text-accent-gold font-semibold"
+          : "border-border-default text-text-secondary hover:border-text-muted"
+      }`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -372,120 +387,9 @@ function SearchButton({
       </Button>
     );
   }
-
   return (
     <Button variant="default" className="w-full" disabled={!canStart} onClick={onStart}>
       Start Search
     </Button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// WarningMessage
-// ---------------------------------------------------------------------------
-
-function WarningMessage({ message }: { readonly message: string }): React.JSX.Element {
-  return (
-    <Card className="border-stat-warning/40 bg-stat-warning/5 p-4">
-      <p className="text-sm text-stat-warning">{message}</p>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// ProgressDisplay — uses interval for elapsed time to avoid impure render
-// ---------------------------------------------------------------------------
-
-function ProgressDisplay({
-  progress,
-}: {
-  readonly progress: ProgressState;
-}): React.JSX.Element {
-  const { checked, total, bestScore, startTime } = progress;
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setElapsed((Date.now() - startTime) / 1000);
-    }, 200);
-    return () => { clearInterval(id); };
-  }, [startTime]);
-
-  const pct = total > 0 ? Math.min((checked / total) * 100, 100) : 0;
-
-  return (
-    <div className="space-y-3">
-      <div className="stat-bar">
-        <div
-          className="stat-bar-fill bg-accent-gold"
-          style={{ width: `${String(pct)}%` }}
-        />
-      </div>
-      <div className="grid grid-cols-3 gap-2 text-center text-xs">
-        <ProgressStat label="Checked" value={`${String(checked)} / ${String(total)}`} />
-        <ProgressStat label="Elapsed" value={`${elapsed.toFixed(1)}s`} />
-        <ProgressStat label="Best Score" value={bestScore.toFixed(1)} />
-      </div>
-    </div>
-  );
-}
-
-function ProgressStat({
-  label,
-  value,
-}: {
-  readonly label: string;
-  readonly value: string;
-}): React.JSX.Element {
-  return (
-    <div>
-      <p className="text-text-muted">{label}</p>
-      <p className="font-stat text-text-primary">{value}</p>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// ErrorDisplay
-// ---------------------------------------------------------------------------
-
-function ErrorDisplay({ message }: { readonly message: string }): React.JSX.Element {
-  return (
-    <Card className="border-stat-negative/40 bg-stat-negative/5 p-4 space-y-2">
-      <p className="text-sm font-semibold text-stat-negative">Search Error</p>
-      <p className="text-sm text-text-secondary">{message}</p>
-      <p className="text-xs text-text-muted">
-        Try relaxing constraints or expanding the gear pool
-      </p>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// ResultsSummary
-// ---------------------------------------------------------------------------
-
-function ResultsSummary({
-  results,
-}: {
-  readonly results: readonly SearchResult[];
-}): React.JSX.Element {
-  const bestScore = results.length > 0 ? results[0]?.score ?? 0 : 0;
-
-  return (
-    <Card className="border-stat-positive/40 bg-stat-positive/5 p-4 space-y-1">
-      <p className="text-sm font-semibold text-stat-positive">Search Complete</p>
-      <p className="text-sm text-text-secondary">
-        Found{" "}
-        <span className="font-stat text-text-primary">{String(results.length)}</span>
-        {" "}result{results.length !== 1 ? "s" : ""}
-      </p>
-      {results.length > 0 && (
-        <p className="text-sm text-text-secondary">
-          Best score:{" "}
-          <span className="font-stat text-accent-gold">{bestScore.toFixed(1)}</span>
-        </p>
-      )}
-    </Card>
   );
 }
