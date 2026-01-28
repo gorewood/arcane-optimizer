@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GearPoolPanel } from "@/ui/panels";
+import { GearPoolPanel, FitnessPanel } from "@/ui/panels";
 import { useUIStore } from "@/stores/ui-store";
 import type { UIState } from "@/stores/ui-store";
 
@@ -106,6 +106,10 @@ function PanelContent({
 }): React.JSX.Element {
   if (panel === "gear") {
     return <GearPoolPanel />;
+  }
+
+  if (panel === "fitness") {
+    return <FitnessPanel />;
   }
 
   const title = PANEL_TITLES[panel];
