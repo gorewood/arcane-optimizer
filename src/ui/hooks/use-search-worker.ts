@@ -13,7 +13,8 @@ import {
   loadModifiers,
   loadGems,
 } from "@/data/loaders";
-import type { GearPool, SearchResult, SoftConstraint } from "@/models/types";
+import type { EquipmentPiece, GearPool, SearchResult, SoftConstraint } from "@/models/types";
+import { expandEquipment } from "@/search/expand-variants";
 import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
@@ -73,19 +74,26 @@ interface EnabledIds {
   readonly gems: ReadonlySet<string>;
 }
 
-function buildFilteredGearPool(ids: EnabledIds): GearPool {
+function buildFilteredGearPool(
+  ids: EnabledIds,
+  enabledVariants: ReadonlySet<string>,
+): GearPool {
   const allEquipment = loadEquipment();
   const enabled = allEquipment.filter((e) => ids.equipment.has(e.id));
 
+  // Expand equipment with variants into multiple candidates
+  const expanded = expandEquipment(enabled, enabledVariants);
+
+  // Filter by slot type
+  const isAccessory = (e: EquipmentPiece): boolean =>
+    e.slot === "accessory" ||
+    e.slot === "accessory-H" ||
+    e.slot === "accessory-A";
+
   return {
-    chestplates: enabled.filter((e) => e.slot === "chestplate"),
-    leggings: enabled.filter((e) => e.slot === "leggings"),
-    accessories: enabled.filter(
-      (e) =>
-        e.slot === "accessory" ||
-        e.slot === "accessory-H" ||
-        e.slot === "accessory-A",
-    ),
+    chestplates: expanded.filter((e) => e.slot === "chestplate"),
+    leggings: expanded.filter((e) => e.slot === "leggings"),
+    accessories: expanded.filter(isAccessory),
     enchantments: loadEnchantments().filter((e) => ids.enchantments.has(e.id)),
     modifiers: loadModifiers().filter((m) => ids.modifiers.has(m.id)),
     gems: loadGems().filter((g) => ids.gems.has(g.id)),
@@ -211,6 +219,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const algorithm = useSearchStore((s) => s.algorithm);
   const gaParams = useSearchStore((s) => s.gaParams);
   const constraints = useFitnessStore((s) => s.constraints);
+  const enabledVariants = useFitnessStore((s) => s.enabledVariants);
 
   const eqIds = useGearPoolStore((s) => s.enabledEquipmentIds);
   const enIds = useGearPoolStore((s) => s.enabledEnchantmentIds);
@@ -234,7 +243,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     setWarning(null);
 
     const ids: EnabledIds = { equipment: eqIds, enchantments: enIds, modifiers: modIds, gems: gemIds };
-    const gearPool = buildFilteredGearPool(ids);
+    const gearPool = buildFilteredGearPool(ids, enabledVariants);
     startSearch();
     setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
 
@@ -254,7 +263,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
         { onProgress: onProg, onComplete: setResults, onError: setError },
       );
     }
-  }, [eqIds, enIds, modIds, gemIds, constraints, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;

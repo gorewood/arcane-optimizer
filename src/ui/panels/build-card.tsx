@@ -7,6 +7,8 @@
 
 import { useState, useCallback } from "react";
 import type {
+  EquipmentPiece,
+  ExpandedEquipment,
   SearchResult,
   SoftConstraint,
   StatName,
@@ -78,6 +80,26 @@ const STAT_MAX_VALUES: Record<StatName, number> = {
 };
 
 // ---------------------------------------------------------------------------
+// Variant helpers
+// ---------------------------------------------------------------------------
+
+function getAppliedVariant(piece: EquipmentPiece | ExpandedEquipment): string | undefined {
+  if ("appliedVariant" in piece) {
+    return piece.appliedVariant;
+  }
+  return undefined;
+}
+
+function formatPieceName(piece: EquipmentPiece | ExpandedEquipment): string {
+  const variant = getAppliedVariant(piece);
+  if (variant != null) {
+    const capitalizedVariant = variant.charAt(0).toUpperCase() + variant.slice(1);
+    return `${piece.name} (${capitalizedVariant})`;
+  }
+  return piece.name;
+}
+
+// ---------------------------------------------------------------------------
 // Clipboard formatting
 // ---------------------------------------------------------------------------
 
@@ -86,7 +108,7 @@ function formatBuildText(rank: number, result: SearchResult): string {
 
   for (const slot of result.loadout.slots) {
     const label = SLOT_LABELS[slot.piece.slot];
-    const parts = [slot.piece.name];
+    const parts = [formatPieceName(slot.piece)];
     if (slot.enchantment != null) parts.push(`[${slot.enchantment.name}]`);
     if (slot.modifier != null) parts.push(`(${slot.modifier.name})`);
     if (slot.gems.length > 0) {
@@ -268,25 +290,31 @@ function CompactSlotList({
 }): React.JSX.Element {
   return (
     <div className="px-3 pb-2 space-y-0.5">
-      {result.loadout.slots.map((slot, i) => (
-        <div key={i} className="flex items-center gap-1.5 text-[11px]">
-          <Badge variant="outline" className="px-1.5 py-0 text-[9px] shrink-0 w-10 justify-center">
-            {SLOT_LABELS[slot.piece.slot]}
-          </Badge>
-          <span className="text-text-primary">{slot.piece.name}</span>
-          {slot.enchantment != null && (
-            <span className="text-accent-amber">[{slot.enchantment.name}]</span>
-          )}
-          {slot.modifier != null && (
-            <span className="text-text-muted">({slot.modifier.name})</span>
-          )}
-          {slot.gems.length > 0 && (
-            <span className="text-accent-ember">
-              {slot.gems.map((g) => g.name).join(", ")}
-            </span>
-          )}
-        </div>
-      ))}
+      {result.loadout.slots.map((slot, i) => {
+        const variant = getAppliedVariant(slot.piece);
+        return (
+          <div key={i} className="flex items-center gap-1.5 text-[11px]">
+            <Badge variant="outline" className="px-1.5 py-0 text-[9px] shrink-0 w-10 justify-center">
+              {SLOT_LABELS[slot.piece.slot]}
+            </Badge>
+            <span className="text-text-primary">{slot.piece.name}</span>
+            {variant != null && (
+              <span className="text-accent-teal capitalize">({variant})</span>
+            )}
+            {slot.enchantment != null && (
+              <span className="text-accent-amber">[{slot.enchantment.name}]</span>
+            )}
+            {slot.modifier != null && (
+              <span className="text-text-muted">({slot.modifier.name})</span>
+            )}
+            {slot.gems.length > 0 && (
+              <span className="text-accent-ember">
+                {slot.gems.map((g) => g.name).join(", ")}
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

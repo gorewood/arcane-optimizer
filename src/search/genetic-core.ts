@@ -3,6 +3,8 @@
  */
 
 import type {
+  EquipmentPiece,
+  ExpandedEquipment,
   GearPool,
   HardConstraints,
   SearchOptions,
@@ -20,6 +22,16 @@ import {
 } from "./genetic-chromosome";
 import type { EvaluatedIndividual, IndexedPool } from "./genetic-chromosome";
 import { repair } from "./genetic-repair";
+
+/**
+ * Safely extract appliedVariant from a piece that may be ExpandedEquipment.
+ */
+function getAppliedVariant(piece: EquipmentPiece | ExpandedEquipment): string {
+  if ("appliedVariant" in piece) {
+    return piece.appliedVariant ?? "";
+  }
+  return "";
+}
 
 // ---------------------------------------------------------------------------
 // Cancellation token
@@ -70,9 +82,11 @@ export function extractResults(
   const results: SearchResult[] = [];
 
   for (const ind of sorted) {
-    const key = ind.loadout.slots.map((s) =>
-      `${s.piece.id}:${s.enchantment?.id ?? ""}:${s.modifier?.id ?? ""}`,
-    ).join(",");
+    // Include appliedVariant in key to distinguish variant candidates
+    const key = ind.loadout.slots.map((s) => {
+      const variantKey = getAppliedVariant(s.piece);
+      return `${s.piece.id}:${variantKey}:${s.enchantment?.id ?? ""}:${s.modifier?.id ?? ""}`;
+    }).join(",");
     if (seen.has(key)) continue;
     seen.add(key);
     results.push({

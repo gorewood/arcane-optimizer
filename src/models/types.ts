@@ -57,6 +57,19 @@ export interface EquipmentPiece {
   readonly tags: readonly string[];
   /** When true (or absent), only the Atlantean modifier is allowed. */
   readonly atlanteanOnly?: boolean | undefined;
+  /** Optional variant stats keyed by variant name (e.g., "fire", "ice"). */
+  readonly variants?: Readonly<Record<string, Partial<Stats>>> | undefined;
+}
+
+/**
+ * An equipment piece expanded for search with pre-computed effective stats.
+ * Each item with N matching variants becomes N+1 candidates (base + each variant).
+ */
+export interface ExpandedEquipment extends EquipmentPiece {
+  /** The variant applied to this candidate, if any. */
+  readonly appliedVariant?: string | undefined;
+  /** Pre-computed stats: baseStats + variant stats (if applied). */
+  readonly effectiveStats: Partial<Stats>;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,6 +108,19 @@ export interface Gem {
   readonly tier: 1 | 2;
   readonly stats: Partial<Stats>;
 }
+
+// ---------------------------------------------------------------------------
+// Variant Types
+// ---------------------------------------------------------------------------
+
+/** A group of variant names (e.g., all magic types). */
+export interface VariantTypeEntry {
+  readonly label: string;
+  readonly variants: readonly string[];
+}
+
+/** Map of variant type ID to its entry (e.g., "magic" -> { label, variants }). */
+export type VariantTypes = Readonly<Record<string, VariantTypeEntry>>;
 
 // ---------------------------------------------------------------------------
 // Loadout

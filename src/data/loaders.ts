@@ -11,6 +11,7 @@ import type {
   GearPool,
   Gem,
   Modifier,
+  VariantTypes,
 } from "@/models/types";
 
 import {
@@ -18,12 +19,14 @@ import {
   equipmentArraySchema,
   gemArraySchema,
   modifierArraySchema,
+  variantTypesSchema,
 } from "./schemas";
 
 import rawEquipment from "./equipment.json";
 import rawEnchantments from "./enchantments.json";
 import rawModifiers from "./modifiers.json";
 import rawGems from "./gems.json";
+import rawVariantTypes from "./variant-types.json";
 
 // ---------------------------------------------------------------------------
 // Individual loaders
@@ -47,6 +50,11 @@ export function loadModifiers(): readonly Modifier[] {
 /** Validate and return all gems. */
 export function loadGems(): readonly Gem[] {
   return gemArraySchema.parse(rawGems);
+}
+
+/** Validate and return variant type groupings. */
+export function loadVariantTypes(): VariantTypes {
+  return variantTypesSchema.parse(rawVariantTypes);
 }
 
 // ---------------------------------------------------------------------------

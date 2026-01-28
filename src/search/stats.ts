@@ -13,7 +13,7 @@ import type {
   Stats,
 } from "@/models/types";
 
-import { computeSlotStats } from "./constraints";
+import { computeSlotStats, getPieceStats } from "./constraints";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -97,8 +97,8 @@ function hasNonZeroStat(block: Partial<Stats>, name: StatName): boolean {
  * Get which stats are valid Atlantean bonus targets for a slot.
  *
  * A stat is valid if it appears in the modifier's `possibleBonusStats`
- * AND is NOT already applied (non-zero) by the base item, any socketed
- * gem, or the enchantment.
+ * AND is NOT already applied (non-zero) by the piece's effective stats
+ * (base + variant), any socketed gem, or the enchantment.
  */
 export function getValidAtlanteanChoices(
   slot: EquippedSlot,
@@ -106,8 +106,9 @@ export function getValidAtlanteanChoices(
   const config = slot.modifier?.atlanteanBehavior;
   if (config == null) return [];
 
+  const pieceStats = getPieceStats(slot.piece);
   return config.possibleBonusStats.filter((stat) => {
-    if (hasNonZeroStat(slot.piece.baseStats, stat)) return false;
+    if (hasNonZeroStat(pieceStats, stat)) return false;
     if (slot.enchantment != null && hasNonZeroStat(slot.enchantment.stats, stat)) return false;
     return !slot.gems.some((gem) => hasNonZeroStat(gem.stats, stat));
   });

@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { PresetSelector } from "./preset-selector";
 import { ConstraintRow } from "./constraint-row";
+import { VariantSelector } from "./variant-selector";
 
 // ---------------------------------------------------------------------------
 // Default constraint for the "Add" button
@@ -42,6 +43,10 @@ export function FitnessPanel(): React.JSX.Element {
         onLoadPreset={loadPreset}
         onClear={clearPreset}
       />
+
+      <Separator className="bg-border-subtle" />
+
+      <VariantSelector />
 
       <Separator className="bg-border-subtle" />
 

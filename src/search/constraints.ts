@@ -6,7 +6,9 @@
  */
 
 import type {
+  EquipmentPiece,
   EquippedSlot,
+  ExpandedEquipment,
   HardConstraints,
   Loadout,
   StatName,
@@ -62,10 +64,22 @@ const STAT_NAMES: readonly StatName[] = [
   "resistance",
 ];
 
+/**
+ * Get the effective stats for a piece, handling both regular and expanded equipment.
+ * For ExpandedEquipment, uses pre-computed effectiveStats (base + variant).
+ * For regular EquipmentPiece, uses baseStats.
+ */
+export function getPieceStats(piece: EquipmentPiece | ExpandedEquipment): Partial<Stats> {
+  if ("effectiveStats" in piece) {
+    return piece.effectiveStats;
+  }
+  return piece.baseStats;
+}
+
 /** Sum all stats contributed by a single equipped slot. */
 export function computeSlotStats(slot: EquippedSlot): Partial<Stats> {
   const sources: readonly Partial<Stats>[] = [
-    slot.piece.baseStats,
+    getPieceStats(slot.piece),
     ...(slot.enchantment ? [slot.enchantment.stats] : []),
     ...(slot.modifier ? [slot.modifier.stats] : []),
     ...slot.gems.map((g) => g.stats),

@@ -53,6 +53,7 @@ export const equipmentSchema = z
     maxLevel: z.number().int().positive(),
     tags: z.array(z.string()).readonly(),
     atlanteanOnly: z.boolean().optional(),
+    variants: z.record(z.string(), partialStatsSchema).readonly().optional(),
   })
   .readonly();
 
@@ -116,3 +117,18 @@ export const gemSchema = z
   .readonly();
 
 export const gemArraySchema = z.array(gemSchema).readonly();
+
+// ---------------------------------------------------------------------------
+// Variant Types
+// ---------------------------------------------------------------------------
+
+const variantTypeEntrySchema = z
+  .object({
+    label: z.string(),
+    variants: z.array(z.string()).readonly(),
+  })
+  .readonly();
+
+export const variantTypesSchema = z
+  .record(z.string(), variantTypeEntrySchema)
+  .readonly();

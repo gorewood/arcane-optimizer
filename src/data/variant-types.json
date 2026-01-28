@@ -1,0 +1,27 @@
+{
+  "magic": {
+    "label": "Magic",
+    "variants": [
+      "acid",
+      "ash",
+      "crystal",
+      "earth",
+      "explosion",
+      "fire",
+      "glass",
+      "ice",
+      "light",
+      "lightning",
+      "magma",
+      "metal",
+      "plasma",
+      "poison",
+      "sand",
+      "shadow",
+      "snow",
+      "water",
+      "wind",
+      "wood"
+    ]
+  }
+}

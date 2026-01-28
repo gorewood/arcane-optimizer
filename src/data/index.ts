@@ -8,6 +8,7 @@ export {
   loadGearPool,
   loadGems,
   loadModifiers,
+  loadVariantTypes,
 } from "./loaders";
 
 export {
@@ -19,4 +20,5 @@ export {
   gemSchema,
   modifierArraySchema,
   modifierSchema,
+  variantTypesSchema,
 } from "./schemas";

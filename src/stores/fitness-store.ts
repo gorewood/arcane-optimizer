@@ -1,11 +1,12 @@
 /**
  * FitnessStore — manages the fitness function configuration
- * (soft constraints and presets). Persisted to localStorage.
+ * (soft constraints, presets, and enabled variants). Persisted to localStorage.
  */
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { SoftConstraint } from "@/models/types";
+import { loadVariantTypes } from "@/data/loaders";
 
 // ---------------------------------------------------------------------------
 // State & Action Types
@@ -14,6 +15,7 @@ import type { SoftConstraint } from "@/models/types";
 export interface FitnessState {
   constraints: readonly SoftConstraint[];
   activePresetName: string | null;
+  enabledVariants: ReadonlySet<string>;
 }
 
 export interface FitnessActions {
@@ -23,6 +25,10 @@ export interface FitnessActions {
   updateConstraint: (index: number, constraint: SoftConstraint) => void;
   loadPreset: (name: string, constraints: readonly SoftConstraint[]) => void;
   clearPreset: () => void;
+  toggleVariant: (variant: string) => void;
+  setEnabledVariants: (variants: ReadonlySet<string>) => void;
+  enableAllVariantsOfType: (typeId: string) => void;
+  disableAllVariantsOfType: (typeId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -41,30 +47,110 @@ const DEFAULT_MAGE_CONSTRAINTS: SoftConstraint[] = [
 const INITIAL_STATE: FitnessState = {
   constraints: DEFAULT_MAGE_CONSTRAINTS,
   activePresetName: "Mage Build",
+  enabledVariants: new Set<string>(),
 };
 
 // ---------------------------------------------------------------------------
-// Migration — v0 → v1: change insanity "exactly" to "atMost"
+// Serialized Shape (Sets -> Arrays for JSON)
 // ---------------------------------------------------------------------------
 
-function migrateFitnessState(persisted: unknown): FitnessState {
+interface FitnessSerialized {
+  constraints: SoftConstraint[];
+  activePresetName: string | null;
+  enabledVariants: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Custom storage adapter: Set <-> Array conversion
+// ---------------------------------------------------------------------------
+
+function createSetStorage(): ReturnType<typeof createJSONStorage<FitnessState>> {
+  return createJSONStorage<FitnessState>(() => localStorage, {
+    replacer: (_key: string, value: unknown): unknown => {
+      if (value instanceof Set) {
+        return [...value];
+      }
+      return value;
+    },
+    reviver: (_key: string, value: unknown): unknown => value,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Migration — v1 → v2: add enabledVariants
+// ---------------------------------------------------------------------------
+
+function migrateFitnessState(
+  persisted: unknown,
+  version: number,
+): FitnessState {
   if (persisted == null || typeof persisted !== "object") {
     return INITIAL_STATE;
   }
-  const raw = persisted as Partial<FitnessState>;
+
+  const raw = persisted as Partial<FitnessSerialized>;
+
+  // Handle constraints
+  let constraints: readonly SoftConstraint[];
   if (!Array.isArray(raw.constraints)) {
-    return INITIAL_STATE;
+    constraints = INITIAL_STATE.constraints;
+  } else {
+    constraints = raw.constraints.map((c: SoftConstraint) => {
+      // v0 → v1: change insanity "exactly" to "atMost"
+      if (c.stat === "insanity" && c.type === "exactly") {
+        return { ...c, type: "atMost" as const };
+      }
+      return c;
+    });
   }
-  const constraints = raw.constraints.map((c: SoftConstraint) => {
-    if (c.stat === "insanity" && c.type === "exactly") {
-      return { ...c, type: "atMost" as const };
-    }
-    return c;
-  });
+
+  // Handle enabledVariants (new in v2)
+  let enabledVariants: ReadonlySet<string>;
+  if (version < 2 || !Array.isArray(raw.enabledVariants)) {
+    enabledVariants = new Set<string>();
+  } else {
+    enabledVariants = new Set<string>(raw.enabledVariants);
+  }
+
   return {
     constraints,
     activePresetName: raw.activePresetName ?? null,
+    enabledVariants,
   };
+}
+
+function mergePersistedState(
+  persisted: unknown,
+  current: FitnessState & FitnessActions,
+): FitnessState & FitnessActions {
+  if (persisted == null || typeof persisted !== "object") {
+    return current;
+  }
+  const raw = persisted as Partial<FitnessSerialized>;
+  return {
+    ...current,
+    constraints: Array.isArray(raw.constraints)
+      ? raw.constraints
+      : current.constraints,
+    activePresetName: raw.activePresetName ?? current.activePresetName,
+    enabledVariants: Array.isArray(raw.enabledVariants)
+      ? new Set<string>(raw.enabledVariants)
+      : current.enabledVariants,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function toggleSetItem(set: ReadonlySet<string>, item: string): ReadonlySet<string> {
+  const next = new Set(set);
+  if (next.has(item)) {
+    next.delete(item);
+  } else {
+    next.add(item);
+  }
+  return next;
 }
 
 // ---------------------------------------------------------------------------
@@ -108,10 +194,46 @@ export const useFitnessStore = create<FitnessState & FitnessActions>()(
       clearPreset: (): void => {
         set({ constraints: [], activePresetName: null });
       },
+
+      toggleVariant: (variant: string): void => {
+        set((s) => ({ enabledVariants: toggleSetItem(s.enabledVariants, variant) }));
+      },
+
+      setEnabledVariants: (variants: ReadonlySet<string>): void => {
+        set({ enabledVariants: variants });
+      },
+
+      enableAllVariantsOfType: (typeId: string): void => {
+        const variantTypes = loadVariantTypes();
+        const typeEntry = variantTypes[typeId];
+        if (!typeEntry) return;
+        set((s) => {
+          const next = new Set(s.enabledVariants);
+          for (const v of typeEntry.variants) {
+            next.add(v);
+          }
+          return { enabledVariants: next };
+        });
+      },
+
+      disableAllVariantsOfType: (typeId: string): void => {
+        const variantTypes = loadVariantTypes();
+        const typeEntry = variantTypes[typeId];
+        if (!typeEntry) return;
+        set((s) => {
+          const next = new Set(s.enabledVariants);
+          for (const v of typeEntry.variants) {
+            next.delete(v);
+          }
+          return { enabledVariants: next };
+        });
+      },
     }),
     {
       name: "ao-fitness",
-      version: 1,
+      version: 2,
+      storage: createSetStorage(),
+      merge: mergePersistedState,
       migrate: migrateFitnessState,
     },
   ),
