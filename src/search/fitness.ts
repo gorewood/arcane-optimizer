@@ -37,7 +37,8 @@ function scoreAtLeast(val: number, weight: number, value: number): number {
   if (val < value) {
     return -((value - val) * weight * 10);
   }
-  return (val - value) * weight * 0.1;
+  // Cap bonus at 1× weight to prevent dominating other constraints
+  return Math.min((val - value) * weight * 0.1, weight);
 }
 
 function scoreAtMost(
@@ -63,8 +64,25 @@ function scoreTarget(
   return -(Math.abs(val - value) * weight);
 }
 
-function scoreExactly(val: number, _weight: number, value: number): number | null {
-  return val === value ? 0 : null;
+function scoreBetween(
+  val: number,
+  weight: number,
+  min: number,
+  max: number | undefined,
+): number {
+  const effectiveMax = max ?? Infinity;
+  if (val < min) {
+    return -((min - val) * weight * 10);
+  }
+  if (val > effectiveMax) {
+    return -((val - effectiveMax) * weight * 10);
+  }
+  return 0;
+}
+
+function scoreExactly(val: number, weight: number, value: number): number | null {
+  // Use weight as small tie-breaker bonus on match
+  return val === value ? weight * 0.01 : null;
 }
 
 /** Dispatch table mapping constraint type to its scorer. */
@@ -73,6 +91,7 @@ const SCORERS: Readonly<Record<ConstraintType, ConstraintScorer>> = {
   maximize: scoreMaximize,
   atLeast: scoreAtLeast,
   atMost: scoreAtMost,
+  between: scoreBetween,
   target: scoreTarget,
   exactly: scoreExactly,
 };

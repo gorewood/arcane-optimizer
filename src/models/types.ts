@@ -1,5 +1,5 @@
 /**
- * Domain types for the AO Armor Optimizer.
+ * Domain types for the Arcane Odyssey Armor Optimizer.
  *
  * Pure type definitions — no runtime code. All stat names use current
  * in-game names as of Full Release v1.20.
@@ -142,6 +142,7 @@ export type ConstraintType =
   | "maximize"
   | "atLeast"
   | "atMost"
+  | "between"
   | "target"
   | "exactly";
 

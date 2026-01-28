@@ -5,6 +5,7 @@
  * and a remove button. Compact game-UI feel.
  */
 
+import { useCallback } from "react";
 import type { ConstraintType, SoftConstraint, StatName } from "@/models/types";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -26,6 +27,7 @@ const CONSTRAINT_TYPES: readonly ConstraintType[] = [
   "maximize",
   "atLeast",
   "atMost",
+  "between",
   "target",
   "exactly",
 ];
@@ -34,12 +36,13 @@ const CONSTRAINT_TYPES: readonly ConstraintType[] = [
 const VALUE_TYPES = new Set<ConstraintType>([
   "atLeast",
   "atMost",
+  "between",
   "target",
   "exactly",
 ]);
 
-/** Constraint types that support a hardCap input. */
-const HARDCAP_TYPES = new Set<ConstraintType>(["atMost", "target"]);
+/** Constraint types that support a hardCap input (as max for between). */
+const HARDCAP_TYPES = new Set<ConstraintType>(["atMost", "between", "target"]);
 
 /** Human-readable labels for constraint types. */
 const TYPE_LABELS: Readonly<Record<ConstraintType, string>> = {
@@ -47,8 +50,15 @@ const TYPE_LABELS: Readonly<Record<ConstraintType, string>> = {
   maximize: "max",
   atLeast: "\u2265",
   atMost: "\u2264",
+  between: "\u2194",
   target: "\u2248",
   exactly: "=",
+};
+
+/** Stat-specific max values (game limits). */
+const STAT_MAX_VALUES: Readonly<Partial<Record<StatName, number>>> = {
+  insanity: 5,
+  warding: 6,
 };
 
 // ---------------------------------------------------------------------------
@@ -63,54 +73,56 @@ interface ConstraintRowProps {
 }
 
 // ---------------------------------------------------------------------------
+// Linked value/hardCap handlers
+// ---------------------------------------------------------------------------
+
+function useValueHandler(
+  constraint: SoftConstraint,
+  index: number,
+  onUpdate: (i: number, c: SoftConstraint) => void,
+  statMax: number | undefined,
+): (v: number) => void {
+  return useCallback((v: number) => {
+    const clamped = statMax != null ? Math.min(v, statMax) : v;
+    let newHardCap = constraint.hardCap;
+    if (newHardCap != null && newHardCap < clamped) newHardCap = clamped;
+    onUpdate(index, { ...constraint, value: clamped, hardCap: newHardCap });
+  }, [constraint, index, onUpdate, statMax]);
+}
+
+function useHardCapHandler(
+  constraint: SoftConstraint,
+  index: number,
+  onUpdate: (i: number, c: SoftConstraint) => void,
+  statMax: number | undefined,
+): (hc: number | undefined) => void {
+  return useCallback((hc: number | undefined) => {
+    const clamped = hc != null && statMax != null ? Math.min(hc, statMax) : hc;
+    let newValue = constraint.value ?? 0;
+    if (clamped != null && newValue > clamped) newValue = clamped;
+    onUpdate(index, { ...constraint, value: newValue, hardCap: clamped });
+  }, [constraint, index, onUpdate, statMax]);
+}
+
+// ---------------------------------------------------------------------------
 // ConstraintRow
 // ---------------------------------------------------------------------------
 
-export function ConstraintRow({
-  constraint,
-  index,
-  onUpdate,
-  onRemove,
-}: ConstraintRowProps): React.JSX.Element {
+export function ConstraintRow({ constraint, index, onUpdate, onRemove }: ConstraintRowProps): React.JSX.Element {
   const showValue = VALUE_TYPES.has(constraint.type);
   const showHardCap = HARDCAP_TYPES.has(constraint.type);
+  const isBetween = constraint.type === "between";
+  const statMax = STAT_MAX_VALUES[constraint.stat];
+  const handleValue = useValueHandler(constraint, index, onUpdate, statMax);
+  const handleHardCap = useHardCapHandler(constraint, index, onUpdate, statMax);
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
-      <StatSelect
-        value={constraint.stat}
-        onChange={(stat) => {
-          onUpdate(index, { ...constraint, stat });
-        }}
-      />
-      <TypeSelect
-        value={constraint.type}
-        onChange={(type) => {
-          handleTypeChange(constraint, index, type, onUpdate);
-        }}
-      />
-      {showValue && (
-        <ValueInput
-          value={constraint.value ?? 0}
-          onChange={(v) => {
-            onUpdate(index, { ...constraint, value: v });
-          }}
-        />
-      )}
-      <WeightControl
-        weight={constraint.weight}
-        onChange={(w) => {
-          onUpdate(index, { ...constraint, weight: w });
-        }}
-      />
-      {showHardCap && (
-        <HardCapInput
-          value={constraint.hardCap}
-          onChange={(hc) => {
-            onUpdate(index, { ...constraint, hardCap: hc });
-          }}
-        />
-      )}
+      <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
+      <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
+      {showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} label={isBetween ? "min" : undefined} max={statMax} />}
+      <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
+      {showHardCap && <HardCapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "max" : "cap"} max={statMax} />}
       <RemoveButton index={index} onRemove={onRemove} />
     </div>
   );
@@ -248,23 +260,38 @@ function TypeSelect({
 function ValueInput({
   value,
   onChange,
+  label,
+  max,
 }: {
   readonly value: number;
   readonly onChange: (value: number) => void;
+  readonly label?: string | undefined;
+  readonly max?: number | undefined;
 }): React.JSX.Element {
   return (
-    <input
-      type="number"
-      value={value}
-      onChange={(e) => {
-        const parsed = Number(e.target.value);
-        if (!Number.isNaN(parsed)) {
-          onChange(parsed);
-        }
-      }}
-      className="w-16 rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold"
-      title="Target value"
-    />
+    <div className="flex items-center gap-0.5">
+      {label != null && <span className="text-[10px] text-text-muted shrink-0">{label}:</span>}
+      <input
+        type="number"
+        value={value}
+        min={0}
+        max={max}
+        onChange={(e) => {
+          const parsed = Number(e.target.value);
+          if (!Number.isNaN(parsed) && parsed >= 0) {
+            onChange(max != null ? Math.min(parsed, max) : parsed);
+          }
+        }}
+        onBlur={() => {
+          // Normalize: round to integer, clamp to valid range
+          const normalized = Math.max(0, Math.round(value));
+          const clamped = max != null ? Math.min(normalized, max) : normalized;
+          if (clamped !== value) onChange(clamped);
+        }}
+        className="w-16 rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold"
+        title={max != null ? `Value (max: ${String(max)})` : "Target value"}
+      />
+    </div>
   );
 }
 
@@ -306,17 +333,23 @@ function WeightControl({
 function HardCapInput({
   value,
   onChange,
+  label = "cap",
+  max,
 }: {
   readonly value: number | undefined;
   readonly onChange: (value: number | undefined) => void;
+  readonly label?: string;
+  readonly max?: number | undefined;
 }): React.JSX.Element {
   return (
     <div className="flex items-center gap-0.5">
-      <span className="text-[10px] text-text-muted shrink-0">cap:</span>
+      <span className="text-[10px] text-text-muted shrink-0">{label}:</span>
       <input
         type="number"
         value={value ?? ""}
         placeholder="--"
+        min={0}
+        max={max}
         onChange={(e) => {
           const raw = e.target.value;
           if (raw === "") {
@@ -324,12 +357,19 @@ function HardCapInput({
             return;
           }
           const parsed = Number(raw);
-          if (!Number.isNaN(parsed)) {
-            onChange(parsed);
+          if (!Number.isNaN(parsed) && parsed >= 0) {
+            onChange(max != null ? Math.min(parsed, max) : parsed);
           }
         }}
+        onBlur={() => {
+          // Normalize: round to integer, clamp to valid range
+          if (value == null) return;
+          const normalized = Math.max(0, Math.round(value));
+          const clamped = max != null ? Math.min(normalized, max) : normalized;
+          if (clamped !== value) onChange(clamped);
+        }}
         className="w-14 rounded-md border border-border-default bg-bg-elevated px-1.5 py-1 text-xs font-stat text-text-primary text-center focus:border-accent-gold focus:outline-none focus:ring-1 focus:ring-accent-gold placeholder:text-text-muted"
-        title="Hard cap (optional)"
+        title={max != null ? `${label} (max: ${String(max)})` : `${label} (optional)`}
       />
     </div>
   );

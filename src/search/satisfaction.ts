@@ -42,16 +42,28 @@ function checkTarget(value: number, target: number): SatisfactionLevel {
   return "negative";
 }
 
+/** Check between constraint: green in range, yellow within 10% of bounds, red otherwise. */
+function checkBetween(value: number, min: number, max: number): SatisfactionLevel {
+  if (value >= min && value <= max) return "positive";
+  const belowMin = min - value;
+  const aboveMax = value - max;
+  const margin = (max - min) * 0.1 || 1;
+  if (belowMin > 0 && belowMin <= margin) return "warning";
+  if (aboveMax > 0 && aboveMax <= margin) return "warning";
+  return "negative";
+}
+
 /** Dispatch table for constraint type -> satisfaction checker. */
 const CHECKERS: Record<
   ConstraintType,
-  (value: number, target: number | undefined) => SatisfactionLevel
+  (value: number, target: number | undefined, hardCap: number | undefined) => SatisfactionLevel
 > = {
   maximize: () => "positive",
   minimize: () => "positive",
   exactly: (v, t) => (v === t ? "positive" : "negative"),
   atLeast: (v, t) => (t != null ? checkAtLeast(v, t) : "neutral"),
   atMost: (v, t) => (t != null ? checkAtMost(v, t) : "neutral"),
+  between: (v, t, hc) => (t != null && hc != null ? checkBetween(v, t, hc) : "neutral"),
   target: (v, t) => (t != null ? checkTarget(v, t) : "neutral"),
 };
 
@@ -64,7 +76,7 @@ export function getSatisfaction(
   value: number,
   constraint: SoftConstraint,
 ): SatisfactionLevel {
-  return CHECKERS[constraint.type](value, constraint.value);
+  return CHECKERS[constraint.type](value, constraint.value, constraint.hardCap);
 }
 
 /** CSS class names for each satisfaction level. */

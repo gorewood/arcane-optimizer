@@ -49,12 +49,12 @@ describe("computeFitness", () => {
     expect(score).toBe(-200_000);
   });
 
-  // 5. atLeast above threshold — small bonus
+  // 5. atLeast above threshold — small bonus (capped at 1× weight)
   it("atLeast above threshold applies small bonus", () => {
     const c: SoftConstraint[] = [{ stat: "defense", type: "atLeast", value: 700, weight: 100 }];
     const score = computeFitness(makeStats({ defense: 800 }), c);
-    // Bonus: (800 - 700) * 100 * 0.1 = 1000
-    expect(score).toBe(1000);
+    // Bonus: min((800 - 700) * 100 * 0.1, 100) = min(1000, 100) = 100 (capped)
+    expect(score).toBe(100);
   });
 
   // 6. atLeast exactly at threshold — zero penalty, zero bonus
@@ -120,11 +120,35 @@ describe("computeFitness", () => {
     expect(score).toBe(-Infinity);
   });
 
-  // 14. exactly matching — no disqualification
-  it("exactly matching value returns 0", () => {
+  // 14. between — in range returns 0
+  it("between in range returns 0", () => {
+    const c: SoftConstraint[] = [{ stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 }];
+    const score = computeFitness(makeStats({ dexterity: 300 }), c);
+    expect(score).toBe(0);
+  });
+
+  // 15. between — below range applies penalty
+  it("between below range applies penalty", () => {
+    const c: SoftConstraint[] = [{ stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 }];
+    const score = computeFitness(makeStats({ dexterity: 260 }), c);
+    // Penalty: -(280 - 260) * 80 * 10 = -16000
+    expect(score).toBe(-16000);
+  });
+
+  // 16. between — above range applies penalty
+  it("between above range applies penalty", () => {
+    const c: SoftConstraint[] = [{ stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 }];
+    const score = computeFitness(makeStats({ dexterity: 350 }), c);
+    // Penalty: -(350 - 320) * 80 * 10 = -24000
+    expect(score).toBe(-24000);
+  });
+
+  // 17. exactly matching — small bonus (weight-based tie-breaker)
+  it("exactly matching value returns small bonus", () => {
     const c: SoftConstraint[] = [{ stat: "insanity", type: "exactly", value: 1, weight: 100 }];
     const score = computeFitness(makeStats({ insanity: 1 }), c);
-    expect(score).toBe(0);
+    // Bonus: weight * 0.01 = 1
+    expect(score).toBe(1);
   });
 
   // 15. exactly not matching — returns -Infinity
@@ -159,8 +183,9 @@ describe("computeFitness", () => {
   it("undefined value defaults to 0", () => {
     const c: SoftConstraint[] = [{ stat: "insanity", type: "exactly", weight: 100 }];
     // value is undefined, defaults to 0 — stats.insanity is 0 too
+    // exactly match returns weight * 0.01 = 1
     const score = computeFitness(makeStats(), c);
-    expect(score).toBe(0);
+    expect(score).toBe(1);
   });
 });
 
@@ -181,6 +206,7 @@ describe("FITNESS_PRESETS", () => {
       "maximize",
       "atLeast",
       "atMost",
+      "between",
       "target",
       "exactly",
     ]);
@@ -197,7 +223,7 @@ describe("FITNESS_PRESETS", () => {
         expect(c.weight).toBeGreaterThan(0);
 
         // Constraints with value-dependent types should have value
-        if (c.type === "atLeast" || c.type === "atMost" || c.type === "target" || c.type === "exactly") {
+        if (c.type === "atLeast" || c.type === "atMost" || c.type === "between" || c.type === "target" || c.type === "exactly") {
           expect(typeof c.value).toBe("number");
         }
 

@@ -252,15 +252,15 @@ describe("integration: fitness scoring", () => {
 
     const score = computeFitness(stats, magePreset);
 
-    // Manual computation per constraint:
-    // 1. defense atLeast 700 w=100: above by 100 -> (100)*100*0.1 = 1000
-    // 2. power atLeast 100 w=90:   above by 20 -> (20)*90*0.1 = 180
+    // Manual computation per constraint (atLeast bonus capped at 1× weight):
+    // 1. defense atLeast 700 w=100: above by 100 -> min(1000, 100) = 100 (capped)
+    // 2. power atLeast 100 w=90:   above by 20 -> min(180, 90) = 90 (capped)
     // 3. dexterity target 300 w=80 hardCap=330: at target -> 0
     // 4. size target 300 w=70 hardCap=330: at target -> 0
     // 5. insanity atMost 1 w=100: 1 <= 1 -> 0
     // 6. drawback atMost 2 w=100: 1 <= 2 -> 0
-    // Total = 1180
-    expect(score).toBe(1180);
+    // Total = 190
+    expect(score).toBe(190);
   });
 
   it("disqualifies loadout failing exactly constraint", () => {
@@ -272,7 +272,8 @@ describe("integration: fitness scoring", () => {
     expect(computeFitness(stats, exactConstraints)).toBe(-Infinity);
 
     const matching = makeStats({ insanity: 1 });
-    expect(computeFitness(matching, exactConstraints)).toBe(0);
+    // exactly match returns weight * 0.01 = 1
+    expect(computeFitness(matching, exactConstraints)).toBe(1);
   });
 });
 
@@ -605,15 +606,15 @@ describe("integration: full pipeline round-trip", () => {
 
     const score = computeFitness(stats, magePreset);
 
-    // Manual computation:
-    // defense atLeast 700 w=100: above by 50 -> 50*100*0.1 = 500
-    // power atLeast 100 w=90:   above by 10 -> 10*90*0.1 = 90
+    // Manual computation (atLeast bonus capped at 1× weight):
+    // defense atLeast 700 w=100: above by 50 -> min(50*100*0.1, 100) = 100 (capped)
+    // power atLeast 100 w=90:   above by 10 -> min(10*90*0.1, 90) = 90
     // dexterity target 300 w=80: at target -> 0
     // size target 300 w=70: at target -> 0
     // insanity atMost 1 w=100: 1 <= 1 -> 0
     // drawback atMost 2 w=100: 0 <= 2 -> 0
-    // Total = 590
-    expect(score).toBe(590);
+    // Total = 190
+    expect(score).toBe(190);
   });
 
   it("STAT_NAMES constant has all 12 entries", () => {
