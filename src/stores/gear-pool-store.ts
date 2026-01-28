@@ -5,6 +5,12 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  loadEquipment,
+  loadEnchantments,
+  loadModifiers,
+  loadGems,
+} from "@/data/loaders";
 
 // ---------------------------------------------------------------------------
 // State & Action Types
@@ -102,15 +108,30 @@ function mergePersistedState(
 }
 
 // ---------------------------------------------------------------------------
+// All-IDs helper (for default state + Enable All)
+// ---------------------------------------------------------------------------
+
+function buildAllEnabledState(): GearPoolState {
+  return {
+    enabledEquipmentIds: new Set(loadEquipment().map((e) => e.id)),
+    enabledEnchantmentIds: new Set(loadEnchantments().map((e) => e.id)),
+    enabledModifierIds: new Set(loadModifiers().map((m) => m.id)),
+    enabledGemIds: new Set(loadGems().map((g) => g.id)),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
 
-const INITIAL_STATE: GearPoolState = {
+const EMPTY_STATE: GearPoolState = {
   enabledEquipmentIds: new Set<string>(),
   enabledEnchantmentIds: new Set<string>(),
   enabledModifierIds: new Set<string>(),
   enabledGemIds: new Set<string>(),
 };
+
+const INITIAL_STATE: GearPoolState = buildAllEnabledState();
 
 export const useGearPoolStore = create<GearPoolState & GearPoolActions>()(
   persist(
@@ -134,13 +155,11 @@ export const useGearPoolStore = create<GearPoolState & GearPoolActions>()(
       },
 
       enableAll: (): void => {
-        // Re-enables all by resetting to empty sets — callers should
-        // populate from available data. This clears the "disabled" state.
-        set(INITIAL_STATE);
+        set(buildAllEnabledState());
       },
 
       disableAll: (): void => {
-        set(INITIAL_STATE);
+        set(EMPTY_STATE);
       },
 
       enableByTag: (
