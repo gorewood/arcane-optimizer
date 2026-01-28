@@ -2,18 +2,30 @@
  * StatBar — mini progress bar with target reference mark.
  *
  * Shows a horizontal bar representing a stat value relative to a max,
- * with an optional target marker line.
+ * with an optional target marker line. Uses group-based colors when no
+ * constraint is active, or satisfaction colors when there's a constraint.
  */
 
 import type { SoftConstraint, StatName } from "@/models/types";
 import { getSatisfaction, SATISFACTION_BG_CLASSES } from "@/search/satisfaction";
 import { STAT_LABELS } from "./stat-indicator";
 
+// Group-based bar colors (used when no constraint is set)
+type StatGroup = "combat" | "scaling" | "risk" | "defensive";
+
+const GROUP_BAR_COLORS: Record<StatGroup, string> = {
+  combat: "bg-accent-ember",     // Red-orange for power/defense
+  scaling: "bg-accent-gold",     // Gold for scaling stats
+  risk: "bg-accent-purple",      // Purple for risk stats
+  defensive: "bg-accent-teal",   // Teal for defensive stats
+};
+
 interface StatBarProps {
   readonly stat: StatName;
   readonly value: number;
   readonly max: number;
   readonly constraint?: SoftConstraint | undefined;
+  readonly group?: StatGroup | undefined;
 }
 
 export function StatBar({
@@ -21,10 +33,16 @@ export function StatBar({
   value,
   max,
   constraint,
+  group,
 }: StatBarProps): React.JSX.Element {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   const level = constraint != null ? getSatisfaction(value, constraint) : "neutral";
-  const barColor = SATISFACTION_BG_CLASSES[level];
+  // Use satisfaction colors when there's an active constraint, otherwise use group colors
+  const barColor = constraint != null
+    ? SATISFACTION_BG_CLASSES[level]
+    : group != null
+      ? GROUP_BAR_COLORS[group]
+      : "bg-accent-gold";
   const label = STAT_LABELS[stat];
 
   // Calculate target marker position if constraint has a target value

@@ -44,21 +44,22 @@ const COLLAPSED_STATS: readonly StatName[] = [
   "insanity",
 ];
 
-// Stats to show bars for in expanded view (all stats)
-const EXPANDED_STATS: readonly StatName[] = [
-  "power",
-  "defense",
-  "size",
-  "dexterity",
-  "range",
-  "haste",
-  "insanity",
-  "warding",
-  "drawback",
-  "regeneration",
-  "pierce",
-  "resistance",
-];
+// Stats grouped for expanded view display
+type StatGroup = "combat" | "scaling" | "risk" | "defensive";
+
+interface StatGroupConfig {
+  readonly label: string;
+  readonly stats: readonly StatName[];
+}
+
+const STAT_GROUPS: Record<StatGroup, StatGroupConfig> = {
+  combat: { label: "Combat", stats: ["power", "defense"] },
+  scaling: { label: "Scaling", stats: ["size", "dexterity", "range", "haste"] },
+  risk: { label: "Risk", stats: ["insanity", "warding", "drawback"] },
+  defensive: { label: "Defensive", stats: ["regeneration", "pierce", "resistance"] },
+};
+
+const STAT_GROUP_ORDER: readonly StatGroup[] = ["combat", "scaling", "risk", "defensive"];
 
 // Max values for stat bars (approximate game maximums)
 const STAT_MAX_VALUES: Record<StatName, number> = {
@@ -303,21 +304,30 @@ function ExpandedContent({
 }): React.JSX.Element {
   return (
     <div className="px-3 py-3 space-y-4">
-      {/* Stat bars */}
+      {/* Stat bars - grouped in 4 columns */}
       <div>
         <h4 className="text-xs font-semibold text-accent-gold mb-2">
           Total Stats
         </h4>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          {EXPANDED_STATS.map((stat) => (
-            <StatBar
-              key={stat}
-              stat={stat}
-              value={result.stats[stat]}
-              max={STAT_MAX_VALUES[stat]}
-              constraint={constraintMap.get(stat)}
-            />
-          ))}
+        <div className="grid grid-cols-4 gap-x-3 gap-y-1">
+          {STAT_GROUP_ORDER.map((groupKey) => {
+            const group = STAT_GROUPS[groupKey];
+            return (
+              <div key={groupKey} className="space-y-1">
+                <span className="text-[10px] font-medium text-text-muted">{group.label}</span>
+                {group.stats.map((stat) => (
+                  <StatBar
+                    key={stat}
+                    stat={stat}
+                    value={result.stats[stat]}
+                    max={STAT_MAX_VALUES[stat]}
+                    constraint={constraintMap.get(stat)}
+                    group={groupKey}
+                  />
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
 

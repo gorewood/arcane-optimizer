@@ -40,7 +40,10 @@ export function SlotContributionTable({
   loadout,
   atlanteanChoices,
 }: SlotContributionTableProps): React.JSX.Element {
-  const [expandedSlots, setExpandedSlots] = useState<ReadonlySet<number>>(new Set());
+  // Start with all slots expanded by default
+  const [expandedSlots, setExpandedSlots] = useState<ReadonlySet<number>>(
+    () => new Set([0, 1, 2, 3, 4]),
+  );
 
   const toggleSlot = (index: number): void => {
     setExpandedSlots((prev) => {
