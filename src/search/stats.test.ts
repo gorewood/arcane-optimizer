@@ -88,7 +88,7 @@ function makeAtlanteanModifier(
   return makeModifier({
     id: "atlantean",
     name: "Atlantean",
-    stats: { insanity: 1 },
+    stats: {},
     atlanteanBehavior: {
       insanity: 1,
       possibleBonusStats,

@@ -297,14 +297,14 @@ describe("budgetAwareAssign", () => {
 
     const constraints: HardConstraints = {
       ...DEFAULT_HARD_CONSTRAINTS,
-      maxNetInsanity: 1, // only 1 atlantean allowed
+      maxUnwardedInsanity: 1, // tolerate at most 1 insanity without warding
     };
 
     const result = budgetAwareAssign(loadout, pool, constraints, fitness);
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
-    // Should not use more than 1 atlantean (net insanity <= 1)
-    expect(stats.insanity).toBeLessThanOrEqual(1);
+    // Insanity must be <= max(warding, 1)
+    expect(stats.insanity).toBeLessThanOrEqual(Math.max(stats.warding, 1));
   });
 
   it("respects drawback budget", () => {

@@ -425,7 +425,6 @@ export function budgetAwareAssign(
   fitness: readonly SoftConstraint[],
 ): EnhancedLoadoutResult {
   const state = initSlotState(loadout);
-  let remainingInsanity = hardConstraints.maxNetInsanity;
   let remainingDrawback = hardConstraints.maxDrawback;
 
   for (let i = 0; i < state.slots.length; i++) {
@@ -437,10 +436,9 @@ export function budgetAwareAssign(
     const otherStats = subtractStats(state.runningTotal, contribution);
     const best = findBestBudgetSlot({
       slot, pool, hardConstraints, otherSlotStats: otherStats, fitness,
-    }, remainingInsanity, remainingDrawback);
+    }, state.runningTotal, remainingDrawback);
 
     updateSlotState(state, i, best);
-    remainingInsanity -= candidateNetInsanity(best);
     remainingDrawback -= candidateDrawback(best);
   }
 
@@ -453,7 +451,7 @@ export function budgetAwareAssign(
 
 function findBestBudgetSlot(
   params: FindBestParams,
-  insanityBudget: number,
+  currentStats: Stats,
   drawbackBudget: number,
 ): SlotCandidate {
   const { slot, pool, hardConstraints, otherSlotStats, fitness } = params;
@@ -471,7 +469,7 @@ function findBestBudgetSlot(
     for (const mod of [undefined, ...applicableMods]) {
       if (!isAtlanteanCompatible(ench, mod, hardConstraints)) continue;
       const candidate = evaluateEnchantModPair(ctx, ench, mod);
-      if (candidateNetInsanity(candidate) > insanityBudget) continue;
+      if (!insanityWithinBudget(candidate, currentStats, hardConstraints)) continue;
       if (candidateDrawback(candidate) > drawbackBudget) continue;
       if (candidate.score > best.score) best = candidate;
     }
@@ -498,13 +496,30 @@ function sumStatFromSources(
   return total;
 }
 
-function candidateNetInsanity(c: SlotCandidate): number {
+function candidateInsanity(c: SlotCandidate): number {
   let insanity = sumStatFromSources("insanity", c.enchantment, c.modifier, c.gems);
   if (c.modifier?.atlanteanBehavior != null) {
     insanity += c.modifier.atlanteanBehavior.insanity;
   }
-  const warding = sumStatFromSources("warding", c.enchantment, c.modifier, c.gems);
-  return insanity - warding;
+  return insanity;
+}
+
+function candidateWarding(c: SlotCandidate): number {
+  return sumStatFromSources("warding", c.enchantment, c.modifier, c.gems);
+}
+
+/**
+ * Check whether adding this candidate keeps insanity within safe bounds.
+ * Game rule: insanity <= max(warding, maxUnwardedInsanity).
+ */
+function insanityWithinBudget(
+  c: SlotCandidate,
+  currentStats: Stats,
+  hardConstraints: HardConstraints,
+): boolean {
+  const newInsanity = currentStats.insanity + candidateInsanity(c);
+  const newWarding = currentStats.warding + candidateWarding(c);
+  return newInsanity <= Math.max(newWarding, hardConstraints.maxUnwardedInsanity);
 }
 
 function candidateDrawback(c: SlotCandidate): number {

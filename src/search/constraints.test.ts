@@ -302,10 +302,10 @@ describe("validateLoadout", () => {
     });
   });
 
-  // ---- Rule 8: Net insanity ----
+  // ---- Rule 8: Insanity / warding ----
 
-  describe("net insanity", () => {
-    it("rejects when net insanity exceeds limit", () => {
+  describe("insanity constraint", () => {
+    it("rejects insanity exceeding warding and tolerable level", () => {
       const loadout = makeLoadout([
         makeSlot({
           piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 3 } }),
@@ -315,12 +315,13 @@ describe("validateLoadout", () => {
         makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
         makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
       ]);
+      // insanity 3 > max(warding 0, tolerable 1)
       const result = validateLoadout(loadout, defaults);
       expect(result.valid).toBe(false);
-      expect(result.violations.some((v) => v.rule === "net-insanity")).toBe(true);
+      expect(result.violations.some((v) => v.rule === "insanity")).toBe(true);
     });
 
-    it("passes when insanity exactly at limit", () => {
+    it("passes when insanity at tolerable level without warding", () => {
       const loadout = makeLoadout([
         makeSlot({
           piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 1 } }),
@@ -330,23 +331,40 @@ describe("validateLoadout", () => {
         makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
         makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
       ]);
+      // insanity 1 <= max(warding 0, tolerable 1) = 1
       const result = validateLoadout(loadout, defaults);
-      expect(result.violations.some((v) => v.rule === "net-insanity")).toBe(false);
+      expect(result.violations.some((v) => v.rule === "insanity")).toBe(false);
     });
 
-    it("warding offsets insanity", () => {
+    it("passes when warding covers insanity", () => {
       const loadout = makeLoadout([
         makeSlot({
-          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 3, warding: 2 } }),
+          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 3, warding: 3 } }),
         }),
         makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
         makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
         makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
         makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
       ]);
+      // insanity 3 <= max(warding 3, tolerable 1) = 3
       const result = validateLoadout(loadout, defaults);
-      // net = 3 - 2 = 1, which equals the limit
-      expect(result.violations.some((v) => v.rule === "net-insanity")).toBe(false);
+      expect(result.violations.some((v) => v.rule === "insanity")).toBe(false);
+    });
+
+    it("rejects when insanity exceeds warding by 1 (above tolerable)", () => {
+      const loadout = makeLoadout([
+        makeSlot({
+          piece: makeEquipment({ id: "c1", slot: "chestplate", baseStats: { insanity: 4, warding: 3 } }),
+        }),
+        makeSlot({ piece: makeEquipment({ id: "l1", slot: "leggings" }) }),
+        makeSlot({ piece: makeEquipment({ id: "a1", slot: "accessory" }) }),
+        makeSlot({ piece: makeEquipment({ id: "a2", slot: "accessory-H" }) }),
+        makeSlot({ piece: makeEquipment({ id: "a3", slot: "accessory-A" }) }),
+      ]);
+      // insanity 4 > max(warding 3, tolerable 1) = 3 — NOT safe
+      const result = validateLoadout(loadout, defaults);
+      expect(result.valid).toBe(false);
+      expect(result.violations.some((v) => v.rule === "insanity")).toBe(true);
     });
   });
 
@@ -408,8 +426,8 @@ describe("validateLoadout", () => {
       expect(rules.has("helmet-limit")).toBe(true);
       // gem-count (3 gems, 2 sockets)
       expect(rules.has("gem-count")).toBe(true);
-      // net-insanity (5 > 1)
-      expect(rules.has("net-insanity")).toBe(true);
+      // insanity (5 > max(0, 1))
+      expect(rules.has("insanity")).toBe(true);
       // drawback-cap (5 > 2)
       expect(rules.has("drawback-cap")).toBe(true);
       expect(result.violations.length).toBeGreaterThanOrEqual(6);

@@ -39,7 +39,7 @@ export const DEFAULT_HARD_CONSTRAINTS: HardConstraints = {
   maxAmuletAccessories: 1,
   totalAccessories: 3,
   atlanteanIncompatibleWith: ["virtuous"],
-  maxNetInsanity: 1,
+  maxUnwardedInsanity: 1,
   maxDrawback: 2,
   noDuplicateItems: true,
 };
@@ -71,6 +71,10 @@ export function computeSlotStats(slot: EquippedSlot): Partial<Stats> {
     ...(slot.enchantment ? [slot.enchantment.stats] : []),
     ...(slot.modifier ? [slot.modifier.stats] : []),
     ...slot.gems.map((g) => g.stats),
+    // Atlantean modifier contributes insanity as a real stat
+    ...(slot.modifier?.atlanteanBehavior != null
+      ? [{ insanity: slot.modifier.atlanteanBehavior.insanity } as Partial<Stats>]
+      : []),
   ];
   return sumStatBlocks(sources);
 }
@@ -220,17 +224,26 @@ function checkGemCount(
   return violations;
 }
 
-/** Rule 8: Net insanity (insanity - warding) within limit. */
-function checkNetInsanity(
+/**
+ * Rule 8: Insanity must be covered by warding or be within tolerable level.
+ *
+ * Game mechanic: warding >= insanity fully negates effects.
+ * Insanity at or below `maxUnwardedInsanity` (default 1) is tolerable without warding.
+ * Constraint: insanity <= max(warding, maxUnwardedInsanity).
+ */
+function checkInsanity(
   loadout: Loadout,
   constraints: HardConstraints,
 ): readonly ConstraintViolation[] {
   const totals = sumAllSlotStats(loadout);
   const insanity = totals.insanity ?? 0;
   const warding = totals.warding ?? 0;
-  const net = insanity - warding;
-  if (net > constraints.maxNetInsanity) {
-    return [violation("net-insanity", `Net insanity ${String(net)} exceeds max ${String(constraints.maxNetInsanity)}`)];
+  const limit = Math.max(warding, constraints.maxUnwardedInsanity);
+  if (insanity > limit) {
+    return [violation(
+      "insanity",
+      `Insanity ${String(insanity)} exceeds warding ${String(warding)} (max unguarded: ${String(constraints.maxUnwardedInsanity)})`,
+    )];
   }
   return [];
 }
@@ -273,7 +286,7 @@ export function validateLoadout(
     ...checkAtlanteanConflict(loadout, constraints),
     ...checkSingleEnchantment(loadout),
     ...checkGemCount(loadout),
-    ...checkNetInsanity(loadout, constraints),
+    ...checkInsanity(loadout, constraints),
     ...checkDrawbackCap(loadout, constraints),
   ];
   return { valid: violations.length === 0, violations };

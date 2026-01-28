@@ -170,8 +170,10 @@ describe("diagnostic: real data produces results", () => {
 
     for (const r of results) {
       const stats = r.stats;
-      const netInsanity = stats.insanity - stats.warding;
-      expect(netInsanity).toBeLessThanOrEqual(constraints.maxNetInsanity);
+      // Insanity must be covered by warding or be within tolerable level
+      expect(stats.insanity).toBeLessThanOrEqual(
+        Math.max(stats.warding, constraints.maxUnwardedInsanity),
+      );
       expect(stats.drawback).toBeLessThanOrEqual(constraints.maxDrawback);
     }
   });

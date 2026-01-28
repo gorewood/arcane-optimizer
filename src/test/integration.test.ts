@@ -436,7 +436,7 @@ describe("integration: atlantean modifiers", () => {
   const atlanteanMod: Modifier = {
     id: "atl-1",
     name: "Atlantean",
-    stats: { insanity: 1 },
+    stats: {},
     atlanteanBehavior: {
       insanity: 1,
       possibleBonusStats: ["power", "defense", "size", "dexterity"],
@@ -514,7 +514,7 @@ describe("integration: atlantean modifiers", () => {
 
     expect(stats.defense).toBe(100);
     expect(stats.size).toBe(38); // ATLANTEAN_BONUS_VALUES.size
-    expect(stats.insanity).toBe(1); // from atlantean modifier stats
+    expect(stats.insanity).toBe(1); // from atlantean modifier behavior
   });
 });
 
