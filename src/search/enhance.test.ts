@@ -57,11 +57,11 @@ function makeLoadout(pieces: [EquipmentPiece, EquipmentPiece, EquipmentPiece, Eq
   };
 }
 
-const CHEST = makeEquipment({ id: "c1", name: "Chest", slot: "chestplate", baseStats: { defense: 200 } });
-const LEGS = makeEquipment({ id: "l1", name: "Legs", slot: "leggings", baseStats: { defense: 150 } });
-const ACC1 = makeEquipment({ id: "a1", name: "Ring", slot: "accessory", baseStats: { defense: 30 } });
-const ACC2 = makeEquipment({ id: "a2", name: "Helm", slot: "accessory-H", baseStats: { defense: 40 } });
-const ACC3 = makeEquipment({ id: "a3", name: "Amul", slot: "accessory-A", baseStats: { power: 8 } });
+const CHEST = makeEquipment({ id: "c1", name: "Chest", slot: "chestplate", baseStats: { defense: 200 }, atlanteanOnly: false });
+const LEGS = makeEquipment({ id: "l1", name: "Legs", slot: "leggings", baseStats: { defense: 150 }, atlanteanOnly: false });
+const ACC1 = makeEquipment({ id: "a1", name: "Ring", slot: "accessory", baseStats: { defense: 30 }, atlanteanOnly: false });
+const ACC2 = makeEquipment({ id: "a2", name: "Helm", slot: "accessory-H", baseStats: { defense: 40 }, atlanteanOnly: false });
+const ACC3 = makeEquipment({ id: "a3", name: "Amul", slot: "accessory-A", baseStats: { power: 8 }, atlanteanOnly: false });
 
 const HARD_ENCHANT: Enchantment = {
   id: "hard", name: "Hard", tier: 1, applicableTo: ["armor"], stats: { defense: 50 },
@@ -191,7 +191,7 @@ describe("greedyAssignEnhancements", () => {
   });
 });
 
-describe("set-piece modifier constraint", () => {
+describe("atlanteanOnly modifier constraint", () => {
   const ATLANTEAN: Modifier = {
     id: "atlantean", name: "Atlantean", stats: {},
     atlanteanBehavior: {
@@ -214,14 +214,14 @@ describe("set-piece modifier constraint", () => {
   });
   const NONSET_ACC = makeEquipment({
     id: "ns-a", name: "Arcsphere", slot: "accessory",
-    baseStats: { power: 10 },
+    baseStats: { power: 10 }, atlanteanOnly: false,
   });
   const NONSET_AMULET = makeEquipment({
     id: "ns-am", name: "Amulet", slot: "accessory-A",
-    baseStats: { power: 8 },
+    baseStats: { power: 8 }, atlanteanOnly: false,
   });
 
-  it("set pieces only receive atlantean modifier, not regular modifiers", () => {
+  it("atlanteanOnly pieces only receive atlantean modifier", () => {
     const loadout = makeLoadout([SET_CHEST, SET_LEGS, SET_ACC, NONSET_ACC, NONSET_AMULET]);
     const pool: GearPool = {
       chestplates: [SET_CHEST], leggings: [SET_LEGS],
@@ -245,7 +245,7 @@ describe("set-piece modifier constraint", () => {
     }
   });
 
-  it("non-set accessories can receive any modifier", () => {
+  it("atlanteanOnly:false accessories can receive any modifier", () => {
     const loadout = makeLoadout([SET_CHEST, SET_LEGS, SET_ACC, NONSET_ACC, NONSET_AMULET]);
     const pool: GearPool = {
       chestplates: [SET_CHEST], leggings: [SET_LEGS],

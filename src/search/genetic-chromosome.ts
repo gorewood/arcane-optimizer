@@ -105,7 +105,7 @@ function pickRandomModIdx(
   piece: EquipmentPiece | undefined,
   pool: IndexedPool,
 ): number {
-  if (piece?.setName != null) {
+  if (piece?.atlanteanOnly !== false) {
     const valid = pool.setModifierIndices;
     if (valid.length === 0) return -1;
     const r = randInt(valid.length + 1) - 1;
@@ -135,8 +135,8 @@ function resolveSlot(
   const mIdx = chromo.modIndices[slotIdx] ?? -1;
   const enchantment = eIdx >= 0 ? enchPool[eIdx] : undefined;
   const rawModifier = mIdx >= 0 ? pool.modifiers[mIdx] : undefined;
-  // Set pieces can only have the Atlantean modifier
-  const modifier = (piece.setName != null && rawModifier?.atlanteanBehavior == null)
+  // Atlantean-only pieces cannot have regular modifiers
+  const modifier = (piece.atlanteanOnly !== false && rawModifier?.atlanteanBehavior == null)
     ? undefined
     : rawModifier;
 
@@ -447,7 +447,7 @@ function repairAccessories(chromo: Chromosome, pool: IndexedPool): void {
 
 function repairSetModifier(chromo: Chromosome, i: number, pool: IndexedPool): void {
   const piece = getPieceForSlot(chromo, i, pool);
-  if (piece?.setName == null) return;
+  if (piece?.atlanteanOnly === false) return;
   const modIdx = chromo.modIndices[i] ?? -1;
   if (modIdx < 0) return;
   const mod = pool.modifiers[modIdx];

@@ -65,7 +65,7 @@ function getApplicableModifiers(
   piece: EquipmentPiece,
   modifiers: readonly Modifier[],
 ): readonly Modifier[] {
-  if (piece.setName != null) {
+  if (piece.atlanteanOnly !== false) {
     return modifiers.filter((m) => m.atlanteanBehavior != null);
   }
   return modifiers;

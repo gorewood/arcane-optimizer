@@ -55,6 +55,8 @@ export interface EquipmentPiece {
   readonly socketCount: number;
   readonly maxLevel: number;
   readonly tags: readonly string[];
+  /** When true (or absent), only the Atlantean modifier is allowed. */
+  readonly atlanteanOnly?: boolean | undefined;
 }
 
 // ---------------------------------------------------------------------------

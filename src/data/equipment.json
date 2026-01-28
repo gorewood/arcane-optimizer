@@ -4,363 +4,557 @@
     "name": "Sunken Iron Helmet",
     "setName": "Sunken Iron",
     "slot": "accessory-H",
-    "baseStats": { "defense": 247, "size": 28 },
+    "baseStats": {
+      "defense": 247,
+      "size": 28
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["sunken"]
+    "tags": [
+      "sunken"
+    ]
   },
   {
     "id": "sunken-iron-armor",
     "name": "Sunken Iron Armor",
     "setName": "Sunken Iron",
     "slot": "chestplate",
-    "baseStats": { "defense": 330, "size": 38 },
+    "baseStats": {
+      "defense": 330,
+      "size": 38
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["sunken"]
+    "tags": [
+      "sunken"
+    ]
   },
   {
     "id": "sunken-iron-greaves",
     "name": "Sunken Iron Greaves",
     "setName": "Sunken Iron",
     "slot": "leggings",
-    "baseStats": { "defense": 247, "size": 28 },
+    "baseStats": {
+      "defense": 247,
+      "size": 28
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["sunken"]
+    "tags": [
+      "sunken"
+    ]
   },
   {
     "id": "sunken-warrior-helmet",
     "name": "Sunken Warrior Helmet",
     "setName": "Sunken Warrior",
     "slot": "accessory-H",
-    "baseStats": { "defense": 247, "dexterity": 28 },
+    "baseStats": {
+      "defense": 247,
+      "dexterity": 28
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["sunken"]
+    "tags": [
+      "sunken"
+    ]
   },
   {
     "id": "sunken-warrior-armor",
     "name": "Sunken Warrior Armor",
     "setName": "Sunken Warrior",
     "slot": "chestplate",
-    "baseStats": { "defense": 330, "dexterity": 38 },
+    "baseStats": {
+      "defense": 330,
+      "dexterity": 38
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["sunken"]
+    "tags": [
+      "sunken"
+    ]
   },
   {
     "id": "sunken-warrior-greaves",
     "name": "Sunken Warrior Greaves",
     "setName": "Sunken Warrior",
     "slot": "leggings",
-    "baseStats": { "defense": 247, "dexterity": 28 },
+    "baseStats": {
+      "defense": 247,
+      "dexterity": 28
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["sunken"]
+    "tags": [
+      "sunken"
+    ]
   },
   {
     "id": "vatrachos-helmet",
     "name": "Vatrachos Helmet",
     "setName": "Vatrachos",
     "slot": "accessory-H",
-    "baseStats": { "power": 9, "defense": 181, "drawback": 1 },
+    "baseStats": {
+      "power": 9,
+      "defense": 181,
+      "drawback": 1
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "boss-drop"
+    ]
   },
   {
     "id": "vatrachos-cape",
     "name": "Vatrachos Cape",
     "setName": "Vatrachos",
     "slot": "accessory",
-    "baseStats": { "power": 6, "defense": 136, "drawback": 1 },
+    "baseStats": {
+      "power": 6,
+      "defense": 136,
+      "drawback": 1
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "vatrachos-armor",
     "name": "Vatrachos Armor",
     "setName": "Vatrachos",
     "slot": "chestplate",
-    "baseStats": { "power": 12, "defense": 242, "drawback": 1 },
+    "baseStats": {
+      "power": 12,
+      "defense": 242,
+      "drawback": 1
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "vatrachos-boots",
     "name": "Vatrachos Boots",
     "setName": "Vatrachos",
     "slot": "leggings",
-    "baseStats": { "power": 9, "defense": 181, "drawback": 1 },
+    "baseStats": {
+      "power": 9,
+      "defense": 181,
+      "drawback": 1
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "ravenna-apostle-gi",
     "name": "Ravenna Apostle Gi",
     "setName": "Ravenna Apostle",
     "slot": "chestplate",
-    "baseStats": { "power": 7, "dexterity": 38 },
+    "baseStats": {
+      "power": 7,
+      "dexterity": 38
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["quest"]
+    "tags": [
+      "boss-drop"
+    ]
   },
   {
     "id": "ravenna-apostle-leggings",
     "name": "Ravenna Apostle Leggings",
     "setName": "Ravenna Apostle",
     "slot": "leggings",
-    "baseStats": { "power": 5, "dexterity": 28 },
+    "baseStats": {
+      "power": 5,
+      "dexterity": 28
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["quest"]
+    "tags": [
+      "boss-drop"
+    ]
   },
   {
     "id": "ravenna-apostle-bracelets",
     "name": "Ravenna Apostle Bracelets",
     "setName": "Ravenna Apostle",
     "slot": "accessory",
-    "baseStats": { "power": 3, "dexterity": 19 },
+    "baseStats": {
+      "power": 3,
+      "dexterity": 19
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["quest"]
+    "tags": [
+      "boss-drop"
+    ]
   },
   {
     "id": "ravenna-apostle-faulds",
     "name": "Ravenna Apostle Faulds",
     "setName": "Ravenna Apostle",
     "slot": "accessory",
-    "baseStats": { "power": 3, "dexterity": 19 },
+    "baseStats": {
+      "power": 3,
+      "dexterity": 19
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["quest"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "ravenna-apostle-pauldrons",
     "name": "Ravenna Apostle Pauldrons",
     "setName": "Ravenna Apostle",
     "slot": "accessory",
-    "baseStats": { "power": 3, "dexterity": 19 },
+    "baseStats": {
+      "power": 3,
+      "dexterity": 19
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["quest"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "theugrist-robes",
     "name": "Theugrist Robes",
     "setName": "Theugrist",
     "slot": "chestplate",
-    "baseStats": { "dexterity": 38, "warding": 1 },
+    "baseStats": {
+      "dexterity": 38,
+      "warding": 1
+    },
     "socketCount": 3,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "theugrist-pants",
     "name": "Theugrist Pants",
     "setName": "Theugrist",
     "slot": "leggings",
-    "baseStats": { "dexterity": 28, "warding": 1 },
+    "baseStats": {
+      "dexterity": 28,
+      "warding": 1
+    },
     "socketCount": 3,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "theugrist-hat",
     "name": "Theugrist Hat",
     "setName": "Theugrist",
     "slot": "accessory-H",
-    "baseStats": { "dexterity": 19, "warding": 1 },
+    "baseStats": {
+      "dexterity": 19,
+      "warding": 1
+    },
     "socketCount": 3,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "theugrist-cloak",
     "name": "Theugrist Cloak",
     "setName": "Theugrist",
     "slot": "accessory",
-    "baseStats": { "dexterity": 19, "warding": 1 },
+    "baseStats": {
+      "dexterity": 19,
+      "warding": 1
+    },
     "socketCount": 3,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "apex-cloak",
     "name": "Apex Cloak",
     "setName": "Apex",
     "slot": "accessory",
-    "baseStats": { "power": 4, "defense": 91 },
+    "baseStats": {
+      "power": 4,
+      "defense": 91
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "apex-armor",
     "name": "Apex Armor",
     "setName": "Apex",
     "slot": "chestplate",
-    "baseStats": { "power": 7, "defense": 161 },
+    "baseStats": {
+      "power": 7,
+      "defense": 161
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "apex-leggings",
     "name": "Apex Leggings",
     "setName": "Apex",
     "slot": "leggings",
-    "baseStats": { "power": 5, "defense": 121 },
+    "baseStats": {
+      "power": 5,
+      "defense": 121
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "omen-cloak",
     "name": "Omen Cloak",
     "setName": "Omen",
     "slot": "accessory",
-    "baseStats": { "power": -3, "defense": 182 },
+    "baseStats": {
+      "power": -3,
+      "defense": 182
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "omen-armor",
     "name": "Omen Armor",
     "setName": "Omen",
     "slot": "chestplate",
-    "baseStats": { "power": -5, "defense": 323 },
+    "baseStats": {
+      "power": -5,
+      "defense": 323
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "omen-leggings",
     "name": "Omen Leggings",
     "setName": "Omen",
     "slot": "leggings",
-    "baseStats": { "power": -3, "defense": 242 },
+    "baseStats": {
+      "power": -3,
+      "defense": 242
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "sopharagos-hood",
     "name": "Sopharagos Hood",
     "setName": "Sopharagos",
     "slot": "accessory-H",
-    "baseStats": { "power": 14, "defense": -91 },
+    "baseStats": {
+      "power": 14,
+      "defense": -91
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "sopharagos-robes",
     "name": "Sopharagos Robes",
     "setName": "Sopharagos",
     "slot": "chestplate",
-    "baseStats": { "power": 25, "defense": -161 },
+    "baseStats": {
+      "power": 25,
+      "defense": -161
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "sopharagos-pants",
     "name": "Sopharagos Pants",
     "setName": "Sopharagos",
     "slot": "leggings",
-    "baseStats": { "power": 19, "defense": -121 },
+    "baseStats": {
+      "power": 19,
+      "defense": -121
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "lost-chief-cape",
     "name": "Lost Chief Cape",
     "setName": "Lost Chief",
     "slot": "accessory",
-    "baseStats": { "power": 4, "defense": 91, "size": 10 },
+    "baseStats": {
+      "power": 4,
+      "defense": 91,
+      "size": 10
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "lost-chief-armor",
     "name": "Lost Chief Armor",
     "setName": "Lost Chief",
     "slot": "chestplate",
-    "baseStats": { "power": 7, "defense": 161, "size": 17 },
+    "baseStats": {
+      "power": 7,
+      "defense": 161,
+      "size": 17
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "lost-chief-boots",
     "name": "Lost Chief Boots",
     "setName": "Lost Chief",
     "slot": "leggings",
-    "baseStats": { "power": 5, "defense": 121, "size": 13 },
+    "baseStats": {
+      "power": 5,
+      "defense": 121,
+      "size": 13
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "dark-sea"
+    ]
   },
   {
     "id": "kraken-band",
     "name": "Kraken Band",
     "slot": "accessory",
-    "baseStats": { "power": 4, "defense": 91, "range": 10 },
+    "baseStats": {
+      "power": 4,
+      "defense": 91,
+      "range": 10
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"]
+    "tags": [
+      "boss-drop"
+    ]
   },
   {
     "id": "dexterity-amulet",
     "name": "Dexterity Amulet",
     "slot": "accessory-A",
-    "baseStats": { "dexterity": 127 },
+    "baseStats": {
+      "dexterity": 127
+    },
     "socketCount": 0,
     "maxLevel": 170,
-    "tags": ["treasure"]
+    "tags": [
+      "treasure"
+    ],
+    "atlanteanOnly": false
   },
   {
     "id": "size-amulet",
     "name": "Size Amulet",
     "slot": "accessory-A",
-    "baseStats": { "size": 127 },
+    "baseStats": {
+      "size": 127
+    },
     "socketCount": 0,
     "maxLevel": 170,
-    "tags": ["treasure"]
+    "tags": [
+      "treasure"
+    ],
+    "atlanteanOnly": false
   },
   {
     "id": "power-amulet",
     "name": "Power Amulet",
     "slot": "accessory-A",
-    "baseStats": { "power": 43 },
+    "baseStats": {
+      "power": 43
+    },
     "socketCount": 0,
     "maxLevel": 170,
-    "tags": ["treasure"]
+    "tags": [
+      "treasure"
+    ],
+    "atlanteanOnly": false
   },
   {
     "id": "defense-amulet",
     "name": "Defense Amulet",
     "slot": "accessory-A",
-    "baseStats": { "defense": 382 },
+    "baseStats": {
+      "defense": 382
+    },
     "socketCount": 0,
     "maxLevel": 170,
-    "tags": ["treasure"]
+    "tags": [
+      "treasure"
+    ],
+    "atlanteanOnly": false
   },
   {
     "id": "glass-arcsphere",
     "name": "Glass Arcsphere",
     "slot": "accessory",
-    "baseStats": { "power": 30, "defense": -45 },
+    "baseStats": {
+      "power": 30,
+      "defense": -45
+    },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["dark-sea"]
+    "tags": [
+      "treasure"
+    ],
+    "atlanteanOnly": false
   }
 ]

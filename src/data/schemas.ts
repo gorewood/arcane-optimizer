@@ -52,6 +52,7 @@ export const equipmentSchema = z
     socketCount: z.number().int().nonnegative(),
     maxLevel: z.number().int().positive(),
     tags: z.array(z.string()).readonly(),
+    atlanteanOnly: z.boolean().optional(),
   })
   .readonly();
 
