@@ -6,7 +6,6 @@
  * top result when search completes.
  */
 
-import { useEffect } from "react";
 import { useSearchStore } from "@/stores/search-store";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -22,23 +21,8 @@ export function ResultsPanel(): React.JSX.Element {
   const constraints = useFitnessStore((s) => s.constraints);
   const expandedCards = useUIStore((s) => s.expandedCardIndices);
   const toggleCardExpanded = useUIStore((s) => s.toggleCardExpanded);
-  const setExpandedCards = useUIStore((s) => s.setExpandedCards);
 
   const isRunning = status === "running";
-
-  // Expand top result when search completes (subscription pattern)
-  useEffect(() => {
-    let prevStatus = useSearchStore.getState().status;
-    const unsubscribe = useSearchStore.subscribe((state) => {
-      if (prevStatus === "running" && state.status === "complete") {
-        if (state.results.length > 0) {
-          setExpandedCards(new Set([0]));
-        }
-      }
-      prevStatus = state.status;
-    });
-    return unsubscribe;
-  }, [setExpandedCards]);
 
   return (
     <div className="space-y-4 p-6">

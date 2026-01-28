@@ -47,10 +47,10 @@ interface StatGroupConfig {
 }
 
 const STAT_GROUPS: Record<StatGroup, StatGroupConfig> = {
-  combat: { label: "Combat", stats: ["power", "defense"] },
+  combat: { label: "Combat", stats: ["power", "pierce"] },
   scaling: { label: "Scaling", stats: ["size", "dexterity", "range", "haste"] },
   risk: { label: "Risk", stats: ["insanity", "warding", "drawback"] },
-  defensive: { label: "Defensive", stats: ["regeneration", "pierce", "resistance"] },
+  defensive: { label: "Defensive", stats: ["defense", "regeneration", "resistance"] },
 };
 
 const STAT_GROUP_ORDER: readonly StatGroup[] = ["combat", "scaling", "risk", "defensive"];

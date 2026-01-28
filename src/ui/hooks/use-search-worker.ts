@@ -19,6 +19,7 @@ import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore, type GAParams } from "@/stores/search-store";
+import { useUIStore } from "@/stores/ui-store";
 import type { ExitMetadata, WorkerRequest, WorkerResponse } from "@/workers/search-worker";
 import { ExhaustiveCoordinator } from "@/workers/exhaustive-coordinator";
 
@@ -225,6 +226,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const enIds = useGearPoolStore((s) => s.enabledEnchantmentIds);
   const modIds = useGearPoolStore((s) => s.enabledModifierIds);
   const gemIds = useGearPoolStore((s) => s.enabledGemIds);
+  const setExpandedCards = useUIStore((s) => s.setExpandedCards);
 
   const [progress, setProgress] = useState<ProgressState>(INITIAL_PROGRESS);
   const [warning, setWarning] = useState<string | null>(null);
@@ -252,18 +254,23 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
       setPreviewResults(r);
     };
 
+    const onComplete = (r: readonly SearchResult[], meta?: ExitMetadata): void => {
+      setResults(r, meta);
+      if (r.length > 0) setExpandedCards(new Set([0]));
+    };
+
     if (algorithm === "exhaustive") {
       coordinatorRef.current = launchCoordinator(
         { gearPool, fitness: constraints, maxResults },
-        { onProgress: onProg, onComplete: (r) => { setResults(r, undefined); }, onError: setError },
+        { onProgress: onProg, onComplete: (r) => { onComplete(r, undefined); }, onError: setError },
       );
     } else {
       workerRef.current = launchWorker(
         { gearPool, fitness: constraints, maxResults, algorithm, gaParams },
-        { onProgress: onProg, onComplete: setResults, onError: setError },
+        { onProgress: onProg, onComplete: onComplete, onError: setError },
       );
     }
-  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError, setExpandedCards]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;
