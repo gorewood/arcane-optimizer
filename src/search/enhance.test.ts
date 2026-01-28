@@ -337,4 +337,41 @@ describe("budgetAwareAssign", () => {
 
     expect(stats.drawback).toBeLessThanOrEqual(2);
   });
+
+  it("uses drawback cap from soft constraints when present", () => {
+    const drawbackGem: Gem = {
+      id: "painite", name: "Painite", tier: 2, stats: { defense: 224, drawback: 1 },
+    };
+
+    // Multiple socketed items to demonstrate budget spread
+    const socketed1 = makeEquipment({
+      id: "c-sock", name: "Socketed Chest", slot: "chestplate",
+      baseStats: { defense: 200 }, socketCount: 3,
+    });
+    const socketed2 = makeEquipment({
+      id: "l-sock", name: "Socketed Legs", slot: "leggings",
+      baseStats: { defense: 150 }, socketCount: 2,
+    });
+    const loadout = makeLoadout([socketed1, socketed2, ACC1, ACC2, ACC3]);
+    const pool: GearPool = {
+      chestplates: [socketed1], leggings: [socketed2], accessories: [ACC1, ACC2, ACC3],
+      enchantments: [],
+      modifiers: [],
+      gems: [drawbackGem],
+    };
+
+    // Soft constraint with hardCap of 5 should override DEFAULT maxDrawback of 2
+    const fitness: SoftConstraint[] = [
+      { stat: "defense", type: "maximize", weight: 1 },
+      { stat: "drawback", type: "atMost", value: 3, weight: 100, hardCap: 5 },
+    ];
+
+    // Hard constraint has maxDrawback: 2, but soft constraint hardCap: 5 should be used
+    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
+
+    // Should use the softCap of 5, allowing more than 2 gems
+    expect(stats.drawback).toBeGreaterThan(2);
+    expect(stats.drawback).toBeLessThanOrEqual(5);
+  });
 });

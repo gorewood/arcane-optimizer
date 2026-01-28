@@ -383,6 +383,38 @@ export function greedyAssignEnhancements(
 }
 
 // ---------------------------------------------------------------------------
+// Budget extraction from soft constraints
+// ---------------------------------------------------------------------------
+
+interface BudgetCaps {
+  readonly maxDrawback: number;
+  readonly maxInsanity: number;
+}
+
+/**
+ * Extract insanity and drawback caps from user's soft constraints.
+ * Uses hardCap from "atMost" constraints, falling back to hard constraint defaults.
+ */
+function extractBudgetCaps(
+  fitness: readonly SoftConstraint[],
+  hardConstraints: HardConstraints,
+): BudgetCaps {
+  let maxDrawback = hardConstraints.maxDrawback;
+  let maxInsanity = hardConstraints.maxUnwardedInsanity;
+
+  for (const c of fitness) {
+    if (c.stat === "drawback" && c.type === "atMost") {
+      maxDrawback = c.hardCap ?? c.value ?? maxDrawback;
+    }
+    if (c.stat === "insanity" && c.type === "atMost") {
+      maxInsanity = c.hardCap ?? c.value ?? maxInsanity;
+    }
+  }
+
+  return { maxDrawback, maxInsanity };
+}
+
+// ---------------------------------------------------------------------------
 // Budget-aware enhancement assignment (public)
 // ---------------------------------------------------------------------------
 
@@ -393,7 +425,8 @@ export function budgetAwareAssign(
   fitness: readonly SoftConstraint[],
 ): EnhancedLoadoutResult {
   const state = initSlotState(loadout);
-  let remainingDrawback = hardConstraints.maxDrawback;
+  const caps = extractBudgetCaps(fitness, hardConstraints);
+  let remainingDrawback = caps.maxDrawback;
 
   for (let i = 0; i < state.slots.length; i++) {
     const slot = state.slots[i];
@@ -404,7 +437,7 @@ export function budgetAwareAssign(
     const otherStats = subtractStats(state.runningTotal, contribution);
     const best = findBestBudgetSlot({
       slot, pool, hardConstraints, otherSlotStats: otherStats, fitness,
-    }, state.runningTotal, remainingDrawback);
+    }, state.runningTotal, remainingDrawback, caps.maxInsanity);
 
     updateSlotState(state, i, best);
     remainingDrawback -= candidateDrawback(best);
@@ -421,6 +454,7 @@ function findBestBudgetSlot(
   params: FindBestParams,
   currentStats: Stats,
   drawbackBudget: number,
+  insanityCap: number,
 ): SlotCandidate {
   const { slot, pool, hardConstraints, otherSlotStats, fitness } = params;
   const category = slotCategory(slot);
@@ -437,7 +471,7 @@ function findBestBudgetSlot(
     for (const mod of [undefined, ...applicableMods]) {
       if (!isAtlanteanCompatible(ench, mod, hardConstraints)) continue;
       const candidate = evaluateEnchantModPair(ctx, ench, mod);
-      if (!insanityWithinBudget(candidate, currentStats, hardConstraints)) continue;
+      if (!insanityWithinBudget(candidate, currentStats, insanityCap)) continue;
       if (candidateDrawback(candidate) > drawbackBudget) continue;
       if (candidate.score > best.score) best = candidate;
     }
@@ -483,11 +517,11 @@ function candidateWarding(c: SlotCandidate): number {
 function insanityWithinBudget(
   c: SlotCandidate,
   currentStats: Stats,
-  hardConstraints: HardConstraints,
+  maxUnwardedInsanity: number,
 ): boolean {
   const newInsanity = currentStats.insanity + candidateInsanity(c);
   const newWarding = currentStats.warding + candidateWarding(c);
-  return newInsanity <= Math.max(newWarding, hardConstraints.maxUnwardedInsanity);
+  return newInsanity <= Math.max(newWarding, maxUnwardedInsanity);
 }
 
 function candidateDrawback(c: SlotCandidate): number {
