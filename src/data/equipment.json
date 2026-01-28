@@ -95,9 +95,9 @@
     "setName": "Vatrachos",
     "slot": "accessory-H",
     "baseStats": {
-      "power": 9,
-      "defense": 181,
-      "drawback": 1
+      "power": 40,
+      "defense": 103,
+      "drawback": 2
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -111,9 +111,9 @@
     "setName": "Vatrachos",
     "slot": "accessory",
     "baseStats": {
-      "power": 6,
-      "defense": 136,
-      "drawback": 1
+      "power": 40,
+      "defense": 103,
+      "drawback": 2
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -127,9 +127,9 @@
     "setName": "Vatrachos",
     "slot": "chestplate",
     "baseStats": {
-      "power": 12,
-      "defense": 242,
-      "drawback": 1
+      "power": 53,
+      "defense": 137,
+      "drawback": 3
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -143,9 +143,9 @@
     "setName": "Vatrachos",
     "slot": "leggings",
     "baseStats": {
-      "power": 9,
-      "defense": 181,
-      "drawback": 1
+      "power": 40,
+      "defense": 103,
+      "drawback": 2
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -159,8 +159,8 @@
     "setName": "Ravenna Apostle",
     "slot": "chestplate",
     "baseStats": {
-      "power": 7,
-      "dexterity": 38
+      "power": 24,
+      "dexterity": 28
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -174,8 +174,8 @@
     "setName": "Ravenna Apostle",
     "slot": "leggings",
     "baseStats": {
-      "power": 5,
-      "dexterity": 28
+      "power": 18,
+      "dexterity": 21
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -189,8 +189,8 @@
     "setName": "Ravenna Apostle",
     "slot": "accessory",
     "baseStats": {
-      "power": 3,
-      "dexterity": 19
+      "power": 18,
+      "dexterity": 21
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -204,8 +204,8 @@
     "setName": "Ravenna Apostle",
     "slot": "accessory",
     "baseStats": {
-      "power": 3,
-      "dexterity": 19
+      "power": 18,
+      "dexterity": 21
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -219,8 +219,8 @@
     "setName": "Ravenna Apostle",
     "slot": "accessory",
     "baseStats": {
-      "power": 3,
-      "dexterity": 19
+      "power": 18,
+      "dexterity": 21
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -234,7 +234,7 @@
     "setName": "Theugrist",
     "slot": "chestplate",
     "baseStats": {
-      "dexterity": 38,
+      "dexterity": 64,
       "warding": 1
     },
     "socketCount": 3,
@@ -249,7 +249,7 @@
     "setName": "Theugrist",
     "slot": "leggings",
     "baseStats": {
-      "dexterity": 28,
+      "dexterity": 42,
       "warding": 1
     },
     "socketCount": 3,
@@ -264,7 +264,7 @@
     "setName": "Theugrist",
     "slot": "accessory-H",
     "baseStats": {
-      "dexterity": 19,
+      "dexterity": 42,
       "warding": 1
     },
     "socketCount": 3,
@@ -279,7 +279,7 @@
     "setName": "Theugrist",
     "slot": "accessory",
     "baseStats": {
-      "dexterity": 19,
+      "dexterity": 42,
       "warding": 1
     },
     "socketCount": 3,
@@ -294,8 +294,8 @@
     "setName": "Apex",
     "slot": "accessory",
     "baseStats": {
-      "power": 4,
-      "defense": 91
+      "power": 15,
+      "defense": 154
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -309,8 +309,8 @@
     "setName": "Apex",
     "slot": "chestplate",
     "baseStats": {
-      "power": 7,
-      "defense": 161
+      "power": 20,
+      "defense": 206
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -324,8 +324,8 @@
     "setName": "Apex",
     "slot": "leggings",
     "baseStats": {
-      "power": 5,
-      "defense": 121
+      "power": 15,
+      "defense": 154
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -339,8 +339,8 @@
     "setName": "Omen",
     "slot": "accessory",
     "baseStats": {
-      "power": -3,
-      "defense": 182
+      "power": -24,
+      "defense": 576
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -354,8 +354,8 @@
     "setName": "Omen",
     "slot": "chestplate",
     "baseStats": {
-      "power": -5,
-      "defense": 323
+      "power": -32,
+      "defense": 768
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -369,8 +369,8 @@
     "setName": "Omen",
     "slot": "leggings",
     "baseStats": {
-      "power": -3,
-      "defense": 242
+      "power": -24,
+      "defense": 576
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -384,8 +384,8 @@
     "setName": "Sopharagos",
     "slot": "accessory-H",
     "baseStats": {
-      "power": 14,
-      "defense": -91
+      "power": 48,
+      "defense": -141
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -399,8 +399,8 @@
     "setName": "Sopharagos",
     "slot": "chestplate",
     "baseStats": {
-      "power": 25,
-      "defense": -161
+      "power": 64,
+      "defense": -188
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -414,8 +414,8 @@
     "setName": "Sopharagos",
     "slot": "leggings",
     "baseStats": {
-      "power": 19,
-      "defense": -121
+      "power": 48,
+      "defense": -141
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -429,9 +429,8 @@
     "setName": "Lost Chief",
     "slot": "accessory",
     "baseStats": {
-      "power": 4,
-      "defense": 91,
-      "size": 10
+      "power": 26,
+      "size": 25
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -445,9 +444,8 @@
     "setName": "Lost Chief",
     "slot": "chestplate",
     "baseStats": {
-      "power": 7,
-      "defense": 161,
-      "size": 17
+      "power": 34,
+      "size": 34
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -461,9 +459,8 @@
     "setName": "Lost Chief",
     "slot": "leggings",
     "baseStats": {
-      "power": 5,
-      "defense": 121,
-      "size": 13
+      "power": 26,
+      "size": 25
     },
     "socketCount": 2,
     "maxLevel": 170,
@@ -476,9 +473,9 @@
     "name": "Kraken Band",
     "slot": "accessory",
     "baseStats": {
-      "power": 4,
-      "defense": 91,
-      "range": 10
+      "power": 29,
+      "defense": 114,
+      "range": 21
     },
     "socketCount": 2,
     "maxLevel": 170,
