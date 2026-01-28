@@ -13,14 +13,20 @@ import { computeSlotStats } from "@/search/constraints";
 import { resolveAtlanteanBonus, sumStats, ATLANTEAN_BONUS_VALUES } from "@/search/stats";
 import { STAT_LABELS } from "./stat-indicator";
 
-// Stats to display in the contribution table (core stats only)
+// Stats to display in the contribution table (all stats)
 const DISPLAY_STATS: readonly StatName[] = [
   "power",
   "defense",
   "size",
   "dexterity",
+  "range",
+  "haste",
   "insanity",
   "warding",
+  "drawback",
+  "regeneration",
+  "pierce",
+  "resistance",
 ];
 
 const SLOT_LABELS = ["Chest", "Legs", "Acc 1", "Acc 2", "Acc 3"] as const;

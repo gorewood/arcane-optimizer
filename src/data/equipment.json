@@ -544,8 +544,8 @@
     "name": "Glass Arcsphere",
     "slot": "accessory",
     "baseStats": {
-      "power": 30,
-      "defense": -45
+      "power": 33,
+      "defense": -39
     },
     "socketCount": 2,
     "maxLevel": 170,

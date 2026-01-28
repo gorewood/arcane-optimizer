@@ -44,7 +44,7 @@ const COLLAPSED_STATS: readonly StatName[] = [
   "insanity",
 ];
 
-// Stats to show bars for in expanded view
+// Stats to show bars for in expanded view (all stats)
 const EXPANDED_STATS: readonly StatName[] = [
   "power",
   "defense",
@@ -54,6 +54,10 @@ const EXPANDED_STATS: readonly StatName[] = [
   "haste",
   "insanity",
   "warding",
+  "drawback",
+  "regeneration",
+  "pierce",
+  "resistance",
 ];
 
 // Max values for stat bars (approximate game maximums)
