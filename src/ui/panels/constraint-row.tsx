@@ -117,12 +117,13 @@ export function ConstraintRow({ constraint, index, onUpdate, onRemove }: Constra
   const handleHardCap = useHardCapHandler(constraint, index, onUpdate, statMax);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
+    <div className="flex items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
       <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
       <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
       {showValue && <ValueInput value={constraint.value ?? 0} onChange={handleValue} label={isBetween ? "min" : undefined} max={statMax} />}
-      <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
       {showHardCap && <HardCapInput value={constraint.hardCap} onChange={handleHardCap} label={isBetween ? "max" : "cap"} max={statMax} />}
+      <div className="flex-1" />
+      <WeightControl weight={constraint.weight} onChange={(w) => { onUpdate(index, { ...constraint, weight: w }); }} />
       <RemoveButton index={index} onRemove={onRemove} />
     </div>
   );
