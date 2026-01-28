@@ -28,7 +28,7 @@ A loadout consists of exactly **5 equipment slots**:
 | Slot | Type | Constraint |
 |------|------|------------|
 | Chestplate | `chestplate` | Exactly 1 |
-| Boots | `boots` | Exactly 1 |
+| Leggings | `leggings` | Exactly 1 |
 | Accessory 1 | `accessory` | Any accessory type |
 | Accessory 2 | `accessory` | Any accessory type |
 | Accessory 3 | `accessory` | Any accessory type |
@@ -49,10 +49,9 @@ interface Stats {
   defense: number;         // Increases max HP (1:1)
 
   // Secondary (diminishing returns formula applies in-game)
-  attackSize: number;      // AoE of attacks
+  size: number;            // AoE of attacks
   dexterity: number;       // Attack speed / startup reduction
-  agility: number;         // Movement/range
-  intensity: number;       // Status effect strength
+  range: number;           // Movement/range
   haste: number;           // Cooldown reduction
 
   // Special
@@ -72,7 +71,7 @@ interface EquipmentPiece {
   id: string;                    // Unique identifier
   name: string;                  // Display name
   setName?: string;              // Optional set membership
-  slot: 'chestplate' | 'boots' | 'accessory' | 'accessory-H' | 'accessory-A';
+  slot: 'chestplate' | 'leggings' | 'accessory' | 'accessory-H' | 'accessory-A';
   baseStats: Partial<Stats>;     // Base stats at max level
   socketCount: number;           // 0-3 (usually 2, Theugrist has 3)
   maxLevel: number;              // Usually 170 for endgame
@@ -88,7 +87,7 @@ Enchantments add flat stats. Only ONE enchantment per equipment piece.
 interface Enchantment {
   id: string;
   name: string;
-  tier: 1 | 2;                   // Tier 2 = "exotic" (Dark Sea)
+  tier: 1 | 2;                   // Tier 2 = "mystic" (Dark Sea)
   applicableTo: ('armor' | 'accessory')[];
   stats: Partial<Stats>;
   incompatibleWith?: string[];   // e.g., Virtuous incompatible with Atlantean
@@ -100,11 +99,11 @@ interface Enchantment {
 |------|-------|
 | Powerful | +14 Power |
 | Armored | +136 Defense |
-| Explosive | +44 Attack Size |
+| Explosive | +44 Size |
 | Brisk | +44 Dexterity |
 | Virtuous | +71 Defense, +1 Warding (removes Atlantean) |
 | Charged | +9 Power, +23 Haste |
-| Hasty | +23 Dexterity, +23 Agility |
+| Hasty | +23 Dexterity, +23 Range |
 
 ### 2.5 Modifiers
 
@@ -121,7 +120,7 @@ interface Modifier {
 
 interface AtlanteanConfig {
   insanity: number;              // Always +1
-  bonusStats: Partial<Stats>[];  // Picks ONE stat NOT already on the item
+  possibleBonusStats: readonly (keyof Stats)[];  // Picks stat NOT on base item OR its socketed gems
 }
 ```
 
@@ -129,12 +128,16 @@ interface AtlanteanConfig {
 | Name | Stats | Notes |
 |------|-------|-------|
 | Gilded | +1 socket | Exclusive with other modifiers |
-| Archaic | +24 Attack Size | |
+| Archaic | +24 Size | |
 | Blasted | +8 Power | |
 | Crystalline | +24 Dexterity | |
-| Drowned | +39 Defense, +14 Attack Size | |
+| Drowned | +39 Defense, +14 Size | |
 | Frozen | +76 Defense | |
-| Atlantean | +1 Insanity + one of: 13 Power / 116 Defense / 38 AtkSize / 38 Dex / 38 Range / 38 Haste | Picks stat NOT on base item |
+| Sandy | +38 Size | |
+| Superheated | +15 Power, +24 Size | |
+| Abyssal | +2 Insanity, +high stat bonus | Stronger atlantean variant |
+| Imbued | +varies | Elemental modifier |
+| Atlantean | +1 Insanity + one of: 13 Power / 116 Defense / 38 Size / 38 Dexterity / 38 Range / 38 Haste | Picks stat NOT on base item OR its socketed gems |
 
 ### 2.6 Gems/Jewels
 
@@ -144,7 +147,7 @@ Gems socket into equipment. Each socket holds one gem.
 interface Gem {
   id: string;
   name: string;
-  tier: 1 | 2;                   // Tier 2 = exotic
+  tier: 1 | 2;                   // Tier 2 = mystic
   stats: Partial<Stats>;
 }
 ```
@@ -152,11 +155,11 @@ interface Gem {
 **Gems (Max Level Jewelcrafting):**
 | Name | Stats |
 |------|-------|
-| Agate | +48 Defense, +8 Attack Size |
-| Malachite | +4 Power, +8 Attack Size |
+| Agate | +48 Defense, +8 Size |
+| Malachite | +4 Power, +8 Size |
 | Candelaria | +4 Power, +8 Dexterity |
 | Painite | +224 Defense, +1 Drawback |
-| Emerald | +16 Attack Size |
+| Emerald | +16 Size |
 | Sapphire | +16 Dexterity |
 | Lapis Lazuli | +8 Power |
 | Larimar | +12 Dexterity, +12 Haste |
@@ -176,6 +179,9 @@ interface HardConstraints {
   maxAmuletAccessories: 1;
   totalAccessories: 3;
 
+  // Item rules
+  noDuplicateItems: boolean;       // No duplicate items in loadout (game-enforced)
+
   // Modifier rules
   atlanteanIncompatibleWith: ['Virtuous'];  // Enchantment blocks modifier
 
@@ -184,6 +190,8 @@ interface HardConstraints {
   maxDrawback: number;           // Default: 2 (< 3 means ≤ 2)
 }
 ```
+
+No duplicate items of any kind in loadouts — the game enforces unique item selection.
 
 ### 3.2 Soft Constraints (Fitness Penalties/Bonuses)
 
@@ -218,7 +226,7 @@ const defaultFitness: SoftConstraint[] = [
   { stat: 'defense', type: 'atLeast', value: 700, weight: 100 },
   { stat: 'power', type: 'atLeast', value: 100, weight: 90 },
   { stat: 'dexterity', type: 'target', value: 300, hardCap: 330, weight: 80 },
-  { stat: 'attackSize', type: 'target', value: 300, hardCap: 330, weight: 70 },
+  { stat: 'size', type: 'target', value: 300, hardCap: 330, weight: 70 },
   { stat: 'insanity', type: 'exactly', value: 1, weight: 100 },
   { stat: 'drawback', type: 'atMost', value: 2, weight: 100 },
 ];
@@ -330,7 +338,7 @@ class ExhaustiveSearch implements SearchStrategy {
 
     // Pre-filter gear by hard constraints
     const validChests = pool.chestplates.filter(c => this.passesHardConstraints(c));
-    const validBoots = pool.boots.filter(b => this.passesHardConstraints(b));
+    const validLeggings = pool.leggings.filter(b => this.passesHardConstraints(b));
     const validAccessories = pool.accessories.filter(a => this.passesHardConstraints(a));
 
     // Group accessories by subtype for conflict checking
@@ -342,11 +350,11 @@ class ExhaustiveSearch implements SearchStrategy {
     const accessoryCombos = this.generateAccessoryCombinations(helmets, amulets, generic);
 
     for (const chest of validChests) {
-      for (const boots of validBoots) {
+      for (const leggings of validLeggings) {
         for (const [acc1, acc2, acc3] of accessoryCombos) {
           // For each base loadout, enumerate enchant/modifier/gem combinations
           yield* this.enumerateEnhancements(
-            [chest, boots, acc1, acc2, acc3],
+            [chest, leggings, acc1, acc2, acc3],
             pool,
             constraints,
             fitness
@@ -394,7 +402,7 @@ For larger gear pools:
 class GeneticSearch implements SearchStrategy {
   name = 'genetic';
 
-  // Chromosome: [chestIdx, bootsIdx, acc1Idx, acc2Idx, acc3Idx,
+  // Chromosome: [chestIdx, leggingsIdx, acc1Idx, acc2Idx, acc3Idx,
   //              enchant1..5, modifier1..5, gems1..15 (5 pieces × 3 sockets)]
 
   async search(pool, constraints, fitness, options): Promise<SearchResult[]> {
@@ -449,11 +457,12 @@ class GeneticSearch implements SearchStrategy {
 ```
 src/
 ├── data/
-│   ├── equipment.ts       // All gear pieces
-│   ├── enchantments.ts    // All enchantments
-│   ├── modifiers.ts       // All modifiers
-│   ├── gems.ts            // All gems
-│   └── index.ts           // Aggregated GearPool
+│   ├── equipment.json     // Equipment data (externalized)
+│   ├── enchantments.json  // Enchantment data
+│   ├── modifiers.json     // Modifier data
+│   ├── gems.json          // Gem data
+│   ├── schemas.ts         // Zod validation schemas
+│   └── index.ts           // Data loaders with Zod validation
 ├── models/
 │   ├── types.ts           // TypeScript interfaces
 │   ├── stats.ts           // Stats computation
@@ -474,51 +483,59 @@ src/
 
 ### 6.2 Data Format Example
 
-```typescript
-// data/equipment.ts
-export const equipment: EquipmentPiece[] = [
-  {
-    id: 'sunken-iron-helmet',
-    name: 'Sunken Iron Helmet',
-    setName: 'Sunken Iron',
-    slot: 'accessory-H',
-    baseStats: { defense: 247, attackSize: 28 },
-    socketCount: 2,
-    maxLevel: 170,
-    tags: ['sunken', 'fishing', 'underwater']
-  },
-  {
-    id: 'sunken-iron-armor',
-    name: 'Sunken Iron Armor',
-    setName: 'Sunken Iron',
-    slot: 'chestplate',
-    baseStats: { defense: 330, attackSize: 38 },
-    socketCount: 2,
-    maxLevel: 170,
-    tags: ['sunken', 'fishing', 'underwater']
-  },
-  // ... etc
-];
+Game data is externalized as JSON files and validated at load time using Zod schemas. This separates data authoring (JSON) from type safety (Zod + TypeScript).
 
-// data/enchantments.ts
-export const enchantments: Enchantment[] = [
+```json
+// data/equipment.json
+[
   {
-    id: 'powerful',
-    name: 'Powerful',
-    tier: 2,
-    applicableTo: ['armor', 'accessory'],
-    stats: { power: 14 }
+    "id": "sunken-iron-helmet",
+    "name": "Sunken Iron Helmet",
+    "setName": "Sunken Iron",
+    "slot": "accessory-H",
+    "baseStats": { "defense": 247, "size": 28 },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["sunken", "fishing", "underwater"]
   },
   {
-    id: 'virtuous',
-    name: 'Virtuous',
-    tier: 2,
-    applicableTo: ['armor', 'accessory'],
-    stats: { defense: 71, warding: 1 },
-    incompatibleWith: ['atlantean']
-  },
-  // ... etc
-];
+    "id": "sunken-iron-armor",
+    "name": "Sunken Iron Armor",
+    "setName": "Sunken Iron",
+    "slot": "chestplate",
+    "baseStats": { "defense": 330, "size": 38 },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["sunken", "fishing", "underwater"]
+  }
+]
+```
+
+```typescript
+// data/schemas.ts — Zod schemas for runtime validation
+import { z } from 'zod';
+
+const StatsSchema = z.object({
+  power: z.number().optional(),
+  defense: z.number().optional(),
+  size: z.number().optional(),
+  // ... all stat fields
+}).strict();
+
+const EquipmentPieceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  setName: z.string().optional(),
+  slot: z.enum(['chestplate', 'leggings', 'accessory', 'accessory-H', 'accessory-A']),
+  baseStats: StatsSchema,
+  socketCount: z.number().int().min(0).max(3),
+  maxLevel: z.number().int(),
+  tags: z.array(z.string()),
+});
+
+// data/index.ts — Loader with validation
+import equipmentJson from './equipment.json';
+export const equipment = z.array(EquipmentPieceSchema).parse(equipmentJson);
 ```
 
 ---
@@ -638,23 +655,23 @@ Maintain a `testdata/` folder with:
 
 | Set | Pieces | Key Stats |
 |-----|--------|-----------|
-| Sunken Iron | Helmet, Armor, Boots | Defense + Attack Size |
-| Sunken Warrior | Helmet, Armor, Boots | Defense + Dexterity |
-| Vatrachos | Helmet, Cape, Armor, Boots | Power + Defense + Drawback |
+| Sunken Iron | Helmet, Armor, Leggings | Defense + Size |
+| Sunken Warrior | Helmet, Armor, Leggings | Defense + Dexterity |
+| Vatrachos | Helmet, Cape, Armor, Leggings | Power + Defense + Drawback |
 | Sopharagos | Hood, Robes, Pants | Power + Negative Defense |
 | Ravenna Apostle | Gi, Leggings, Bracelets, Faulds, Pauldrons | Power + Dexterity |
 | Omen | Cloak, Armor, Leggings | Negative Power + High Defense |
 | Theugrist | Robes, Pants, Hat, Cloak | Dexterity + Warding + 3 sockets |
 | Apex | Cloak, Armor, Leggings | Power + Defense |
 | Kraken Band | Band (Accessory) | Power + Defense + Range |
-| Lost Chief | Cape, Armor, Boots | Power + Defense + Attack Size |
+| Lost Chief | Cape, Armor, Leggings | Power + Defense + Size |
 
 ### Standalone Accessories
 
 | Item | Slot | Stats |
 |------|------|-------|
 | Dexterity Amulet | accessory-A | 127 Dexterity |
-| Attack Size Amulet | accessory-A | 127 Attack Size |
+| Size Amulet | accessory-A | 127 Size |
 | Power Amulet | accessory-A | 43 Power |
 | Defense Amulet | accessory-A | 382 Defense |
 | Glass Arcsphere | accessory | 30 Power, -45 Defense |
@@ -667,11 +684,11 @@ Maintain a `testdata/` folder with:
 |------|------------|
 | Loadout | Complete set of 5 equipped items with enchants, modifiers, and gems |
 | Socket | Slot on equipment that can hold one gem |
-| Atlantean | Special modifier from Dark Sea that adds insanity |
+| Atlantean | Special modifier from Dark Sea that adds insanity; picks stat NOT on base item OR its socketed gems |
 | Warding | Stat that counters insanity effects |
 | Net Insanity | `insanity - warding` (negative values treated as 0) |
 | Drawback | Self-damage stat (1% max HP per attack) |
-| Exotic | Tier 2 enchantments/gems from Dark Sea |
+| Mystic | Tier 2 enchantments/gems from Dark Sea |
 | Fitness | Score representing how well a loadout meets goals |
 
 ---
