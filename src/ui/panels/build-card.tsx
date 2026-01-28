@@ -182,7 +182,7 @@ function CollapsedHeader({
 }): React.JSX.Element {
   return (
     <div
-      className="flex items-center gap-2 px-3 py-2 flex-wrap cursor-pointer"
+      className="flex items-center gap-2 px-3 py-2 flex-wrap cursor-pointer rounded-t-lg transition-colors hover:bg-border-subtle/30"
       onClick={onToggle}
     >
       <span className="text-accent-gold font-bold text-base min-w-[1.5rem]">
@@ -261,7 +261,9 @@ function CompactSlotList({
             <span className="text-text-muted">({slot.modifier.name})</span>
           )}
           {slot.gems.length > 0 && (
-            <span className="text-accent-ember">{slot.gems.length} gem{slot.gems.length > 1 ? "s" : ""}</span>
+            <span className="text-accent-ember">
+              {slot.gems.map((g) => g.name).join(", ")}
+            </span>
           )}
         </div>
       ))}
