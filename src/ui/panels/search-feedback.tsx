@@ -2,8 +2,9 @@
  * Search feedback components — progress, warnings, errors, status bar.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { SearchResult } from "@/models/types";
 import type { ExitMetadata } from "@/stores/search-store";
 
@@ -183,13 +184,34 @@ function formatScore(score: number): string {
 // ---------------------------------------------------------------------------
 
 export function ErrorDisplay({ message }: { readonly message: string }): React.JSX.Element {
+  const handleClearData = useCallback(() => {
+    if (window.confirm("Clear all local data and reload? This will reset your settings, profiles, and custom equipment.")) {
+      // Clear all localStorage keys used by this app
+      const keysToRemove = Object.keys(localStorage).filter(
+        (key) => key.startsWith("ao-") || key.startsWith("user-")
+      );
+      for (const key of keysToRemove) {
+        localStorage.removeItem(key);
+      }
+      window.location.reload();
+    }
+  }, []);
+
   return (
-    <Card className="border-stat-negative/40 bg-stat-negative/5 p-4 space-y-2">
+    <Card className="border-stat-negative/40 bg-stat-negative/5 p-4 space-y-3">
       <p className="text-sm font-semibold text-stat-negative">Search Error</p>
       <p className="text-sm text-text-secondary">{message}</p>
       <p className="text-xs text-text-muted">
         Try relaxing constraints or expanding the gear pool
       </p>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleClearData}
+        className="text-xs"
+      >
+        Clear Local Data & Reload
+      </Button>
     </Card>
   );
 }

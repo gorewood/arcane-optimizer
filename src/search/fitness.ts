@@ -101,6 +101,17 @@ export function computeFitness(
   for (const c of constraints) {
     const val = stats[c.stat];
     const value = c.value ?? 0;
+
+    // Guard against invalid constraint types (can happen with corrupted localStorage)
+    // Cast to unknown first to bypass TypeScript's type narrowing
+    const constraintType = c.type as unknown;
+    if (typeof constraintType !== "string" || !(constraintType in SCORERS)) {
+      throw new Error(
+        `Invalid constraint type "${c.type}" for stat "${c.stat}". ` +
+        `Try clearing site data (Settings → Clear Local Data).`
+      );
+    }
+
     const scorer = SCORERS[c.type];
     // hardCap is only used by 'between' (as max value)
     const result = scorer(val, c.weight, value, c.hardCap);
