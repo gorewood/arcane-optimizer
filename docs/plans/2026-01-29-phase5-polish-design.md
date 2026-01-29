@@ -1,10 +1,12 @@
 # Phase 5: Polish Design
 
+**Status: COMPLETE** (2026-01-29)
+
 ## Scope
 
-1. **Rename Data → "Game Data"**, remove Equipment subtab
-2. **Header-level Add button** — consistent placement in both tabs
-3. **Enhanced gear row** — set/source as dimmed text, contextual hiding, responsive wrap, vertical center
+1. ✅ **Rename Data → "Game Data"**, remove Equipment subtab
+2. ✅ **Header-level Add button** — consistent placement in both tabs
+3. ✅ **Enhanced gear row** — set/source as dimmed text, contextual hiding, responsive wrap, vertical center
 
 ## Tab & Add Button Changes
 
