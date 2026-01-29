@@ -19,6 +19,14 @@ import type {
 // ---------------------------------------------------------------------------
 
 /**
+ * Item purpose determines sync behavior:
+ * - "contribution": User is contributing to project data. Auto-purged when
+ *   matching bundled item appears in a data update.
+ * - "custom": User's personal item. Never auto-purged.
+ */
+export type ItemPurpose = "contribution" | "custom";
+
+/**
  * Generic user override record for any item type.
  *
  * Records track:
@@ -34,6 +42,12 @@ export interface UserItemRecord<T> {
   readonly data?: T | undefined;
   /** Version of the bundled data this record was based on. */
   readonly baseVersion?: number | undefined;
+  /**
+   * Purpose of this user item. Defaults to "contribution".
+   * - "contribution": Will be purged when matching bundled item exists.
+   * - "custom": Always kept, never auto-purged.
+   */
+  readonly purpose?: ItemPurpose | undefined;
   readonly createdAt: number;
   readonly updatedAt: number;
 }

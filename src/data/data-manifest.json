@@ -1,3 +1,11 @@
 {
-  "version": 1
+  "version": 1,
+  "changelog": [
+    {
+      "version": 1,
+      "date": "2026-01-29",
+      "summary": "Initial game data release",
+      "added": ["69 equipment items with source tracking"]
+    }
+  ]
 }

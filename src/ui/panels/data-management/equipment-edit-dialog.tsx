@@ -1,12 +1,14 @@
 /**
- * EquipmentEditDialog — dialog for creating/editing equipment.
+ * EquipmentEditDialog - dialog for creating/editing equipment.
  */
 
 import { useState, useEffect } from "react";
 import type { EquipmentPiece } from "@/models/types";
+import type { ItemPurpose } from "@/data/user-data-types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { ItemEditorDialog } from "./item-editor-dialog";
 import { EquipmentForm } from "./equipment-form";
+import { PurposeToggle } from "./purpose-toggle";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -31,15 +33,22 @@ export function EquipmentEditDialog({
   const updateEquipment = useUserDataStore((s) => s.updateEquipment);
 
   const [draft, setDraft] = useState<EquipmentPiece | null>(null);
+  const [purpose, setPurpose] = useState<ItemPurpose>("contribution");
 
   useEffect(() => {
     setDraft(equipment);
   }, [equipment]);
 
+  useEffect(() => {
+    if (equipment !== null) {
+      setPurpose("contribution");
+    }
+  }, [equipment]);
+
   const handleSave = (): void => {
     if (draft === null) return;
     if (isNew) {
-      addEquipment(draft);
+      addEquipment(draft, purpose);
     } else {
       updateEquipment(draft.id, draft);
     }
@@ -47,14 +56,14 @@ export function EquipmentEditDialog({
   };
 
   const isValid =
-    draft !== null &&
-    draft.name.trim() !== "" &&
-    draft.id.trim() !== "";
+    draft !== null && draft.name.trim() !== "" && draft.id.trim() !== "";
 
   return (
     <ItemEditorDialog
       open={equipment !== null}
-      onOpenChange={(open) => { if (!open) onClose(); }}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
       title={isNew ? "Add Equipment" : "Edit Equipment"}
       onSave={handleSave}
       onCancel={onClose}
@@ -62,6 +71,13 @@ export function EquipmentEditDialog({
     >
       {draft !== null && (
         <EquipmentForm equipment={draft} onChange={setDraft} isNew={isNew} />
+      )}
+      {isNew && (
+        <PurposeToggle
+          idPrefix="equipment"
+          value={purpose}
+          onChange={setPurpose}
+        />
       )}
     </ItemEditorDialog>
   );

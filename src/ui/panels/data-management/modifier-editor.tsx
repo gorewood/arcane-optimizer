@@ -2,11 +2,10 @@
  * ModifierEditor — modifier list with CRUD operations.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { Modifier } from "@/models/types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { sortItems, type SortOption } from "@/ui/panels/sort-select";
-import { ModifierEditorHeader } from "./modifier-editor-header";
 import { ModifierList } from "./modifier-list";
 import { ModifierEditDialog } from "./modifier-edit-dialog";
 
@@ -17,9 +16,11 @@ import { ModifierEditDialog } from "./modifier-edit-dialog";
 export function ModifierEditor({
   filter,
   sortBy,
+  addRequest,
 }: {
   readonly filter: string;
   readonly sortBy: SortOption;
+  readonly addRequest: number;
 }): React.JSX.Element {
   // Subscribe to userModifiers to trigger re-render on changes
   const userModifiers = useUserDataStore((s) => s.userModifiers);
@@ -59,9 +60,18 @@ export function ModifierEditor({
 
   const handleClose = useCallback((): void => { setEditingItem(null); }, []);
 
+  // Respond to add requests from parent
+  const prevAddRequest = useRef(addRequest);
+  useEffect(() => {
+    if (addRequest > 0 && addRequest !== prevAddRequest.current) {
+      // Use requestAnimationFrame to avoid sync setState in effect
+      requestAnimationFrame(() => { handleAddNew(); });
+    }
+    prevAddRequest.current = addRequest;
+  }, [addRequest, handleAddNew]);
+
   return (
     <div className="space-y-2">
-      <ModifierEditorHeader count={filtered.length} onAddNew={handleAddNew} />
       <ModifierList items={filtered} deletedItems={deletedItems} onEdit={handleEdit} />
       <ModifierEditDialog modifier={editingItem} isNew={isNew} onClose={handleClose} />
     </div>

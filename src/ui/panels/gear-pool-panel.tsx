@@ -3,30 +3,45 @@
  * modifiers, and gems are available to the optimizer.
  */
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  loadEquipment,
-  loadEnchantments,
-  loadModifiers,
-  loadGems,
-} from "@/data/loaders";
+import type { EquipmentPiece, Enchantment, Modifier, Gem } from "@/models/types";
+import type { MergedItem } from "@/data/user-data-types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { useUserDataStore } from "@/stores/user-data-store";
 import { SortSelect, type SortOption } from "./sort-select";
+import { GroupBySelect, type GroupByOption } from "./group-by-select";
+import { FilterChips, type FilterChipId } from "./filter-chips";
 import { EquipmentSection } from "./equipment-section";
 import { EnchantmentSection } from "./enchantment-section";
 import { ModifierSection } from "./modifier-section";
 import { GemSection } from "./gem-section";
 
 // ---------------------------------------------------------------------------
-// Static data (loaders return cached, validated data — safe in render)
+// Hooks
 // ---------------------------------------------------------------------------
 
-const equipment = loadEquipment();
-const enchantments = loadEnchantments();
-const modifiers = loadModifiers();
-const gems = loadGems();
+interface MergedGearData {
+  readonly equipment: readonly MergedItem<EquipmentPiece>[];
+  readonly enchantments: readonly Enchantment[];
+  readonly modifiers: readonly Modifier[];
+  readonly gems: readonly Gem[];
+}
+
+function useMergedGearData(): MergedGearData {
+  const getMergedEquipment = useUserDataStore((s) => s.getMergedEquipment);
+  const getMergedEnchantments = useUserDataStore((s) => s.getMergedEnchantments);
+  const getMergedModifiers = useUserDataStore((s) => s.getMergedModifiers);
+  const getMergedGems = useUserDataStore((s) => s.getMergedGems);
+
+  return {
+    equipment: useMemo(() => getMergedEquipment().filter((m) => !m.isDeleted), [getMergedEquipment]),
+    enchantments: useMemo(() => getMergedEnchantments().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedEnchantments]),
+    modifiers: useMemo(() => getMergedModifiers().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedModifiers]),
+    gems: useMemo(() => getMergedGems().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedGems]),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // GearPoolPanel
@@ -35,8 +50,23 @@ const gems = loadGems();
 export function GearPoolPanel(): React.JSX.Element {
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("set-name");
+  const [groupBy, setGroupBy] = useState<GroupByOption>("set");
+  const [activeFilters, setActiveFilters] = useState<ReadonlySet<FilterChipId>>(new Set());
   const enableAll = useGearPoolStore((s) => s.enableAll);
   const disableAll = useGearPoolStore((s) => s.disableAll);
+  const { equipment, enchantments, modifiers, gems } = useMergedGearData();
+
+  const toggleFilter = useCallback((id: FilterChipId) => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   return (
     <div className="space-y-4 p-4">
@@ -45,6 +75,10 @@ export function GearPoolPanel(): React.JSX.Element {
         onFilterChange={setFilter}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        groupBy={groupBy}
+        onGroupByChange={setGroupBy}
+        activeFilters={activeFilters}
+        onToggleFilter={toggleFilter}
         onEnableAll={enableAll}
         onDisableAll={disableAll}
       />
@@ -56,7 +90,7 @@ export function GearPoolPanel(): React.JSX.Element {
           <TabsTrigger value="gems">Gems</TabsTrigger>
         </TabsList>
         <TabsContent value="equipment">
-          <EquipmentSection equipment={equipment} filter={filter} sortBy={sortBy} />
+          <EquipmentSection equipment={equipment} filter={filter} sortBy={sortBy} groupBy={groupBy} activeFilters={activeFilters} />
         </TabsContent>
         <TabsContent value="enchantments">
           <EnchantmentSection enchantments={enchantments} filter={filter} sortBy={sortBy} />
@@ -81,6 +115,10 @@ function PanelHeader({
   onFilterChange,
   sortBy,
   onSortChange,
+  groupBy,
+  onGroupByChange,
+  activeFilters,
+  onToggleFilter,
   onEnableAll,
   onDisableAll,
 }: {
@@ -88,6 +126,10 @@ function PanelHeader({
   readonly onFilterChange: (value: string) => void;
   readonly sortBy: SortOption;
   readonly onSortChange: (value: SortOption) => void;
+  readonly groupBy: GroupByOption;
+  readonly onGroupByChange: (value: GroupByOption) => void;
+  readonly activeFilters: ReadonlySet<FilterChipId>;
+  readonly onToggleFilter: (id: FilterChipId) => void;
   readonly onEnableAll: () => void;
   readonly onDisableAll: () => void;
 }): React.JSX.Element {
@@ -106,10 +148,12 @@ function PanelHeader({
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <SearchInput value={filter} onChange={onFilterChange} />
         <SortSelect value={sortBy} onChange={onSortChange} />
+        <GroupBySelect value={groupBy} onChange={onGroupByChange} />
       </div>
+      <FilterChips activeFilters={activeFilters} onToggle={onToggleFilter} />
     </div>
   );
 }

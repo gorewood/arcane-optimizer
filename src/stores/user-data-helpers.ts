@@ -18,6 +18,7 @@ import type {
   UserGemRecord,
   UserDataExport,
   UserItemRecord,
+  ItemPurpose,
 } from "@/data/user-data-types";
 import dataManifest from "@/data/data-manifest.json";
 
@@ -38,11 +39,12 @@ export function generateId(type: string): string {
 export function addEquipmentRecord(
   records: readonly UserEquipmentRecord[],
   item: EquipmentPiece,
+  purpose?: ItemPurpose,
 ): { readonly records: readonly UserEquipmentRecord[]; readonly id: string } {
   const now = Date.now();
   const id = generateId("equipment");
   const itemWithId: EquipmentPiece = { ...item, id };
-  const record: UserEquipmentRecord = { id, data: itemWithId, createdAt: now, updatedAt: now };
+  const record: UserEquipmentRecord = { id, data: itemWithId, purpose, createdAt: now, updatedAt: now };
   return { records: [...records, record], id };
 }
 
@@ -104,11 +106,12 @@ export function restoreEquipmentRecord(
 export function addEnchantmentRecord(
   records: readonly UserEnchantmentRecord[],
   item: Enchantment,
+  purpose?: ItemPurpose,
 ): { readonly records: readonly UserEnchantmentRecord[]; readonly id: string } {
   const now = Date.now();
   const id = generateId("enchantment");
   const itemWithId: Enchantment = { ...item, id };
-  const record: UserEnchantmentRecord = { id, data: itemWithId, createdAt: now, updatedAt: now };
+  const record: UserEnchantmentRecord = { id, data: itemWithId, purpose, createdAt: now, updatedAt: now };
   return { records: [...records, record], id };
 }
 
@@ -170,11 +173,12 @@ export function restoreEnchantmentRecord(
 export function addModifierRecord(
   records: readonly UserModifierRecord[],
   item: Modifier,
+  purpose?: ItemPurpose,
 ): { readonly records: readonly UserModifierRecord[]; readonly id: string } {
   const now = Date.now();
   const id = generateId("modifier");
   const itemWithId: Modifier = { ...item, id };
-  const record: UserModifierRecord = { id, data: itemWithId, createdAt: now, updatedAt: now };
+  const record: UserModifierRecord = { id, data: itemWithId, purpose, createdAt: now, updatedAt: now };
   return { records: [...records, record], id };
 }
 
@@ -236,11 +240,12 @@ export function restoreModifierRecord(
 export function addGemRecord(
   records: readonly UserGemRecord[],
   item: Gem,
+  purpose?: ItemPurpose,
 ): { readonly records: readonly UserGemRecord[]; readonly id: string } {
   const now = Date.now();
   const id = generateId("gem");
   const itemWithId: Gem = { ...item, id };
-  const record: UserGemRecord = { id, data: itemWithId, createdAt: now, updatedAt: now };
+  const record: UserGemRecord = { id, data: itemWithId, purpose, createdAt: now, updatedAt: now };
   return { records: [...records, record], id };
 }
 

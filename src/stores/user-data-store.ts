@@ -22,6 +22,7 @@ import type {
   UserGemRecord,
   UserVariantTypes,
   MergedItem,
+  ItemPurpose,
 } from "@/data/user-data-types";
 import { userDataStorageSchema, userDataExportSchema } from "@/data/user-data-schemas";
 import {
@@ -38,27 +39,28 @@ import {
   loadGems,
   loadVariantTypes,
 } from "@/data/loaders";
+import { buildExportData, parseImportData } from "./user-data-helpers";
 import {
-  addEquipmentRecord,
-  updateEquipmentRecord,
-  deleteEquipmentRecord,
-  restoreEquipmentRecord,
-  addEnchantmentRecord,
-  updateEnchantmentRecord,
-  deleteEnchantmentRecord,
-  restoreEnchantmentRecord,
-  addModifierRecord,
-  updateModifierRecord,
-  deleteModifierRecord,
-  restoreModifierRecord,
-  addGemRecord,
-  updateGemRecord,
-  deleteGemRecord,
-  restoreGemRecord,
-  buildExportData,
-  parseImportData,
-} from "./user-data-helpers";
+  createEquipmentActions,
+  createEnchantmentActions,
+  createModifierActions,
+  createGemActions,
+  createVariantTypeActions,
+} from "./user-data-crud";
+import {
+  detectAllDuplicates,
+  buildUserDataSyncSummary,
+  getChangelogEntryForCurrentVersion,
+  purgeDuplicates,
+  type SyncSummary,
+  type DuplicateMatch,
+} from "./user-data-sync";
+import { detectEquipmentDuplicates } from "@/data/sync-utils";
+import type { ChangelogEntry } from "@/data/user-data-schemas";
 import dataManifest from "@/data/data-manifest.json";
+
+// Re-export sync types for dialog use
+export type { SyncSummary, DuplicateMatch };
 
 // ---------------------------------------------------------------------------
 // State & Action Types
@@ -74,19 +76,19 @@ export interface UserDataState {
 }
 
 export interface UserDataActions {
-  addEquipment: (item: EquipmentPiece) => string;
+  addEquipment: (item: EquipmentPiece, purpose?: ItemPurpose) => string;
   updateEquipment: (id: string, item: EquipmentPiece) => void;
   deleteEquipment: (id: string) => void;
   restoreEquipment: (id: string) => void;
-  addEnchantment: (item: Enchantment) => string;
+  addEnchantment: (item: Enchantment, purpose?: ItemPurpose) => string;
   updateEnchantment: (id: string, item: Enchantment) => void;
   deleteEnchantment: (id: string) => void;
   restoreEnchantment: (id: string) => void;
-  addModifier: (item: Modifier) => string;
+  addModifier: (item: Modifier, purpose?: ItemPurpose) => string;
   updateModifier: (id: string, item: Modifier) => void;
   deleteModifier: (id: string) => void;
   restoreModifier: (id: string) => void;
-  addGem: (item: Gem) => string;
+  addGem: (item: Gem, purpose?: ItemPurpose) => string;
   updateGem: (id: string, item: Gem) => void;
   deleteGem: (id: string) => void;
   restoreGem: (id: string) => void;
@@ -110,6 +112,10 @@ export interface UserDataActions {
   clearAllUserData: () => void;
   checkBundledUpdate: () => boolean;
   updateStoredVersion: () => void;
+  getSyncSummary: () => SyncSummary;
+  getChangelogEntry: () => ChangelogEntry | undefined;
+  getEquipmentDuplicates: () => readonly DuplicateMatch[];
+  performSync: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -122,30 +128,28 @@ let cachedModifiers: readonly Modifier[] | null = null;
 let cachedGems: readonly Gem[] | null = null;
 let cachedVariantTypes: VariantTypes | null = null;
 
-function getBundledEquipment(): readonly EquipmentPiece[] {
-  cachedEquipment ??= loadEquipment();
-  return cachedEquipment;
-}
-
-function getBundledEnchantments(): readonly Enchantment[] {
-  cachedEnchantments ??= loadEnchantments();
-  return cachedEnchantments;
-}
-
-function getBundledModifiers(): readonly Modifier[] {
-  cachedModifiers ??= loadModifiers();
-  return cachedModifiers;
-}
-
-function getBundledGems(): readonly Gem[] {
-  cachedGems ??= loadGems();
-  return cachedGems;
-}
-
-function getBundledVariantTypes(): VariantTypes {
-  cachedVariantTypes ??= loadVariantTypes();
-  return cachedVariantTypes;
-}
+const bundledGetters = {
+  getBundledEquipment: (): readonly EquipmentPiece[] => {
+    cachedEquipment ??= loadEquipment();
+    return cachedEquipment;
+  },
+  getBundledEnchantments: (): readonly Enchantment[] => {
+    cachedEnchantments ??= loadEnchantments();
+    return cachedEnchantments;
+  },
+  getBundledModifiers: (): readonly Modifier[] => {
+    cachedModifiers ??= loadModifiers();
+    return cachedModifiers;
+  },
+  getBundledGems: (): readonly Gem[] => {
+    cachedGems ??= loadGems();
+    return cachedGems;
+  },
+  getBundledVariantTypes: (): VariantTypes => {
+    cachedVariantTypes ??= loadVariantTypes();
+    return cachedVariantTypes;
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Empty State
@@ -167,141 +171,35 @@ const emptyState: UserDataState = {
 };
 
 // ---------------------------------------------------------------------------
-// Type aliases for store functions
+// Type aliases
 // ---------------------------------------------------------------------------
 
 type SetFn = (fn: (state: UserDataState) => Partial<UserDataState>) => void;
 type GetFn = () => UserDataState & UserDataActions;
 
 // ---------------------------------------------------------------------------
-// CRUD Action Factories
+// Getter Actions
 // ---------------------------------------------------------------------------
-
-function createEquipmentActions(set: SetFn, get: GetFn) {
-  return {
-    addEquipment: (item: EquipmentPiece) => {
-      const result = addEquipmentRecord(get().userEquipment, item);
-      set(() => ({ userEquipment: result.records }));
-      return result.id;
-    },
-    updateEquipment: (id: string, item: EquipmentPiece) => {
-      set(() => ({ userEquipment: updateEquipmentRecord(get().userEquipment, getBundledEquipment(), id, item) }));
-    },
-    deleteEquipment: (id: string) => {
-      set(() => ({ userEquipment: deleteEquipmentRecord(get().userEquipment, getBundledEquipment(), id) }));
-    },
-    restoreEquipment: (id: string) => {
-      set(() => ({ userEquipment: restoreEquipmentRecord(get().userEquipment, id) }));
-    },
-  };
-}
-
-function createEnchantmentActions(set: SetFn, get: GetFn) {
-  return {
-    addEnchantment: (item: Enchantment) => {
-      const result = addEnchantmentRecord(get().userEnchantments, item);
-      set(() => ({ userEnchantments: result.records }));
-      return result.id;
-    },
-    updateEnchantment: (id: string, item: Enchantment) => {
-      set(() => ({ userEnchantments: updateEnchantmentRecord(get().userEnchantments, getBundledEnchantments(), id, item) }));
-    },
-    deleteEnchantment: (id: string) => {
-      set(() => ({ userEnchantments: deleteEnchantmentRecord(get().userEnchantments, getBundledEnchantments(), id) }));
-    },
-    restoreEnchantment: (id: string) => {
-      set(() => ({ userEnchantments: restoreEnchantmentRecord(get().userEnchantments, id) }));
-    },
-  };
-}
-
-function createModifierActions(set: SetFn, get: GetFn) {
-  return {
-    addModifier: (item: Modifier) => {
-      const result = addModifierRecord(get().userModifiers, item);
-      set(() => ({ userModifiers: result.records }));
-      return result.id;
-    },
-    updateModifier: (id: string, item: Modifier) => {
-      set(() => ({ userModifiers: updateModifierRecord(get().userModifiers, getBundledModifiers(), id, item) }));
-    },
-    deleteModifier: (id: string) => {
-      set(() => ({ userModifiers: deleteModifierRecord(get().userModifiers, getBundledModifiers(), id) }));
-    },
-    restoreModifier: (id: string) => {
-      set(() => ({ userModifiers: restoreModifierRecord(get().userModifiers, id) }));
-    },
-  };
-}
-
-function createGemActions(set: SetFn, get: GetFn) {
-  return {
-    addGem: (item: Gem) => {
-      const result = addGemRecord(get().userGems, item);
-      set(() => ({ userGems: result.records }));
-      return result.id;
-    },
-    updateGem: (id: string, item: Gem) => {
-      set(() => ({ userGems: updateGemRecord(get().userGems, getBundledGems(), id, item) }));
-    },
-    deleteGem: (id: string) => {
-      set(() => ({ userGems: deleteGemRecord(get().userGems, getBundledGems(), id) }));
-    },
-    restoreGem: (id: string) => {
-      set(() => ({ userGems: restoreGemRecord(get().userGems, id) }));
-    },
-  };
-}
-
-function createVariantTypeActions(set: SetFn, _get: GetFn) {
-  return {
-    addVariantType: (key: string, entry: VariantTypeEntry) => {
-      set((s) => ({
-        userVariantTypes: { ...s.userVariantTypes, additions: { ...s.userVariantTypes.additions, [key]: entry } },
-      }));
-    },
-    updateVariantType: (key: string, entry: VariantTypeEntry) => {
-      const bundled = getBundledVariantTypes();
-      set((s) => {
-        if (key in bundled) {
-          return { userVariantTypes: { ...s.userVariantTypes, modifications: { ...s.userVariantTypes.modifications, [key]: entry } } };
-        }
-        return { userVariantTypes: { ...s.userVariantTypes, additions: { ...s.userVariantTypes.additions, [key]: entry } } };
-      });
-    },
-    deleteVariantType: (key: string) => {
-      const bundled = getBundledVariantTypes();
-      set((s) => {
-        if (key in bundled) {
-          return { userVariantTypes: { ...s.userVariantTypes, deletedKeys: [...s.userVariantTypes.deletedKeys, key] } };
-        }
-        const { [key]: _, ...rest } = s.userVariantTypes.additions;
-        return { userVariantTypes: { ...s.userVariantTypes, additions: rest } };
-      });
-    },
-    restoreVariantType: (key: string) => {
-      set((s) => ({
-        userVariantTypes: { ...s.userVariantTypes, deletedKeys: s.userVariantTypes.deletedKeys.filter((k) => k !== key) },
-      }));
-    },
-  };
-}
 
 function createGetterActions(get: GetFn) {
   return {
-    getMergedEquipment: () => mergeItems(getBundledEquipment(), get().userEquipment),
-    getMergedEnchantments: () => mergeItems(getBundledEnchantments(), get().userEnchantments),
-    getMergedModifiers: () => mergeItems(getBundledModifiers(), get().userModifiers),
-    getMergedGems: () => mergeItems(getBundledGems(), get().userGems),
-    getMergedVariantTypes: () => mergeVariantTypes(getBundledVariantTypes(), get().userVariantTypes),
-    getDeletedEquipment: () => getDeletedItems(getBundledEquipment(), get().userEquipment),
-    getDeletedEnchantments: () => getDeletedItems(getBundledEnchantments(), get().userEnchantments),
-    getDeletedModifiers: () => getDeletedItems(getBundledModifiers(), get().userModifiers),
-    getDeletedGems: () => getDeletedItems(getBundledGems(), get().userGems),
-    getDeletedVariantTypes: () => getDeletedVariantTypes(getBundledVariantTypes(), get().userVariantTypes),
+    getMergedEquipment: () => mergeItems(bundledGetters.getBundledEquipment(), get().userEquipment),
+    getMergedEnchantments: () => mergeItems(bundledGetters.getBundledEnchantments(), get().userEnchantments),
+    getMergedModifiers: () => mergeItems(bundledGetters.getBundledModifiers(), get().userModifiers),
+    getMergedGems: () => mergeItems(bundledGetters.getBundledGems(), get().userGems),
+    getMergedVariantTypes: () => mergeVariantTypes(bundledGetters.getBundledVariantTypes(), get().userVariantTypes),
+    getDeletedEquipment: () => getDeletedItems(bundledGetters.getBundledEquipment(), get().userEquipment),
+    getDeletedEnchantments: () => getDeletedItems(bundledGetters.getBundledEnchantments(), get().userEnchantments),
+    getDeletedModifiers: () => getDeletedItems(bundledGetters.getBundledModifiers(), get().userModifiers),
+    getDeletedGems: () => getDeletedItems(bundledGetters.getBundledGems(), get().userGems),
+    getDeletedVariantTypes: () => getDeletedVariantTypes(bundledGetters.getBundledVariantTypes(), get().userVariantTypes),
     getVariantTypesRecord: () => toVariantTypesRecord(get().getMergedVariantTypes()),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Import/Export Actions
+// ---------------------------------------------------------------------------
 
 function createImportExportActions(set: SetFn, get: GetFn) {
   return {
@@ -323,7 +221,7 @@ function createImportExportActions(set: SetFn, get: GetFn) {
         const parsed = JSON.parse(json) as unknown;
         const result = userDataExportSchema.safeParse(parsed);
         if (!result.success) return { imported: 0, errors: ["Invalid export format"] };
-        const bundledKeys = new Set(Object.keys(getBundledVariantTypes()));
+        const bundledKeys = new Set(Object.keys(bundledGetters.getBundledVariantTypes()));
         const importResult = parseImportData(result.data, bundledKeys);
         set(() => ({
           userEquipment: importResult.equipment,
@@ -344,6 +242,50 @@ function createImportExportActions(set: SetFn, get: GetFn) {
     clearAllUserData: () => { set(() => emptyState); },
     checkBundledUpdate: () => dataManifest.version > get().bundledVersion,
     updateStoredVersion: () => { set(() => ({ bundledVersion: dataManifest.version })); },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Sync Actions
+// ---------------------------------------------------------------------------
+
+function createSyncActions(set: SetFn, get: GetFn) {
+  const getAllDuplicates = () =>
+    detectAllDuplicates({
+      userEquipment: get().userEquipment,
+      userEnchantments: get().userEnchantments,
+      userModifiers: get().userModifiers,
+      userGems: get().userGems,
+      bundledEquipment: bundledGetters.getBundledEquipment(),
+      bundledEnchantments: bundledGetters.getBundledEnchantments(),
+      bundledModifiers: bundledGetters.getBundledModifiers(),
+      bundledGems: bundledGetters.getBundledGems(),
+    });
+
+  return {
+    getEquipmentDuplicates: () => detectEquipmentDuplicates(get().userEquipment, bundledGetters.getBundledEquipment()),
+    getChangelogEntry: () => getChangelogEntryForCurrentVersion(),
+    getSyncSummary: (): SyncSummary => {
+      const state = get();
+      return buildUserDataSyncSummary({
+        duplicates: getAllDuplicates(),
+        userEquipment: state.userEquipment,
+        userEnchantments: state.userEnchantments,
+        userModifiers: state.userModifiers,
+        userGems: state.userGems,
+      });
+    },
+    performSync: () => {
+      const state = get();
+      const purged = purgeDuplicates({
+        duplicates: getAllDuplicates(),
+        userEquipment: state.userEquipment,
+        userEnchantments: state.userEnchantments,
+        userModifiers: state.userModifiers,
+        userGems: state.userGems,
+      });
+      set(() => ({ ...purged, bundledVersion: dataManifest.version }));
+    },
   };
 }
 
@@ -398,13 +340,14 @@ export const useUserDataStore = create<UserDataState & UserDataActions>()(
   persist(
     (set, get) => ({
       ...emptyState,
-      ...createEquipmentActions(set, get),
-      ...createEnchantmentActions(set, get),
-      ...createModifierActions(set, get),
-      ...createGemActions(set, get),
-      ...createVariantTypeActions(set, get),
+      ...createEquipmentActions(set, get, bundledGetters),
+      ...createEnchantmentActions(set, get, bundledGetters),
+      ...createModifierActions(set, get, bundledGetters),
+      ...createGemActions(set, get, bundledGetters),
+      ...createVariantTypeActions(set, get, bundledGetters),
       ...createGetterActions(get),
       ...createImportExportActions(set, get),
+      ...createSyncActions(set, get),
     }),
     {
       name: "ao-user-data",

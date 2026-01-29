@@ -1,5 +1,5 @@
 /**
- * PanelHeader — header with import/export/clear actions and storage size.
+ * PanelHeader — header with add/import/export/clear actions and storage size.
  */
 
 import { useRef, useState, useMemo } from "react";
@@ -8,10 +8,18 @@ import { useUserDataStore } from "@/stores/user-data-store";
 import { ConfirmClearDialog } from "./confirm-clear-dialog";
 
 // ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface PanelHeaderProps {
+  readonly onAdd: () => void;
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function PanelHeader(): React.JSX.Element {
+export function PanelHeader({ onAdd }: PanelHeaderProps): React.JSX.Element {
   const exportData = useUserDataStore((s) => s.exportData);
   const importData = useUserDataStore((s) => s.importData);
 
@@ -58,6 +66,7 @@ export function PanelHeader(): React.JSX.Element {
       <HeaderRow
         storageSize={storageSize}
         fileInputRef={fileInputRef}
+        onAdd={onAdd}
         onExport={handleExport}
         onImport={handleImport}
         onClearClick={() => { setConfirmClear(true); }}
@@ -77,21 +86,26 @@ export function PanelHeader(): React.JSX.Element {
 function HeaderRow({
   storageSize,
   fileInputRef,
+  onAdd,
   onExport,
   onImport,
   onClearClick,
 }: {
   readonly storageSize: string;
   readonly fileInputRef: React.RefObject<HTMLInputElement | null>;
+  readonly onAdd: () => void;
   readonly onExport: () => void;
   readonly onImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readonly onClearClick: () => void;
 }): React.JSX.Element {
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <h2 className="text-lg font-bold text-text-primary">Data Management</h2>
+      <h2 className="text-lg font-bold text-text-primary">Game Data</h2>
       <span className="text-xs text-text-muted">Storage: {storageSize}</span>
       <div className="flex gap-1.5 ml-auto">
+        <Button variant="outline" size="xs" onClick={onAdd}>
+          + Add
+        </Button>
         <input
           ref={fileInputRef}
           type="file"

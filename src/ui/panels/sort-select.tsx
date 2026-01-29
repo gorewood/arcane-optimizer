@@ -13,14 +13,20 @@ export type SortOption =
   | "name-desc"
   | "defense-desc"
   | "power-desc"
-  | "set-name";
+  | "dexterity-desc"
+  | "sockets-desc"
+  | "set-name"
+  | "source-name";
 
 export const SORT_OPTIONS: readonly { readonly value: SortOption; readonly label: string }[] = [
   { value: "name-asc", label: "Name (A-Z)" },
   { value: "name-desc", label: "Name (Z-A)" },
-  { value: "defense-desc", label: "Defense (High-Low)" },
-  { value: "power-desc", label: "Power (High-Low)" },
+  { value: "defense-desc", label: "Defense (High)" },
+  { value: "power-desc", label: "Power (High)" },
+  { value: "dexterity-desc", label: "Dexterity (High)" },
+  { value: "sockets-desc", label: "Sockets (High)" },
   { value: "set-name", label: "Set Name" },
+  { value: "source-name", label: "Source" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -62,6 +68,8 @@ export function SortSelect({ value, onChange }: SortSelectProps): React.JSX.Elem
 interface Sortable {
   readonly name: string;
   readonly setName?: string | undefined;
+  readonly source?: string | undefined;
+  readonly socketCount?: number | undefined;
   readonly baseStats?: Partial<Record<string, number>> | undefined;
 }
 
@@ -84,10 +92,23 @@ export function sortItems<T extends Sortable>(
     case "power-desc":
       sorted.sort((a, b) => (b.baseStats?.power ?? 0) - (a.baseStats?.power ?? 0));
       break;
+    case "dexterity-desc":
+      sorted.sort((a, b) => (b.baseStats?.dexterity ?? 0) - (a.baseStats?.dexterity ?? 0));
+      break;
+    case "sockets-desc":
+      sorted.sort((a, b) => (b.socketCount ?? 0) - (a.socketCount ?? 0));
+      break;
     case "set-name":
       sorted.sort((a, b) => {
         const setCompare = (a.setName ?? "zzz").localeCompare(b.setName ?? "zzz");
         if (setCompare !== 0) return setCompare;
+        return a.name.localeCompare(b.name);
+      });
+      break;
+    case "source-name":
+      sorted.sort((a, b) => {
+        const srcCompare = (a.source ?? "zzz").localeCompare(b.source ?? "zzz");
+        if (srcCompare !== 0) return srcCompare;
         return a.name.localeCompare(b.name);
       });
       break;

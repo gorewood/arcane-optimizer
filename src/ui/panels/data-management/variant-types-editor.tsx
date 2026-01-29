@@ -2,11 +2,10 @@
  * VariantTypesEditor — variant types list with CRUD operations.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { VariantTypeEntry } from "@/models/types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import type { SortOption } from "@/ui/panels/sort-select";
-import { VariantTypesEditorHeader } from "./variant-types-editor-header";
 import { VariantTypesList } from "./variant-types-list";
 import { VariantTypeEditDialog } from "./variant-type-edit-dialog";
 
@@ -25,9 +24,11 @@ export interface VariantTypeWithKey extends VariantTypeEntry {
 export function VariantTypesEditor({
   filter,
   sortBy,
+  addRequest,
 }: {
   readonly filter: string;
   readonly sortBy: SortOption;
+  readonly addRequest: number;
 }): React.JSX.Element {
   // Subscribe to userVariantTypes to trigger re-render on changes
   const userVariantTypes = useUserDataStore((s) => s.userVariantTypes);
@@ -74,9 +75,18 @@ export function VariantTypesEditor({
 
   const handleClose = useCallback((): void => { setEditingItem(null); }, []);
 
+  // Respond to add requests from parent
+  const prevAddRequest = useRef(addRequest);
+  useEffect(() => {
+    if (addRequest > 0 && addRequest !== prevAddRequest.current) {
+      // Use requestAnimationFrame to avoid sync setState in effect
+      requestAnimationFrame(() => { handleAddNew(); });
+    }
+    prevAddRequest.current = addRequest;
+  }, [addRequest, handleAddNew]);
+
   return (
     <div className="space-y-2">
-      <VariantTypesEditorHeader count={filtered.length} onAddNew={handleAddNew} />
       <VariantTypesList items={filtered} deletedItems={deletedItems} onEdit={handleEdit} />
       <VariantTypeEditDialog variantType={editingItem} isNew={isNew} onClose={handleClose} />
     </div>

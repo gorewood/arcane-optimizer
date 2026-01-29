@@ -28,6 +28,9 @@ const variantTypeEntrySchema = z
 // User Item Record Schemas
 // ---------------------------------------------------------------------------
 
+/** Schema for item purpose field. */
+export const itemPurposeSchema = z.enum(["contribution", "custom"]);
+
 /**
  * Creates a user item record schema for the given item schema.
  */
@@ -38,6 +41,7 @@ function createUserItemRecordSchema<T extends z.ZodTypeAny>(itemSchema: T) {
       deleted: z.boolean().optional(),
       data: itemSchema.optional(),
       baseVersion: z.number().int().optional(),
+      purpose: itemPurposeSchema.optional(),
       createdAt: z.number(),
       updatedAt: z.number(),
     })
@@ -108,8 +112,27 @@ export const userDataExportSchema = z
 // Data Manifest Schema
 // ---------------------------------------------------------------------------
 
+/** Schema for a single changelog entry. */
+export const changelogEntrySchema = z
+  .object({
+    version: z.number().int().positive(),
+    date: z.string(),
+    summary: z.string(),
+    added: z.array(z.string()).readonly().optional(),
+    modified: z.array(z.string()).readonly().optional(),
+    removed: z.array(z.string()).readonly().optional(),
+  })
+  .readonly();
+
 export const dataManifestSchema = z
   .object({
     version: z.number().int().positive(),
+    changelog: z.array(changelogEntrySchema).readonly().optional(),
   })
   .readonly();
+
+/** TypeScript type for changelog entry. */
+export type ChangelogEntry = z.infer<typeof changelogEntrySchema>;
+
+/** TypeScript type for data manifest. */
+export type DataManifest = z.infer<typeof dataManifestSchema>;

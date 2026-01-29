@@ -4,44 +4,102 @@
  */
 
 import { useState, useMemo } from "react";
-import type { EquipmentPiece } from "@/models/types";
+import type { EquipmentPiece, SlotType } from "@/models/types";
+import type { MergedItem } from "@/data/user-data-types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { sortItems, type SortOption } from "./sort-select";
+import type { GroupByOption } from "./group-by-select";
 import { SlotBadge } from "./slot-badge";
 import { StatSummary } from "./stat-summary";
+import { SourceBadge } from "./data-management/source-badge";
+import { matchesActiveFilters, type FilterChipId } from "./filter-chips";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface SetGroup {
+type MergedEquipment = MergedItem<EquipmentPiece>;
+
+interface ItemGroup {
   readonly name: string;
-  readonly items: readonly EquipmentPiece[];
+  readonly items: readonly MergedEquipment[];
 }
 
 // ---------------------------------------------------------------------------
-// Grouping helper
+// Grouping helpers
 // ---------------------------------------------------------------------------
 
-function groupBySet(
-  equipment: readonly EquipmentPiece[],
-): readonly SetGroup[] {
-  const groups = new Map<string, EquipmentPiece[]>();
+const SLOT_DISPLAY_ORDER: readonly SlotType[] = [
+  "chestplate",
+  "leggings",
+  "accessory",
+  "accessory-H",
+  "accessory-A",
+];
+const SLOT_LABELS: Record<SlotType, string> = {
+  chestplate: "Chestplates",
+  leggings: "Leggings",
+  accessory: "Accessories",
+  "accessory-H": "Helmets",
+  "accessory-A": "Amulets",
+};
 
-  for (const item of equipment) {
-    const key = item.setName ?? "Standalone";
+function groupItems(
+  equipment: readonly MergedEquipment[],
+  groupBy: GroupByOption,
+): readonly ItemGroup[] {
+  if (groupBy === "none") {
+    return [{ name: "All Equipment", items: equipment }];
+  }
+
+  const groups = new Map<string, MergedEquipment[]>();
+
+  for (const merged of equipment) {
+    const item = merged.item;
+    let key: string;
+    switch (groupBy) {
+      case "set":
+        key = item.setName ?? "Standalone";
+        break;
+      case "slot":
+        key = item.slot;
+        break;
+      case "source":
+        key = item.source ?? "Unknown";
+        break;
+    }
     const existing = groups.get(key);
     if (existing) {
-      existing.push(item);
+      existing.push(merged);
     } else {
-      groups.set(key, [item]);
+      groups.set(key, [merged]);
     }
   }
 
-  return Array.from(groups.entries()).map(([name, items]) => ({
-    name,
+  // Sort groups appropriately
+  const entries = Array.from(groups.entries());
+  if (groupBy === "slot") {
+    entries.sort((a, b) => {
+      const aKey = a[0];
+      const bKey = b[0];
+      const aIdx = isSlotType(aKey) ? SLOT_DISPLAY_ORDER.indexOf(aKey) : -1;
+      const bIdx = isSlotType(bKey) ? SLOT_DISPLAY_ORDER.indexOf(bKey) : -1;
+      return aIdx - bIdx;
+    });
+  } else {
+    entries.sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  return entries.map(([key, items]) => ({
+    name: groupBy === "slot" && isSlotType(key) ? SLOT_LABELS[key] : key,
     items,
   }));
+}
+
+const SLOT_TYPE_SET: ReadonlySet<string> = new Set(SLOT_DISPLAY_ORDER);
+
+function isSlotType(value: string): value is SlotType {
+  return SLOT_TYPE_SET.has(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -52,32 +110,44 @@ export function EquipmentSection({
   equipment,
   filter,
   sortBy,
+  groupBy = "set",
+  activeFilters = new Set(),
 }: {
-  readonly equipment: readonly EquipmentPiece[];
+  readonly equipment: readonly MergedEquipment[];
   readonly filter: string;
   readonly sortBy: SortOption;
+  readonly groupBy?: GroupByOption;
+  readonly activeFilters?: ReadonlySet<FilterChipId>;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
     let result = equipment;
+    // Text filter
     if (filter !== "") {
       const lower = filter.toLowerCase();
       result = result.filter(
-        (item) =>
-          item.name.toLowerCase().includes(lower) ||
-          (item.setName?.toLowerCase().includes(lower) ?? false),
+        (m) =>
+          m.item.name.toLowerCase().includes(lower) ||
+          (m.item.setName?.toLowerCase().includes(lower) ?? false) ||
+          (m.item.source?.toLowerCase().includes(lower) ?? false),
       );
     }
-    return sortItems(result, sortBy);
-  }, [equipment, filter, sortBy]);
-
-  const groups = useMemo(() => {
-    // Only group by set if sortBy is "set-name"
-    if (sortBy === "set-name") {
-      return groupBySet(filtered);
+    // Quick filter chips
+    if (activeFilters.size > 0) {
+      result = result.filter((m) =>
+        matchesActiveFilters(m.item.source, m.source === "user", activeFilters)
+      );
     }
-    // Otherwise show as flat list under "All Equipment"
-    return [{ name: "All Equipment", items: filtered }];
-  }, [filtered, sortBy]);
+    // Sort by the inner item
+    const sortedItems = sortItems(result.map((m) => m.item), sortBy);
+    // Rebuild merged array in sorted order
+    const itemToMerged = new Map(result.map((m) => [m.item.id, m]));
+    return sortedItems.map((item) => itemToMerged.get(item.id)).filter((m): m is MergedEquipment => m !== undefined);
+  }, [equipment, filter, sortBy, activeFilters]);
+
+  const groups = useMemo(
+    () => groupItems(filtered, groupBy),
+    [filtered, groupBy]
+  );
 
   return (
     <div className="space-y-1">
@@ -91,7 +161,7 @@ export function EquipmentSection({
         <p className="text-text-muted text-xs px-1">No matching equipment.</p>
       ) : (
         groups.map((group) => (
-          <SetGroupBlock key={group.name} group={group} />
+          <ItemGroupBlock key={group.name} group={group} />
         ))
       )}
     </div>
@@ -99,13 +169,13 @@ export function EquipmentSection({
 }
 
 // ---------------------------------------------------------------------------
-// SetGroupBlock — collapsible set header + item rows
+// ItemGroupBlock — collapsible group header + item rows
 // ---------------------------------------------------------------------------
 
-function SetGroupBlock({
+function ItemGroupBlock({
   group,
 }: {
-  readonly group: SetGroup;
+  readonly group: ItemGroup;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(true);
 
@@ -130,8 +200,8 @@ function SetGroupBlock({
       </button>
       {expanded && (
         <div className="divide-y divide-border-subtle">
-          {group.items.map((item) => (
-            <EquipmentRow key={item.id} item={item} />
+          {group.items.map((merged) => (
+            <EquipmentRow key={merged.item.id} merged={merged} />
           ))}
         </div>
       )}
@@ -144,10 +214,11 @@ function SetGroupBlock({
 // ---------------------------------------------------------------------------
 
 function EquipmentRow({
-  item,
+  merged,
 }: {
-  readonly item: EquipmentPiece;
+  readonly merged: MergedEquipment;
 }): React.JSX.Element {
+  const item = merged.item;
   const enabled = useGearPoolStore((s) => s.enabledEquipmentIds.has(item.id));
   const toggle = useGearPoolStore((s) => s.toggleEquipment);
 
@@ -164,6 +235,7 @@ function EquipmentRow({
       <span className="text-sm text-text-primary truncate flex-1">
         {item.name}
       </span>
+      <SourceBadge item={merged} />
       <SlotBadge slot={item.slot} />
       {item.socketCount > 0 && (
         <span
