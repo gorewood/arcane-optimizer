@@ -227,6 +227,7 @@ function launchIslandCoordinator(config: IslandLaunchConfig, cb: IslandCallbacks
       populationSize: config.gaParams.populationSize,
       generations: config.gaParams.generations,
       mutationRate: config.gaParams.mutationRate,
+      islandCount: config.gaParams.islandCount,
     },
     {
       onProgress: cb.onProgress,

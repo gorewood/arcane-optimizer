@@ -188,6 +188,15 @@ function GAParamsRow({
     <div className="flex items-center gap-3 flex-wrap text-xs">
       <span className="text-text-muted">GA:</span>
       <ParamInput
+        label="Islands"
+        value={params.islandCount}
+        onChange={(v) => { onChange({ islandCount: v }); }}
+        min={1}
+        max={8}
+        step={1}
+        disabled={disabled}
+      />
+      <ParamInput
         label="Pop"
         value={params.populationSize}
         onChange={(v) => { onChange({ populationSize: v }); }}

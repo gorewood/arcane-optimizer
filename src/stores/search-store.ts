@@ -17,6 +17,7 @@ export interface GAParams {
   populationSize: number;
   generations: number;
   mutationRate: number;
+  islandCount: number;
 }
 
 /** Exit metadata from search completion */
@@ -53,10 +54,18 @@ export interface SearchActions {
 // Defaults
 // ---------------------------------------------------------------------------
 
+/** Get default island count based on hardware (capped at 8) */
+function getDefaultIslandCount(): number {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- may be undefined in non-browser
+  const hwConcurrency = globalThis.navigator?.hardwareConcurrency ?? 4;
+  return Math.min(hwConcurrency, 8);
+}
+
 const DEFAULT_GA_PARAMS: GAParams = {
   populationSize: 200,
   generations: 1000,  // Increased from 500 for longer search
   mutationRate: 0.15,
+  islandCount: getDefaultIslandCount(),
 };
 
 const INITIAL_STATE: SearchState = {

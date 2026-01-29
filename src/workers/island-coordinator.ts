@@ -111,6 +111,7 @@ export interface IslandCoordinatorConfig {
   readonly populationSize?: number;
   readonly generations?: number;
   readonly mutationRate?: number;
+  readonly islandCount?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,7 +129,7 @@ export class IslandCoordinator {
   private workerFactory: IslandFactory = createWorkerHandle;
 
   start(config: IslandCoordinatorConfig, callbacks: IslandCoordinatorCallbacks): void {
-    const islandCount = getIslandCount();
+    const islandCount = config.islandCount ?? getIslandCount();
     this.core = new CoordinatorCore(this.workerFactory, islandCount);
     this.core.start(config, callbacks);
   }
