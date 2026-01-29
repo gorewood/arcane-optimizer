@@ -56,7 +56,7 @@ export function ModifierForm({
         <Checkbox
           id="grantsSocket"
           checked={modifier.grantsSocket === true}
-          onCheckedChange={(checked) => {
+          onCheckedChange={(checked: boolean | "indeterminate") => {
             if (checked === true) {
               onChange({ ...modifier, grantsSocket: true });
             } else {
