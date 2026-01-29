@@ -4,9 +4,10 @@
  */
 
 import { useState, useMemo } from "react";
-import type { EquipmentPiece } from "@/models/types";
+import type { EquipmentPiece, SlotType } from "@/models/types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { sortItems, type SortOption } from "./sort-select";
+import type { GroupByOption } from "./group-by-select";
 import { SlotBadge } from "./slot-badge";
 import { StatSummary } from "./stat-summary";
 
@@ -14,22 +15,53 @@ import { StatSummary } from "./stat-summary";
 // Types
 // ---------------------------------------------------------------------------
 
-interface SetGroup {
+interface ItemGroup {
   readonly name: string;
   readonly items: readonly EquipmentPiece[];
 }
 
 // ---------------------------------------------------------------------------
-// Grouping helper
+// Grouping helpers
 // ---------------------------------------------------------------------------
 
-function groupBySet(
+const SLOT_DISPLAY_ORDER: readonly SlotType[] = [
+  "chestplate",
+  "leggings",
+  "accessory",
+  "accessory-H",
+  "accessory-A",
+];
+const SLOT_LABELS: Record<SlotType, string> = {
+  chestplate: "Chestplates",
+  leggings: "Leggings",
+  accessory: "Accessories",
+  "accessory-H": "Helmets",
+  "accessory-A": "Amulets",
+};
+
+function groupItems(
   equipment: readonly EquipmentPiece[],
-): readonly SetGroup[] {
+  groupBy: GroupByOption,
+): readonly ItemGroup[] {
+  if (groupBy === "none") {
+    return [{ name: "All Equipment", items: equipment }];
+  }
+
   const groups = new Map<string, EquipmentPiece[]>();
 
   for (const item of equipment) {
-    const key = item.setName ?? "Standalone";
+    let key: string;
+    switch (groupBy) {
+      case "set":
+        key = item.setName ?? "Standalone";
+        break;
+      case "slot":
+        key = item.slot;
+        break;
+      case "source":
+        key = item.source ?? "Unknown";
+        break;
+    }
     const existing = groups.get(key);
     if (existing) {
       existing.push(item);
@@ -38,10 +70,30 @@ function groupBySet(
     }
   }
 
-  return Array.from(groups.entries()).map(([name, items]) => ({
-    name,
+  // Sort groups appropriately
+  const entries = Array.from(groups.entries());
+  if (groupBy === "slot") {
+    entries.sort((a, b) => {
+      const aKey = a[0];
+      const bKey = b[0];
+      const aIdx = isSlotType(aKey) ? SLOT_DISPLAY_ORDER.indexOf(aKey) : -1;
+      const bIdx = isSlotType(bKey) ? SLOT_DISPLAY_ORDER.indexOf(bKey) : -1;
+      return aIdx - bIdx;
+    });
+  } else {
+    entries.sort((a, b) => a[0].localeCompare(b[0]));
+  }
+
+  return entries.map(([key, items]) => ({
+    name: groupBy === "slot" && isSlotType(key) ? SLOT_LABELS[key] : key,
     items,
   }));
+}
+
+const SLOT_TYPE_SET: ReadonlySet<string> = new Set(SLOT_DISPLAY_ORDER);
+
+function isSlotType(value: string): value is SlotType {
+  return SLOT_TYPE_SET.has(value);
 }
 
 // ---------------------------------------------------------------------------
@@ -52,10 +104,12 @@ export function EquipmentSection({
   equipment,
   filter,
   sortBy,
+  groupBy = "set",
 }: {
   readonly equipment: readonly EquipmentPiece[];
   readonly filter: string;
   readonly sortBy: SortOption;
+  readonly groupBy?: GroupByOption;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
     let result = equipment;
@@ -64,20 +118,17 @@ export function EquipmentSection({
       result = result.filter(
         (item) =>
           item.name.toLowerCase().includes(lower) ||
-          (item.setName?.toLowerCase().includes(lower) ?? false),
+          (item.setName?.toLowerCase().includes(lower) ?? false) ||
+          (item.source?.toLowerCase().includes(lower) ?? false),
       );
     }
     return sortItems(result, sortBy);
   }, [equipment, filter, sortBy]);
 
-  const groups = useMemo(() => {
-    // Only group by set if sortBy is "set-name"
-    if (sortBy === "set-name") {
-      return groupBySet(filtered);
-    }
-    // Otherwise show as flat list under "All Equipment"
-    return [{ name: "All Equipment", items: filtered }];
-  }, [filtered, sortBy]);
+  const groups = useMemo(
+    () => groupItems(filtered, groupBy),
+    [filtered, groupBy]
+  );
 
   return (
     <div className="space-y-1">
@@ -91,7 +142,7 @@ export function EquipmentSection({
         <p className="text-text-muted text-xs px-1">No matching equipment.</p>
       ) : (
         groups.map((group) => (
-          <SetGroupBlock key={group.name} group={group} />
+          <ItemGroupBlock key={group.name} group={group} />
         ))
       )}
     </div>
@@ -99,13 +150,13 @@ export function EquipmentSection({
 }
 
 // ---------------------------------------------------------------------------
-// SetGroupBlock — collapsible set header + item rows
+// ItemGroupBlock — collapsible group header + item rows
 // ---------------------------------------------------------------------------
 
-function SetGroupBlock({
+function ItemGroupBlock({
   group,
 }: {
-  readonly group: SetGroup;
+  readonly group: ItemGroup;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(true);
 
