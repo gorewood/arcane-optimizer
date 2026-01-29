@@ -33,3 +33,4 @@ coverage/
 
 # History (client data, not versioned)
 history/
+.worktrees/

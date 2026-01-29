@@ -119,6 +119,7 @@ export default tseslint.config(
       "*.cjs",
       "*.mjs",
       "public/",
+      ".worktrees/",
     ],
   },
 );
