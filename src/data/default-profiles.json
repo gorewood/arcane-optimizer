@@ -7,7 +7,7 @@
       "version": 1,
       "constraints": [
         { "stat": "defense", "type": "atLeast", "value": 1000, "weight": 100 },
-        { "stat": "power", "type": "target", "value": 130, "weight": 90 },
+        { "stat": "power", "type": "atLeast", "value": 130, "weight": 90 },
         { "stat": "dexterity", "type": "maximize", "weight": 80 },
         { "stat": "insanity", "type": "atMost", "value": 1, "weight": 100 },
         { "stat": "drawback", "type": "atMost", "value": 2, "weight": 100 }
@@ -30,7 +30,7 @@
       "version": 1,
       "constraints": [
         { "stat": "defense", "type": "atLeast", "value": 600, "weight": 80 },
-        { "stat": "power", "type": "target", "value": 200, "weight": 100 },
+        { "stat": "power", "type": "atLeast", "value": 200, "weight": 100 },
         { "stat": "size", "type": "maximize", "weight": 90 },
         { "stat": "insanity", "type": "atMost", "value": 2, "weight": 100 },
         { "stat": "drawback", "type": "atMost", "value": 4, "weight": 100 }
