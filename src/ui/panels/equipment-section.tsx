@@ -6,6 +6,7 @@
 import { useState, useMemo } from "react";
 import type { EquipmentPiece } from "@/models/types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { sortItems, type SortOption } from "./sort-select";
 import { SlotBadge } from "./slot-badge";
 import { StatSummary } from "./stat-summary";
 
@@ -50,21 +51,33 @@ function groupBySet(
 export function EquipmentSection({
   equipment,
   filter,
+  sortBy,
 }: {
   readonly equipment: readonly EquipmentPiece[];
   readonly filter: string;
+  readonly sortBy: SortOption;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
-    if (filter === "") return equipment;
-    const lower = filter.toLowerCase();
-    return equipment.filter(
-      (item) =>
-        item.name.toLowerCase().includes(lower) ||
-        (item.setName?.toLowerCase().includes(lower) ?? false),
-    );
-  }, [equipment, filter]);
+    let result = equipment;
+    if (filter !== "") {
+      const lower = filter.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.name.toLowerCase().includes(lower) ||
+          (item.setName?.toLowerCase().includes(lower) ?? false),
+      );
+    }
+    return sortItems(result, sortBy);
+  }, [equipment, filter, sortBy]);
 
-  const groups = useMemo(() => groupBySet(filtered), [filtered]);
+  const groups = useMemo(() => {
+    // Only group by set if sortBy is "set-name"
+    if (sortBy === "set-name") {
+      return groupBySet(filtered);
+    }
+    // Otherwise show as flat list under "All Equipment"
+    return [{ name: "All Equipment", items: filtered }];
+  }, [filtered, sortBy]);
 
   return (
     <div className="space-y-1">

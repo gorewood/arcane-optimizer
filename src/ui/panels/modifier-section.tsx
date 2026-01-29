@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import type { Modifier } from "@/models/types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { sortItems, type SortOption } from "./sort-select";
 import { StatSummary } from "./stat-summary";
 
 // ---------------------------------------------------------------------------
@@ -14,15 +15,20 @@ import { StatSummary } from "./stat-summary";
 export function ModifierSection({
   modifiers,
   filter,
+  sortBy,
 }: {
   readonly modifiers: readonly Modifier[];
   readonly filter: string;
+  readonly sortBy: SortOption;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
-    if (filter === "") return modifiers;
-    const lower = filter.toLowerCase();
-    return modifiers.filter((m) => m.name.toLowerCase().includes(lower));
-  }, [modifiers, filter]);
+    let result = modifiers;
+    if (filter !== "") {
+      const lower = filter.toLowerCase();
+      result = result.filter((m) => m.name.toLowerCase().includes(lower));
+    }
+    return sortItems(result, sortBy);
+  }, [modifiers, filter, sortBy]);
 
   return (
     <div className="space-y-1">

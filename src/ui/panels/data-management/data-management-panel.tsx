@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PanelHeader } from "./panel-header";
 import { SearchInput } from "./search-input";
+import { SortSelect, type SortOption } from "@/ui/panels/sort-select";
 import { EquipmentEditor } from "./equipment-editor";
 import { EnchantmentEditor } from "./enchantment-editor";
 import { ModifierEditor } from "./modifier-editor";
@@ -19,11 +20,15 @@ import { VariantTypesEditor } from "./variant-types-editor";
 
 export function DataManagementPanel(): React.JSX.Element {
   const [filter, setFilter] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name-asc");
 
   return (
     <div className="space-y-4 p-4">
       <PanelHeader />
-      <SearchInput value={filter} onChange={setFilter} />
+      <div className="flex items-center gap-2">
+        <SearchInput value={filter} onChange={setFilter} />
+        <SortSelect value={sortBy} onChange={setSortBy} />
+      </div>
 
       <Tabs defaultValue="equipment">
         <TabsList variant="line">
@@ -35,23 +40,23 @@ export function DataManagementPanel(): React.JSX.Element {
         </TabsList>
 
         <TabsContent value="equipment">
-          <EquipmentEditor filter={filter} />
+          <EquipmentEditor filter={filter} sortBy={sortBy} />
         </TabsContent>
 
         <TabsContent value="enchantments">
-          <EnchantmentEditor filter={filter} />
+          <EnchantmentEditor filter={filter} sortBy={sortBy} />
         </TabsContent>
 
         <TabsContent value="modifiers">
-          <ModifierEditor filter={filter} />
+          <ModifierEditor filter={filter} sortBy={sortBy} />
         </TabsContent>
 
         <TabsContent value="gems">
-          <GemEditor filter={filter} />
+          <GemEditor filter={filter} sortBy={sortBy} />
         </TabsContent>
 
         <TabsContent value="variants">
-          <VariantTypesEditor filter={filter} />
+          <VariantTypesEditor filter={filter} sortBy={sortBy} />
         </TabsContent>
       </Tabs>
     </div>

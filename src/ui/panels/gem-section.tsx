@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import type { Gem } from "@/models/types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { sortItems, type SortOption } from "./sort-select";
 import { StatSummary } from "./stat-summary";
 
 // ---------------------------------------------------------------------------
@@ -14,15 +15,20 @@ import { StatSummary } from "./stat-summary";
 export function GemSection({
   gems,
   filter,
+  sortBy,
 }: {
   readonly gems: readonly Gem[];
   readonly filter: string;
+  readonly sortBy: SortOption;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
-    if (filter === "") return gems;
-    const lower = filter.toLowerCase();
-    return gems.filter((g) => g.name.toLowerCase().includes(lower));
-  }, [gems, filter]);
+    let result = gems;
+    if (filter !== "") {
+      const lower = filter.toLowerCase();
+      result = result.filter((g) => g.name.toLowerCase().includes(lower));
+    }
+    return sortItems(result, sortBy);
+  }, [gems, filter, sortBy]);
 
   return (
     <div className="space-y-1">

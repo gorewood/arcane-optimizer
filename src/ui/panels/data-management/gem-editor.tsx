@@ -5,6 +5,7 @@
 import { useState, useMemo, useCallback } from "react";
 import type { Gem } from "@/models/types";
 import { useUserDataStore } from "@/stores/user-data-store";
+import { sortItems, type SortOption } from "@/ui/panels/sort-select";
 import { GemEditorHeader } from "./gem-editor-header";
 import { GemList } from "./gem-list";
 import { GemEditDialog } from "./gem-edit-dialog";
@@ -15,23 +16,36 @@ import { GemEditDialog } from "./gem-edit-dialog";
 
 export function GemEditor({
   filter,
+  sortBy,
 }: {
   readonly filter: string;
+  readonly sortBy: SortOption;
 }): React.JSX.Element {
+  // Subscribe to userGems to trigger re-render on changes
+  const userGems = useUserDataStore((s) => s.userGems);
   const getMergedGems = useUserDataStore((s) => s.getMergedGems);
   const getDeletedGems = useUserDataStore((s) => s.getDeletedGems);
 
   const [editingItem, setEditingItem] = useState<Gem | null>(null);
   const [isNew, setIsNew] = useState(false);
 
-  const items = getMergedGems();
-  const deletedItems = getDeletedGems();
+  // Recompute merged items when userGems changes
+  const items = useMemo(() => getMergedGems(), [getMergedGems, userGems]);
+  const deletedItems = useMemo(() => getDeletedGems(), [getDeletedGems, userGems]);
 
   const filtered = useMemo(() => {
-    if (filter === "") return items;
-    const lower = filter.toLowerCase();
-    return items.filter((m) => m.item.name.toLowerCase().includes(lower));
-  }, [items, filter]);
+    let result = items;
+    if (filter !== "") {
+      const lower = filter.toLowerCase();
+      result = result.filter((m) => m.item.name.toLowerCase().includes(lower));
+    }
+    const sortedItems = sortItems(result.map((m) => m.item), sortBy);
+    const itemMap = new Map(result.map((m) => [m.item.id, m]));
+    return sortedItems.flatMap((item) => {
+      const merged = itemMap.get(item.id);
+      return merged !== undefined ? [merged] : [];
+    });
+  }, [items, filter, sortBy]);
 
   const handleAddNew = useCallback((): void => {
     setEditingItem(createNewGem());

@@ -13,6 +13,7 @@ import {
   loadGems,
 } from "@/data/loaders";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { SortSelect, type SortOption } from "./sort-select";
 import { EquipmentSection } from "./equipment-section";
 import { EnchantmentSection } from "./enchantment-section";
 import { ModifierSection } from "./modifier-section";
@@ -33,6 +34,7 @@ const gems = loadGems();
 
 export function GearPoolPanel(): React.JSX.Element {
   const [filter, setFilter] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("set-name");
   const enableAll = useGearPoolStore((s) => s.enableAll);
   const disableAll = useGearPoolStore((s) => s.disableAll);
 
@@ -41,6 +43,8 @@ export function GearPoolPanel(): React.JSX.Element {
       <PanelHeader
         filter={filter}
         onFilterChange={setFilter}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
         onEnableAll={enableAll}
         onDisableAll={disableAll}
       />
@@ -52,16 +56,16 @@ export function GearPoolPanel(): React.JSX.Element {
           <TabsTrigger value="gems">Gems</TabsTrigger>
         </TabsList>
         <TabsContent value="equipment">
-          <EquipmentSection equipment={equipment} filter={filter} />
+          <EquipmentSection equipment={equipment} filter={filter} sortBy={sortBy} />
         </TabsContent>
         <TabsContent value="enchantments">
-          <EnchantmentSection enchantments={enchantments} filter={filter} />
+          <EnchantmentSection enchantments={enchantments} filter={filter} sortBy={sortBy} />
         </TabsContent>
         <TabsContent value="modifiers">
-          <ModifierSection modifiers={modifiers} filter={filter} />
+          <ModifierSection modifiers={modifiers} filter={filter} sortBy={sortBy} />
         </TabsContent>
         <TabsContent value="gems">
-          <GemSection gems={gems} filter={filter} />
+          <GemSection gems={gems} filter={filter} sortBy={sortBy} />
         </TabsContent>
       </Tabs>
     </div>
@@ -75,11 +79,15 @@ export function GearPoolPanel(): React.JSX.Element {
 function PanelHeader({
   filter,
   onFilterChange,
+  sortBy,
+  onSortChange,
   onEnableAll,
   onDisableAll,
 }: {
   readonly filter: string;
   readonly onFilterChange: (value: string) => void;
+  readonly sortBy: SortOption;
+  readonly onSortChange: (value: SortOption) => void;
   readonly onEnableAll: () => void;
   readonly onDisableAll: () => void;
 }): React.JSX.Element {
@@ -98,7 +106,10 @@ function PanelHeader({
           </Button>
         </div>
       </div>
-      <SearchInput value={filter} onChange={onFilterChange} />
+      <div className="flex items-center gap-2">
+        <SearchInput value={filter} onChange={onFilterChange} />
+        <SortSelect value={sortBy} onChange={onSortChange} />
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@
 import { useMemo } from "react";
 import type { Enchantment } from "@/models/types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { sortItems, type SortOption } from "./sort-select";
 import { StatSummary } from "./stat-summary";
 
 // ---------------------------------------------------------------------------
@@ -14,15 +15,20 @@ import { StatSummary } from "./stat-summary";
 export function EnchantmentSection({
   enchantments,
   filter,
+  sortBy,
 }: {
   readonly enchantments: readonly Enchantment[];
   readonly filter: string;
+  readonly sortBy: SortOption;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
-    if (filter === "") return enchantments;
-    const lower = filter.toLowerCase();
-    return enchantments.filter((e) => e.name.toLowerCase().includes(lower));
-  }, [enchantments, filter]);
+    let result = enchantments;
+    if (filter !== "") {
+      const lower = filter.toLowerCase();
+      result = result.filter((e) => e.name.toLowerCase().includes(lower));
+    }
+    return sortItems(result, sortBy);
+  }, [enchantments, filter, sortBy]);
 
   return (
     <div className="space-y-1">
