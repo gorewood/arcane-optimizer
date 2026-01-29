@@ -139,12 +139,28 @@ function StatPair({ label, value, valueClass }: { readonly label: string; readon
   );
 }
 
+function getExitLabel(exitMetadata: ExitMetadata | null): { label: string; detail: string; color: string } {
+  const reason = exitMetadata?.reason;
+  const gen = exitMetadata?.finalGeneration;
+  const total = exitMetadata?.totalGenerations;
+  const hasGenInfo = gen != null && total != null;
+
+  if (reason === "cancelled" && hasGenInfo) {
+    return { label: "Cancelled", detail: `at gen ${String(gen)}/${String(total)}`, color: "text-stat-warning" };
+  }
+  if (reason === "stagnation" && hasGenInfo && gen < total) {
+    return { label: "Complete", detail: `· converged at gen ${String(gen)}/${String(total)}`, color: "text-stat-positive" };
+  }
+  return { label: "Complete", detail: "", color: "text-stat-positive" };
+}
+
 function StatusLabel({ isComplete, exitMetadata }: { readonly isComplete: boolean; readonly exitMetadata: ExitMetadata | null }): React.JSX.Element {
   if (!isComplete) return <span className="text-text-muted">Searching...</span>;
-  const earlyExit = exitMetadata?.reason === "stagnation" && exitMetadata.finalGeneration != null;
+  const { label, detail, color } = getExitLabel(exitMetadata);
   return (
-    <span className="font-semibold text-stat-positive">
-      Complete{earlyExit && <span className="font-normal text-text-muted ml-1">(gen {String(exitMetadata.finalGeneration)})</span>}
+    <span className={`font-semibold ${color}`}>
+      {label}
+      {detail !== "" && <span className="font-normal text-text-muted ml-1">{detail}</span>}
     </span>
   );
 }

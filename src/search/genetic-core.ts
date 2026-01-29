@@ -36,6 +36,17 @@ function getAppliedVariant(piece: EquipmentPiece | ExpandedEquipment): string {
   return "";
 }
 
+/**
+ * Generate a unique key for a loadout based on piece identity only.
+ * Used for elite archive to track best config for each piece combination.
+ */
+function getPieceKey(ind: EvaluatedIndividual): string {
+  return ind.loadout.slots.map((s) => {
+    const variantKey = getAppliedVariant(s.piece);
+    return `${s.piece.id}:${variantKey}`;
+  }).join(",");
+}
+
 // ---------------------------------------------------------------------------
 // Cancellation token
 // ---------------------------------------------------------------------------
@@ -85,10 +96,11 @@ export function extractResults(
   const results: SearchResult[] = [];
 
   for (const ind of sorted) {
-    // Include appliedVariant in key to distinguish variant candidates
+    // Dedup by piece identity only (id + variant) — same pieces with different
+    // enchants/mods are consolidated to the highest-scoring configuration
     const key = ind.loadout.slots.map((s) => {
       const variantKey = getAppliedVariant(s.piece);
-      return `${s.piece.id}:${variantKey}:${s.enchantment?.id ?? ""}:${s.modifier?.id ?? ""}`;
+      return `${s.piece.id}:${variantKey}`;
     }).join(",");
     if (seen.has(key)) continue;
     seen.add(key);
@@ -194,6 +206,8 @@ function produceOffspring(
 
 interface LoopState {
   population: EvaluatedIndividual[];
+  /** Elite archive: best individual for each unique piece combination */
+  archive: Map<string, EvaluatedIndividual>;
   bestScore: number;
   stagnation: number;
   injections: number;
@@ -281,11 +295,25 @@ function handleStagnation(
   return false;
 }
 
+/** Extract results from archive + population combined. */
+function extractResultsWithArchive(
+  state: LoopState,
+  maxResults: number,
+): readonly SearchResult[] {
+  // Merge archive with current population for extraction
+  const archiveIndividuals = [...state.archive.values()];
+  const combined = [...archiveIndividuals, ...state.population];
+  return extractResults(combined, maxResults);
+}
+
 async function runEvolutionLoop(
   config: LoopConfig,
   state: LoopState,
 ): Promise<void> {
   const { evolveParams, generations, maxResults, token, onProgress } = config;
+  // Archive size limit: 2x maxResults to capture diverse solutions
+  const archiveLimit = maxResults * 2;
+
   for (let gen = 0; gen < generations; gen++) {
     if (token.cancelled) {
       state.finalGeneration = gen;
@@ -295,7 +323,8 @@ async function runEvolutionLoop(
 
     state.population = evolveOneGeneration(evolveParams, state.population);
     updateStagnation(state);
-    const currentResults = extractResults(state.population, maxResults);
+    updateArchive(state, archiveLimit);
+    const currentResults = extractResultsWithArchive(state, maxResults);
     onProgress?.(gen + 1, generations, state.bestScore, currentResults);
 
     if (handleStagnation(state, gen, config)) break;
@@ -311,7 +340,7 @@ async function runEvolutionLoop(
     }
   }
   // Report 100% completion so progress bar reaches the end
-  const finalResults = extractResults(state.population, maxResults);
+  const finalResults = extractResultsWithArchive(state, maxResults);
   onProgress?.(generations, generations, state.bestScore, finalResults);
 }
 
@@ -342,6 +371,22 @@ function updateStagnation(state: LoopState): void {
     state.stagnation = 0;
   } else {
     state.stagnation++;
+  }
+}
+
+/** Update elite archive with best individuals for each unique piece combination. */
+function updateArchive(state: LoopState, maxArchiveSize: number): void {
+  for (const ind of state.population) {
+    const key = getPieceKey(ind);
+    const existing = state.archive.get(key);
+    if (existing == null || ind.score > existing.score) {
+      state.archive.set(key, ind);
+    }
+  }
+  // Trim archive to max size (keep highest-scoring entries)
+  if (state.archive.size > maxArchiveSize) {
+    const sorted = [...state.archive.entries()].sort((a, b) => b[1].score - a[1].score);
+    state.archive = new Map(sorted.slice(0, maxArchiveSize));
   }
 }
 
@@ -416,6 +461,7 @@ export class GeneticSearch implements SearchStrategy {
 
     const state: LoopState = {
       population,
+      archive: new Map(),
       bestScore: population[0]?.score ?? -Infinity,
       stagnation: 0,
       injections: 0,
@@ -452,6 +498,6 @@ export class GeneticSearch implements SearchStrategy {
     this.exitReason = state.exitReason;
     this.finalGeneration = state.finalGeneration;
 
-    return extractResults(state.population, options.maxResults);
+    return extractResultsWithArchive(state, options.maxResults);
   }
 }
