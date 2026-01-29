@@ -644,5 +644,46 @@
         "defense": 115
       }
     }
+  },
+  {
+    "id": "lost-envoy-robes",
+    "name": "Lost Envoy Robes",
+    "setName": "Lost Envoy",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 36,
+      "regeneration": 38
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": []
+  },
+  {
+    "id": "lost-envoy-pants",
+    "name": "Lost Envoy Pants",
+    "setName": "Lost Envoy",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 27,
+      "regeneration": 28
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "lost-envoy-pauldrons",
+    "name": "Lost Envoy Pauldrons",
+    "setName": "Lost Envoy",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 27,
+      "regeneration": 28
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "atlanteanOnly": true
   }
 ]
