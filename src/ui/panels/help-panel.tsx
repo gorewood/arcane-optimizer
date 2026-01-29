@@ -11,14 +11,19 @@
 export function HelpPanel(): React.JSX.Element {
   return (
     <div className="p-4 space-y-6 max-w-3xl">
+      {/* General overview */}
       <QuickStart />
-      <GearInventorySection />
-      <GameDataSection />
+      {/* Optimizer tab */}
       <GoalsSection />
       <WeightsSection />
       <ConstraintTypesSection />
       <SearchAlgorithmsSection />
       <ScoringDetailsSection />
+      {/* Gear Inventory tab */}
+      <GearInventorySection />
+      {/* Game Data tab */}
+      <GameDataSection />
+      {/* General tips */}
       <TipsSection />
     </div>
   );
