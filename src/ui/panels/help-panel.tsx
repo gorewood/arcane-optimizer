@@ -17,14 +17,13 @@ export function HelpPanel(): React.JSX.Element {
       <GoalsSection />
       <WeightsSection />
       <ConstraintTypesSection />
+      <TipsSection />
       <SearchAlgorithmsSection />
       <ScoringDetailsSection />
       {/* Gear Inventory tab */}
       <GearInventorySection />
       {/* Game Data tab */}
       <GameDataSection />
-      {/* General tips */}
-      <TipsSection />
     </div>
   );
 }
