@@ -7,6 +7,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { EquipmentPiece, Enchantment, Modifier, Gem } from "@/models/types";
+import type { MergedItem } from "@/data/user-data-types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { SortSelect, type SortOption } from "./sort-select";
@@ -21,7 +22,7 @@ import { GemSection } from "./gem-section";
 // ---------------------------------------------------------------------------
 
 interface MergedGearData {
-  readonly equipment: readonly EquipmentPiece[];
+  readonly equipment: readonly MergedItem<EquipmentPiece>[];
   readonly enchantments: readonly Enchantment[];
   readonly modifiers: readonly Modifier[];
   readonly gems: readonly Gem[];
@@ -34,7 +35,7 @@ function useMergedGearData(): MergedGearData {
   const getMergedGems = useUserDataStore((s) => s.getMergedGems);
 
   return {
-    equipment: useMemo(() => getMergedEquipment().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedEquipment]),
+    equipment: useMemo(() => getMergedEquipment().filter((m) => !m.isDeleted), [getMergedEquipment]),
     enchantments: useMemo(() => getMergedEnchantments().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedEnchantments]),
     modifiers: useMemo(() => getMergedModifiers().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedModifiers]),
     gems: useMemo(() => getMergedGems().filter((m) => !m.isDeleted).map((m) => m.item), [getMergedGems]),

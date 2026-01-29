@@ -5,19 +5,23 @@
 
 import { useState, useMemo } from "react";
 import type { EquipmentPiece, SlotType } from "@/models/types";
+import type { MergedItem } from "@/data/user-data-types";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { sortItems, type SortOption } from "./sort-select";
 import type { GroupByOption } from "./group-by-select";
 import { SlotBadge } from "./slot-badge";
 import { StatSummary } from "./stat-summary";
+import { SourceBadge } from "./data-management/source-badge";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+type MergedEquipment = MergedItem<EquipmentPiece>;
+
 interface ItemGroup {
   readonly name: string;
-  readonly items: readonly EquipmentPiece[];
+  readonly items: readonly MergedEquipment[];
 }
 
 // ---------------------------------------------------------------------------
@@ -40,16 +44,17 @@ const SLOT_LABELS: Record<SlotType, string> = {
 };
 
 function groupItems(
-  equipment: readonly EquipmentPiece[],
+  equipment: readonly MergedEquipment[],
   groupBy: GroupByOption,
 ): readonly ItemGroup[] {
   if (groupBy === "none") {
     return [{ name: "All Equipment", items: equipment }];
   }
 
-  const groups = new Map<string, EquipmentPiece[]>();
+  const groups = new Map<string, MergedEquipment[]>();
 
-  for (const item of equipment) {
+  for (const merged of equipment) {
+    const item = merged.item;
     let key: string;
     switch (groupBy) {
       case "set":
@@ -64,9 +69,9 @@ function groupItems(
     }
     const existing = groups.get(key);
     if (existing) {
-      existing.push(item);
+      existing.push(merged);
     } else {
-      groups.set(key, [item]);
+      groups.set(key, [merged]);
     }
   }
 
@@ -106,7 +111,7 @@ export function EquipmentSection({
   sortBy,
   groupBy = "set",
 }: {
-  readonly equipment: readonly EquipmentPiece[];
+  readonly equipment: readonly MergedEquipment[];
   readonly filter: string;
   readonly sortBy: SortOption;
   readonly groupBy?: GroupByOption;
@@ -116,13 +121,17 @@ export function EquipmentSection({
     if (filter !== "") {
       const lower = filter.toLowerCase();
       result = result.filter(
-        (item) =>
-          item.name.toLowerCase().includes(lower) ||
-          (item.setName?.toLowerCase().includes(lower) ?? false) ||
-          (item.source?.toLowerCase().includes(lower) ?? false),
+        (m) =>
+          m.item.name.toLowerCase().includes(lower) ||
+          (m.item.setName?.toLowerCase().includes(lower) ?? false) ||
+          (m.item.source?.toLowerCase().includes(lower) ?? false),
       );
     }
-    return sortItems(result, sortBy);
+    // Sort by the inner item
+    const sortedItems = sortItems(result.map((m) => m.item), sortBy);
+    // Rebuild merged array in sorted order
+    const itemToMerged = new Map(result.map((m) => [m.item.id, m]));
+    return sortedItems.map((item) => itemToMerged.get(item.id)).filter((m): m is MergedEquipment => m !== undefined);
   }, [equipment, filter, sortBy]);
 
   const groups = useMemo(
@@ -181,8 +190,8 @@ function ItemGroupBlock({
       </button>
       {expanded && (
         <div className="divide-y divide-border-subtle">
-          {group.items.map((item) => (
-            <EquipmentRow key={item.id} item={item} />
+          {group.items.map((merged) => (
+            <EquipmentRow key={merged.item.id} merged={merged} />
           ))}
         </div>
       )}
@@ -195,10 +204,11 @@ function ItemGroupBlock({
 // ---------------------------------------------------------------------------
 
 function EquipmentRow({
-  item,
+  merged,
 }: {
-  readonly item: EquipmentPiece;
+  readonly merged: MergedEquipment;
 }): React.JSX.Element {
+  const item = merged.item;
   const enabled = useGearPoolStore((s) => s.enabledEquipmentIds.has(item.id));
   const toggle = useGearPoolStore((s) => s.toggleEquipment);
 
@@ -215,6 +225,7 @@ function EquipmentRow({
       <span className="text-sm text-text-primary truncate flex-1">
         {item.name}
       </span>
+      <SourceBadge item={merged} />
       <SlotBadge slot={item.slot} />
       {item.socketCount > 0 && (
         <span
