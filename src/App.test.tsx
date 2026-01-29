@@ -16,7 +16,7 @@ describe("App", () => {
     render(<App />);
     const tabs = screen.getAllByRole("button");
     const tabLabels = tabs.map((t) => t.textContent);
-    expect(tabLabels).toContain("Gear Pool");
+    expect(tabLabels).toContain("Gear Inventory");
     expect(tabLabels).toContain("Optimizer");
   });
 });

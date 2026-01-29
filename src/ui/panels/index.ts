@@ -1,5 +1,6 @@
 // Main panels
 export { GearPoolPanel } from "./gear-pool-panel";
+export { GearInventoryPanel } from "./gear-inventory";
 export { FitnessPanel } from "./fitness-panel";
 export { ResultsPanel } from "./results-panel";
 export { OptimizerPage } from "./optimizer-page";
