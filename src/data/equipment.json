@@ -379,9 +379,9 @@
     ]
   },
   {
-    "id": "sopharagos-hood",
-    "name": "Sopharagos Hood",
-    "setName": "Sopharagos",
+    "id": "sophragos-hood",
+    "name": "Sophragos Hood",
+    "setName": "Sophragos",
     "slot": "accessory",
     "baseStats": {
       "power": 48,
@@ -394,9 +394,9 @@
     ]
   },
   {
-    "id": "sopharagos-robes",
-    "name": "Sopharagos Robes",
-    "setName": "Sopharagos",
+    "id": "sophragos-robes",
+    "name": "Sophragos Robes",
+    "setName": "Sophragos",
     "slot": "chestplate",
     "baseStats": {
       "power": 64,
@@ -409,9 +409,9 @@
     ]
   },
   {
-    "id": "sopharagos-pants",
-    "name": "Sopharagos Pants",
-    "setName": "Sopharagos",
+    "id": "sophragos-pants",
+    "name": "Sophragos Pants",
+    "setName": "Sophragos",
     "slot": "leggings",
     "baseStats": {
       "power": 48,
