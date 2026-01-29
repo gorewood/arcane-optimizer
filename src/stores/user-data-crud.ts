@@ -20,6 +20,7 @@ import type {
   UserModifierRecord,
   UserGemRecord,
   UserVariantTypes,
+  ItemPurpose,
 } from "@/data/user-data-types";
 import {
   addEquipmentRecord,
@@ -69,8 +70,8 @@ interface BundledDataGetters {
 
 export function createEquipmentActions(set: SetFn, get: GetFn, bundled: BundledDataGetters) {
   return {
-    addEquipment: (item: EquipmentPiece) => {
-      const result = addEquipmentRecord(get().userEquipment, item);
+    addEquipment: (item: EquipmentPiece, purpose?: ItemPurpose) => {
+      const result = addEquipmentRecord(get().userEquipment, item, purpose);
       set(() => ({ userEquipment: result.records }));
       return result.id;
     },
@@ -92,8 +93,8 @@ export function createEquipmentActions(set: SetFn, get: GetFn, bundled: BundledD
 
 export function createEnchantmentActions(set: SetFn, get: GetFn, bundled: BundledDataGetters) {
   return {
-    addEnchantment: (item: Enchantment) => {
-      const result = addEnchantmentRecord(get().userEnchantments, item);
+    addEnchantment: (item: Enchantment, purpose?: ItemPurpose) => {
+      const result = addEnchantmentRecord(get().userEnchantments, item, purpose);
       set(() => ({ userEnchantments: result.records }));
       return result.id;
     },
@@ -115,8 +116,8 @@ export function createEnchantmentActions(set: SetFn, get: GetFn, bundled: Bundle
 
 export function createModifierActions(set: SetFn, get: GetFn, bundled: BundledDataGetters) {
   return {
-    addModifier: (item: Modifier) => {
-      const result = addModifierRecord(get().userModifiers, item);
+    addModifier: (item: Modifier, purpose?: ItemPurpose) => {
+      const result = addModifierRecord(get().userModifiers, item, purpose);
       set(() => ({ userModifiers: result.records }));
       return result.id;
     },
@@ -138,8 +139,8 @@ export function createModifierActions(set: SetFn, get: GetFn, bundled: BundledDa
 
 export function createGemActions(set: SetFn, get: GetFn, bundled: BundledDataGetters) {
   return {
-    addGem: (item: Gem) => {
-      const result = addGemRecord(get().userGems, item);
+    addGem: (item: Gem, purpose?: ItemPurpose) => {
+      const result = addGemRecord(get().userGems, item, purpose);
       set(() => ({ userGems: result.records }));
       return result.id;
     },

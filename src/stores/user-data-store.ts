@@ -22,6 +22,7 @@ import type {
   UserGemRecord,
   UserVariantTypes,
   MergedItem,
+  ItemPurpose,
 } from "@/data/user-data-types";
 import { userDataStorageSchema, userDataExportSchema } from "@/data/user-data-schemas";
 import {
@@ -75,19 +76,19 @@ export interface UserDataState {
 }
 
 export interface UserDataActions {
-  addEquipment: (item: EquipmentPiece) => string;
+  addEquipment: (item: EquipmentPiece, purpose?: ItemPurpose) => string;
   updateEquipment: (id: string, item: EquipmentPiece) => void;
   deleteEquipment: (id: string) => void;
   restoreEquipment: (id: string) => void;
-  addEnchantment: (item: Enchantment) => string;
+  addEnchantment: (item: Enchantment, purpose?: ItemPurpose) => string;
   updateEnchantment: (id: string, item: Enchantment) => void;
   deleteEnchantment: (id: string) => void;
   restoreEnchantment: (id: string) => void;
-  addModifier: (item: Modifier) => string;
+  addModifier: (item: Modifier, purpose?: ItemPurpose) => string;
   updateModifier: (id: string, item: Modifier) => void;
   deleteModifier: (id: string) => void;
   restoreModifier: (id: string) => void;
-  addGem: (item: Gem) => string;
+  addGem: (item: Gem, purpose?: ItemPurpose) => string;
   updateGem: (id: string, item: Gem) => void;
   deleteGem: (id: string) => void;
   restoreGem: (id: string) => void;
