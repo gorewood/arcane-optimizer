@@ -192,7 +192,7 @@ function GAParamsRow({
         value={params.islandCount}
         onChange={(v) => { onChange({ islandCount: v }); }}
         min={1}
-        max={8}
+        max={32}
         step={1}
         disabled={disabled}
       />
