@@ -32,7 +32,7 @@ interface VersionConflictDialogProps {
 interface SummaryRowProps {
   readonly label: string;
   readonly count: number;
-  readonly details?: readonly string[];
+  readonly details?: readonly string[] | undefined;
   readonly suffix?: string;
 }
 
