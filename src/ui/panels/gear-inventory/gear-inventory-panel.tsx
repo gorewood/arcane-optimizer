@@ -88,7 +88,7 @@ export function GearInventoryPanel(): React.JSX.Element {
           <TabsTrigger value="hidden">Hidden ({deletedEquipment.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="browse">
-          <InventoryEquipmentSection equipment={equipment} groupBy={groupBy} onEdit={handleEdit} />
+          <InventoryEquipmentSection equipment={equipment} groupBy={groupBy} sortBy={sortBy} onEdit={handleEdit} />
         </TabsContent>
         <TabsContent value="hidden">
           <HiddenItemsSection items={deletedEquipment} />

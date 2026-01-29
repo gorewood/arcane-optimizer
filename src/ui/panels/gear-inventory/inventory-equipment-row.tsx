@@ -1,5 +1,6 @@
 /**
  * InventoryEquipmentRow — unified row with enable/disable checkbox and edit actions.
+ * Shows item name with optional set/source metadata below.
  */
 
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,22 @@ import { SourceBadge } from "@/ui/panels/data-management/source-badge";
 
 interface InventoryEquipmentRowProps {
   readonly merged: MergedItem<EquipmentPiece>;
+  readonly hideSet: boolean;
+  readonly hideSource: boolean;
   readonly onEdit: () => void;
   readonly onDelete: () => void;
   readonly onReset?: (() => void) | undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function buildMetadata(item: EquipmentPiece, hideSet: boolean, hideSource: boolean): string {
+  const parts: string[] = [];
+  if (!hideSet && item.setName) parts.push(item.setName);
+  if (!hideSource && item.source) parts.push(item.source);
+  return parts.join(" · ");
 }
 
 // ---------------------------------------------------------------------------
@@ -27,6 +41,8 @@ interface InventoryEquipmentRowProps {
 
 export function InventoryEquipmentRow({
   merged,
+  hideSet,
+  hideSource,
   onEdit,
   onDelete,
   onReset,
@@ -34,45 +50,102 @@ export function InventoryEquipmentRow({
   const item = merged.item;
   const enabled = useGearPoolStore((s) => s.enabledEquipmentIds.has(item.id));
   const toggle = useGearPoolStore((s) => s.toggleEquipment);
+  const metadata = buildMetadata(item, hideSet, hideSource);
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1 bg-bg-surface hover:bg-bg-elevated transition-colors">
+    <div className="flex items-center gap-2 px-2 py-1.5 bg-bg-surface hover:bg-bg-elevated transition-colors">
       <input
         type="checkbox"
         checked={enabled}
         onChange={() => { toggle(item.id); }}
-        className="size-3.5 rounded border-border-default accent-accent-gold"
+        className="size-3.5 rounded border-border-default accent-accent-gold shrink-0"
         title={enabled ? "Disable for optimizer" : "Enable for optimizer"}
       />
-      <span className="text-sm text-text-primary truncate flex-1">
-        {item.name}
-      </span>
+      <NameBlock name={item.name} metadata={metadata} />
       <SourceBadge item={merged} />
       <SlotBadge slot={item.slot} />
-      {item.socketCount > 0 && (
-        <span className="text-xs text-rarity-rare" title={`${String(item.socketCount)} sockets`}>
-          {item.socketCount}&#x25C6;
-        </span>
-      )}
+      <SocketBadge count={item.socketCount} />
       <StatSummary stats={item.baseStats} />
-      <div className="flex gap-0.5 ml-1">
-        <Button variant="ghost" size="xs" className="px-1.5" onClick={onEdit}>
-          Edit
+      <RowActions
+        isBundled={merged.source === "bundled"}
+        isModified={merged.isModified}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onReset={onReset}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// NameBlock
+// ---------------------------------------------------------------------------
+
+function NameBlock({
+  name,
+  metadata,
+}: {
+  readonly name: string;
+  readonly metadata: string;
+}): React.JSX.Element {
+  return (
+    <div className="flex flex-col justify-center min-w-0 flex-1">
+      <span className="text-sm text-text-primary truncate">{name}</span>
+      {metadata !== "" && (
+        <span className="text-xs text-text-muted truncate">{metadata}</span>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SocketBadge
+// ---------------------------------------------------------------------------
+
+function SocketBadge({ count }: { readonly count: number }): React.JSX.Element | null {
+  if (count <= 0) return null;
+  return (
+    <span className="text-xs text-rarity-rare shrink-0" title={`${String(count)} sockets`}>
+      {count}&#x25C6;
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RowActions
+// ---------------------------------------------------------------------------
+
+function RowActions({
+  isBundled,
+  isModified,
+  onEdit,
+  onDelete,
+  onReset,
+}: {
+  readonly isBundled: boolean;
+  readonly isModified: boolean;
+  readonly onEdit: () => void;
+  readonly onDelete: () => void;
+  readonly onReset?: (() => void) | undefined;
+}): React.JSX.Element {
+  return (
+    <div className="flex gap-0.5 ml-1 shrink-0">
+      <Button variant="ghost" size="xs" className="px-1.5" onClick={onEdit}>
+        Edit
+      </Button>
+      {isModified && onReset !== undefined && (
+        <Button variant="ghost" size="xs" className="px-1.5" onClick={onReset}>
+          Reset
         </Button>
-        {merged.isModified && onReset && (
-          <Button variant="ghost" size="xs" className="px-1.5" onClick={onReset}>
-            Reset
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="xs"
-          className="px-1.5 text-stat-negative hover:text-stat-negative"
-          onClick={onDelete}
-        >
-          {merged.source === "bundled" ? "Hide" : "Del"}
-        </Button>
-      </div>
+      )}
+      <Button
+        variant="ghost"
+        size="xs"
+        className="px-1.5 text-stat-negative hover:text-stat-negative"
+        onClick={onDelete}
+      >
+        {isBundled ? "Hide" : "Del"}
+      </Button>
     </div>
   );
 }
