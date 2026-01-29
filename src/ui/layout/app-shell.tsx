@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GearPoolPanel, DataManagementPanel } from "@/ui/panels";
+import { GearPoolPanel, DataManagementPanel, HelpPanel } from "@/ui/panels";
 import { OptimizerPage } from "@/ui/panels/optimizer-page";
 import { useUIStore } from "@/stores/ui-store";
 import type { UIState } from "@/stores/ui-store";
@@ -17,6 +17,7 @@ const TABS: readonly TabDef[] = [
   { id: "optimizer", label: "Optimizer" },
   { id: "gear", label: "Gear Pool" },
   { id: "data", label: "Data" },
+  { id: "help", label: "Help" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -119,6 +120,10 @@ function PanelContent({
 
   if (panel === "data") {
     return <DataManagementPanel />;
+  }
+
+  if (panel === "help") {
+    return <HelpPanel />;
   }
 
   return <OptimizerPage />;

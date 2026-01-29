@@ -4,6 +4,7 @@ export { FitnessPanel } from "./fitness-panel";
 export { ResultsPanel } from "./results-panel";
 export { OptimizerPage } from "./optimizer-page";
 export { DataManagementPanel } from "./data-management";
+export { HelpPanel } from "./help-panel";
 
 // Sub-components
 export { GoalsSection } from "./fitness-section";
