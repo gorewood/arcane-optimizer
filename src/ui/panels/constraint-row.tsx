@@ -322,7 +322,10 @@ function WeightControl({
 }): React.JSX.Element {
   return (
     <div className="flex items-center gap-1.5 min-w-[8rem]">
-      <span className="text-[10px] text-text-muted shrink-0">W:</span>
+      <span className="text-[10px] text-text-muted shrink-0">
+        <span className="hidden sm:inline">Weight:</span>
+        <span className="sm:hidden">W:</span>
+      </span>
       <Slider
         min={1}
         max={100}

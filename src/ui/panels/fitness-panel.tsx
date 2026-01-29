@@ -9,6 +9,7 @@ import type { SoftConstraint } from "@/models/types";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useFitnessStore } from "@/stores/fitness-store";
+import { useUIStore } from "@/stores/ui-store";
 import { ProfileSelector } from "./profile-selector";
 import { ConstraintRow } from "./constraint-row";
 import { VariantSelector } from "./variant-selector";
@@ -53,7 +54,10 @@ export function FitnessPanel(): React.JSX.Element {
         onRemove={removeConstraint}
       />
 
-      <AddConstraintButton onAdd={addConstraint} />
+      <div className="flex items-center gap-3">
+        <AddConstraintButton onAdd={addConstraint} />
+        <HelpLink />
+      </div>
     </div>
   );
 }
@@ -119,5 +123,23 @@ function AddConstraintButton({
     >
       + Add Constraint
     </Button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// HelpLink
+// ---------------------------------------------------------------------------
+
+function HelpLink(): React.JSX.Element {
+  const setActivePanel = useUIStore((s) => s.setActivePanel);
+
+  return (
+    <button
+      type="button"
+      className="text-xs text-text-muted hover:text-accent-gold transition-colors"
+      onClick={() => { setActivePanel("help"); }}
+    >
+      How do goals work?
+    </button>
   );
 }

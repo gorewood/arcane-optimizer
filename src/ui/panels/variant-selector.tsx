@@ -78,7 +78,7 @@ function VariantTypeGroup({
   onEnableAll,
   onDisableAll,
 }: VariantTypeGroupProps): React.JSX.Element {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const enabledCount = variants.filter((v) => enabledVariants.has(v)).length;
 
   return (
