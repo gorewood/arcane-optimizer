@@ -20,8 +20,11 @@ import {
   randomChromosome,
   uniformCrossover,
 } from "./genetic-chromosome";
-import type { EvaluatedIndividual, IndexedPool } from "./genetic-chromosome";
+import type { Chromosome, EvaluatedIndividual, IndexedPool } from "./genetic-chromosome";
 import { repair } from "./genetic-repair";
+
+// Re-export Chromosome for island worker migration protocol
+export type { Chromosome } from "./genetic-chromosome";
 
 /**
  * Safely extract appliedVariant from a piece that may be ExpandedEquipment.
@@ -204,6 +207,8 @@ interface LoopConfig {
   readonly maxResults: number;
   readonly token: CancellationToken;
   readonly onProgress: ((checked: number, total: number, bestScore: number, results: readonly SearchResult[]) => void) | undefined;
+  readonly onStagnating: (() => void) | undefined;
+  readonly getMigrants: (() => Chromosome[]) | undefined;
 }
 
 /** Max diversity injections before final stagnation exit. */
@@ -212,6 +217,69 @@ const MAX_INJECTIONS = 2;
 const INJECTION_THRESHOLD = 25;
 /** Stagnation threshold for final exit (after all injections used). */
 const STAGNATION_LIMIT = 50;
+
+/** Incorporate migrant chromosomes from another island into population. */
+function incorporateMigrants(
+  state: LoopState,
+  migrants: Chromosome[],
+  params: EvolveParams,
+): void {
+  const { pool, constraints, fitness, populationSize } = params;
+
+  // Evaluate migrants
+  const evaluatedMigrants: EvaluatedIndividual[] = [];
+  for (const chromo of migrants) {
+    repair(chromo, pool, undefined);
+    const ind = evaluate(chromo, pool, constraints, fitness);
+    if (ind != null) evaluatedMigrants.push(ind);
+  }
+
+  if (evaluatedMigrants.length === 0) return;
+
+  // Replace worst individuals with migrants
+  const sorted = [...state.population].sort((a, b) => b.score - a.score);
+  const keepCount = populationSize - evaluatedMigrants.length;
+  state.population = [...sorted.slice(0, keepCount), ...evaluatedMigrants];
+  state.stagnation = 0;
+}
+
+/** Handle stagnation with migration or diversity injection. Returns true if search should exit. */
+function handleStagnation(
+  state: LoopState,
+  gen: number,
+  config: LoopConfig,
+): boolean {
+  if (state.stagnation <= INJECTION_THRESHOLD) return false;
+
+  const { evolveParams, onStagnating, getMigrants } = config;
+  const migrants = getMigrants?.();
+
+  // Try migrants first
+  if (migrants != null && migrants.length > 0) {
+    incorporateMigrants(state, migrants, evolveParams);
+    return false;
+  }
+
+  // Notify coordinator if available, but still use diversity injection
+  if (onStagnating != null) {
+    onStagnating();
+    if (state.injections < MAX_INJECTIONS) {
+      injectDiversity(state, evolveParams);
+      return false;
+    }
+  } else if (shouldInjectDiversity(state)) {
+    injectDiversity(state, evolveParams);
+    return false;
+  }
+
+  // Check for final exit
+  if (state.stagnation > STAGNATION_LIMIT) {
+    state.finalGeneration = gen + 1;
+    state.exitReason = "stagnation";
+    return true;
+  }
+  return false;
+}
 
 async function runEvolutionLoop(
   config: LoopConfig,
@@ -230,13 +298,7 @@ async function runEvolutionLoop(
     const currentResults = extractResults(state.population, maxResults);
     onProgress?.(gen + 1, generations, state.bestScore, currentResults);
 
-    if (shouldInjectDiversity(state)) {
-      injectDiversity(state, evolveParams);
-    } else if (state.stagnation > STAGNATION_LIMIT) {
-      state.finalGeneration = gen + 1;
-      state.exitReason = "stagnation";
-      break;
-    }
+    if (handleStagnation(state, gen, config)) break;
 
     if (gen % 10 === 0) {
       await new Promise<void>((r) => { setTimeout(r, 0); });
@@ -293,6 +355,8 @@ export type GAExitReason = "complete" | "stagnation" | "cancelled";
 export class GeneticSearch implements SearchStrategy {
   readonly name = "genetic";
   onProgress?: ((checked: number, total: number, bestScore: number, results: readonly SearchResult[]) => void) | undefined;
+  /** Called when search is stagnating and wants migrants from another island */
+  onStagnating?: (() => void) | undefined;
   private readonly token: CancellationToken = { cancelled: false };
 
   /** Exit reason from last search (available after search completes) */
@@ -302,8 +366,30 @@ export class GeneticSearch implements SearchStrategy {
   /** Total generations configured (available after search completes) */
   totalGenerations = 0;
 
+  /** Current population (accessible for migration export) */
+  private currentPopulation: EvaluatedIndividual[] = [];
+  /** Queue of migrant chromosomes to incorporate */
+  private migrantQueue: Chromosome[] = [];
+
   cancel(): void {
     this.token.cancelled = true;
+  }
+
+  /**
+   * Export top N chromosomes from current population for migration.
+   * Called by island coordinator when another island requests migrants.
+   */
+  exportTopN(n: number): Chromosome[] {
+    const sorted = [...this.currentPopulation].sort((a, b) => b.score - a.score);
+    return sorted.slice(0, n).map((ind) => structuredClone(ind.chromosome));
+  }
+
+  /**
+   * Receive migrant chromosomes from another island.
+   * Called by island coordinator when migrants arrive.
+   */
+  receiveMigrants(chromosomes: Chromosome[]): void {
+    this.migrantQueue.push(...chromosomes);
   }
 
   async search(
@@ -313,6 +399,7 @@ export class GeneticSearch implements SearchStrategy {
     options: SearchOptions,
   ): Promise<readonly SearchResult[]> {
     this.token.cancelled = false;
+    this.migrantQueue = [];
     const pool = buildIndexedPool(gearPool);
     const populationSize = options.populationSize ?? 200;
     const generations = options.generations ?? 500;
@@ -322,6 +409,7 @@ export class GeneticSearch implements SearchStrategy {
     this.totalGenerations = generations;
 
     const population = initPopulation(pool, constraints, fitness, populationSize);
+    this.currentPopulation = population;
     const evolveParams: EvolveParams = {
       pool, constraints, fitness, populationSize, mutationRate, crossoverRate,
     };
@@ -335,8 +423,28 @@ export class GeneticSearch implements SearchStrategy {
       exitReason: "complete",
     };
 
+    // Get migrants from queue (called each generation)
+    const getMigrants = (): Chromosome[] => {
+      if (this.migrantQueue.length === 0) return [];
+      const migrants = [...this.migrantQueue];
+      this.migrantQueue = [];
+      return migrants;
+    };
+
     await runEvolutionLoop(
-      { evolveParams, generations, maxResults: options.maxResults, token: this.token, onProgress: this.onProgress },
+      {
+        evolveParams,
+        generations,
+        maxResults: options.maxResults,
+        token: this.token,
+        onProgress: (checked, total, bestScore, results) => {
+          // Keep currentPopulation in sync for exportTopN
+          this.currentPopulation = state.population;
+          this.onProgress?.(checked, total, bestScore, results);
+        },
+        onStagnating: this.onStagnating,
+        getMigrants,
+      },
       state,
     );
 

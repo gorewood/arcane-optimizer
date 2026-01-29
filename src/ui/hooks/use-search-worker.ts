@@ -18,6 +18,7 @@ import { useUIStore } from "@/stores/ui-store";
 import { useUserDataStore } from "@/stores/user-data-store";
 import type { ExitMetadata, WorkerRequest, WorkerResponse } from "@/workers/search-worker";
 import { ExhaustiveCoordinator } from "@/workers/exhaustive-coordinator";
+import { IslandCoordinator } from "@/workers/island-coordinator";
 
 // ---------------------------------------------------------------------------
 // Progress state type
@@ -199,6 +200,44 @@ function launchCoordinator(config: CoordinatorLaunchConfig, cb: CoordinatorCallb
 }
 
 // ---------------------------------------------------------------------------
+// Island coordinator launcher (for GA mode)
+// ---------------------------------------------------------------------------
+
+interface IslandLaunchConfig {
+  readonly gearPool: GearPool;
+  readonly fitness: readonly SoftConstraint[];
+  readonly maxResults: number;
+  readonly gaParams: GAParams;
+}
+
+interface IslandCallbacks {
+  readonly onProgress: (gen: number, total: number, bestScore: number, topResults: readonly SearchResult[]) => void;
+  readonly onComplete: (results: readonly SearchResult[], exitMetadata: ExitMetadata) => void;
+  readonly onError: (message: string) => void;
+}
+
+function launchIslandCoordinator(config: IslandLaunchConfig, cb: IslandCallbacks): IslandCoordinator {
+  const coordinator = new IslandCoordinator();
+  coordinator.start(
+    {
+      gearPool: config.gearPool,
+      constraints: DEFAULT_HARD_CONSTRAINTS,
+      fitness: config.fitness,
+      maxResults: config.maxResults,
+      populationSize: config.gaParams.populationSize,
+      generations: config.gaParams.generations,
+      mutationRate: config.gaParams.mutationRate,
+    },
+    {
+      onProgress: cb.onProgress,
+      onComplete: cb.onComplete,
+      onError: cb.onError,
+    },
+  );
+  return coordinator;
+}
+
+// ---------------------------------------------------------------------------
 // Hook helpers
 // ---------------------------------------------------------------------------
 
@@ -211,6 +250,7 @@ interface SearchContext {
   readonly setProgress: React.Dispatch<React.SetStateAction<ProgressState>>;
   readonly workerRef: React.RefObject<Worker | null>;
   readonly coordinatorRef: React.RefObject<ExhaustiveCoordinator | null>;
+  readonly islandCoordinatorRef: React.RefObject<IslandCoordinator | null>;
   readonly algorithm: Algorithm;
   readonly gaParams: GAParams;
   readonly constraints: readonly SoftConstraint[];
@@ -221,7 +261,7 @@ interface SearchContext {
 }
 
 function executeSearch(ctx: SearchContext): void {
-  const { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults } = ctx;
+  const { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, islandCoordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults } = ctx;
   const gearPool = buildFilteredGearPool(getters, ids, enabledVariants);
   startSearch();
   setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
@@ -241,10 +281,21 @@ function executeSearch(ctx: SearchContext): void {
       { onProgress: onProg, onComplete: (r) => { onComplete(r, undefined); }, onError: setError },
     );
   } else {
-    workerRef.current = launchWorker(
-      { gearPool, fitness: constraints, maxResults, algorithm, gaParams },
-      { onProgress: onProg, onComplete, onError: setError },
-    );
+    // Use island coordinator for GA mode (parallel islands with migration)
+    // Fall back to single worker if only 1 core available
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- may be undefined in non-browser
+    const cores = globalThis.navigator?.hardwareConcurrency ?? 1;
+    if (cores <= 1) {
+      workerRef.current = launchWorker(
+        { gearPool, fitness: constraints, maxResults, algorithm, gaParams },
+        { onProgress: onProg, onComplete, onError: setError },
+      );
+    } else {
+      islandCoordinatorRef.current = launchIslandCoordinator(
+        { gearPool, fitness: constraints, maxResults, gaParams },
+        { onProgress: onProg, onComplete, onError: setError },
+      );
+    }
   }
 }
 
@@ -282,11 +333,13 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const [warning, setWarning] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const coordinatorRef = useRef<ExhaustiveCoordinator | null>(null);
+  const islandCoordinatorRef = useRef<IslandCoordinator | null>(null);
 
   useEffect(() => {
     const wRef = workerRef;
     const cRef = coordinatorRef;
-    return () => { wRef.current?.terminate(); cRef.current?.stop(); };
+    const iRef = islandCoordinatorRef;
+    return () => { wRef.current?.terminate(); cRef.current?.stop(); iRef.current?.stop(); };
   }, []);
 
   const start = useCallback(() => {
@@ -295,13 +348,14 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     setWarning(null);
     const ids: EnabledIds = { equipment: eqIds, enchantments: enIds, modifiers: modIds, gems: gemIds };
     const getters: MergedGetters = { getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems };
-    const ctx: SearchContext = { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults };
+    const ctx: SearchContext = { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, islandCoordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults };
     executeSearch(ctx);
   }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError, setExpandedCards, getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;
     coordinatorRef.current?.stop(); coordinatorRef.current = null;
+    islandCoordinatorRef.current?.stop(); islandCoordinatorRef.current = null;
     reset();
   }, [reset]);
 
