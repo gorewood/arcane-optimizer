@@ -59,6 +59,8 @@ export interface EquipmentPiece {
   readonly atlanteanOnly?: boolean | undefined;
   /** Optional variant stats keyed by variant name (e.g., "fire", "ice"). */
   readonly variants?: Readonly<Record<string, Partial<Stats>>> | undefined;
+  /** Source of the item: boss name, NPC, location, or acquisition method. */
+  readonly source?: string | undefined;
 }
 
 /**

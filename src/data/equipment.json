@@ -12,7 +12,8 @@
     "maxLevel": 170,
     "tags": [
       "sunken"
-    ]
+    ],
+    "source": "Sunken Chests"
   },
   {
     "id": "sunken-iron-armor",
@@ -27,7 +28,8 @@
     "maxLevel": 170,
     "tags": [
       "sunken"
-    ]
+    ],
+    "source": "Sunken Chests"
   },
   {
     "id": "sunken-iron-greaves",
@@ -42,7 +44,8 @@
     "maxLevel": 170,
     "tags": [
       "sunken"
-    ]
+    ],
+    "source": "Sunken Chests"
   },
   {
     "id": "sunken-warrior-helmet",
@@ -57,7 +60,8 @@
     "maxLevel": 170,
     "tags": [
       "sunken"
-    ]
+    ],
+    "source": "Sunken Chests"
   },
   {
     "id": "sunken-warrior-armor",
@@ -72,7 +76,8 @@
     "maxLevel": 170,
     "tags": [
       "sunken"
-    ]
+    ],
+    "source": "Sunken Chests"
   },
   {
     "id": "sunken-warrior-greaves",
@@ -87,7 +92,8 @@
     "maxLevel": 170,
     "tags": [
       "sunken"
-    ]
+    ],
+    "source": "Sunken Chests"
   },
   {
     "id": "vatrachos-helmet",
@@ -103,7 +109,8 @@
     "maxLevel": 170,
     "tags": [
       "boss-drop"
-    ]
+    ],
+    "source": "Vatrachos"
   },
   {
     "id": "vatrachos-cape",
@@ -119,7 +126,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Vatrachos"
   },
   {
     "id": "vatrachos-armor",
@@ -135,7 +143,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Vatrachos"
   },
   {
     "id": "vatrachos-boots",
@@ -151,7 +160,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Vatrachos"
   },
   {
     "id": "ravenna-apostle-gi",
@@ -166,7 +176,8 @@
     "maxLevel": 170,
     "tags": [
       "boss-drop"
-    ]
+    ],
+    "source": "Carina"
   },
   {
     "id": "ravenna-apostle-leggings",
@@ -181,7 +192,8 @@
     "maxLevel": 170,
     "tags": [
       "boss-drop"
-    ]
+    ],
+    "source": "Carina"
   },
   {
     "id": "ravenna-apostle-bracelets",
@@ -196,7 +208,8 @@
     "maxLevel": 170,
     "tags": [
       "boss-drop"
-    ]
+    ],
+    "source": "Carina"
   },
   {
     "id": "ravenna-apostle-faulds",
@@ -211,7 +224,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Carina"
   },
   {
     "id": "ravenna-apostle-pauldrons",
@@ -226,7 +240,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Carina"
   },
   {
     "id": "theugrist-robes",
@@ -241,7 +256,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "theugrist-pants",
@@ -256,7 +272,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "theugrist-hat",
@@ -271,7 +288,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "theugrist-cloak",
@@ -286,7 +304,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "apex-cloak",
@@ -301,7 +320,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "White Eyes"
   },
   {
     "id": "apex-armor",
@@ -316,7 +336,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "White Eyes"
   },
   {
     "id": "apex-leggings",
@@ -331,7 +352,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "White Eyes"
   },
   {
     "id": "omen-cloak",
@@ -346,7 +368,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "omen-armor",
@@ -361,7 +384,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "omen-leggings",
@@ -376,7 +400,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "sophragos-hood",
@@ -391,7 +416,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "sophragos-robes",
@@ -406,7 +432,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "sophragos-pants",
@@ -421,7 +448,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "lost-chief-cape",
@@ -436,7 +464,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "lost-chief-armor",
@@ -451,7 +480,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "lost-chief-boots",
@@ -466,7 +496,8 @@
     "maxLevel": 170,
     "tags": [
       "dark-sea"
-    ]
+    ],
+    "source": "Dark Sea"
   },
   {
     "id": "kraken-band",
@@ -481,7 +512,8 @@
     "maxLevel": 170,
     "tags": [
       "boss-drop"
-    ]
+    ],
+    "source": "Kraken"
   },
   {
     "id": "dexterity-amulet",
@@ -495,7 +527,8 @@
     "tags": [
       "treasure"
     ],
-    "atlanteanOnly": false
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
   },
   {
     "id": "size-amulet",
@@ -509,7 +542,8 @@
     "tags": [
       "treasure"
     ],
-    "atlanteanOnly": false
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
   },
   {
     "id": "power-amulet",
@@ -523,7 +557,8 @@
     "tags": [
       "treasure"
     ],
-    "atlanteanOnly": false
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
   },
   {
     "id": "defense-amulet",
@@ -537,7 +572,8 @@
     "tags": [
       "treasure"
     ],
-    "atlanteanOnly": false
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
   },
   {
     "id": "arcsphere",
@@ -643,7 +679,8 @@
         "power": 3,
         "defense": 115
       }
-    }
+    },
+    "source": "Lost Magic scrolls"
   },
   {
     "id": "lost-envoy-robes",
@@ -656,7 +693,8 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": []
+    "tags": [],
+    "source": "Dark Sea"
   },
   {
     "id": "lost-envoy-pants",
@@ -670,7 +708,8 @@
     "socketCount": 2,
     "maxLevel": 170,
     "tags": [],
-    "atlanteanOnly": true
+    "atlanteanOnly": true,
+    "source": "Dark Sea"
   },
   {
     "id": "lost-envoy-pauldrons",
@@ -684,7 +723,8 @@
     "socketCount": 2,
     "maxLevel": 170,
     "tags": [],
-    "atlanteanOnly": true
+    "atlanteanOnly": true,
+    "source": "Dark Sea"
   },
   {
     "id": "broken-prince-cape",
@@ -698,8 +738,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Allanon"
   },
   {
     "id": "broken-prince-pants",
@@ -713,8 +756,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Allanon"
   },
   {
     "id": "broken-prince-shirt",
@@ -728,8 +774,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Allanon"
   },
   {
     "id": "lost-coronet-of-skyhall",
@@ -743,8 +792,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Allanon"
   },
   {
     "id": "jaw-captain-hat",
@@ -758,8 +810,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Jaw Captain"
   },
   {
     "id": "jaw-captain-cape",
@@ -773,8 +828,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Jaw Captain"
   },
   {
     "id": "jaw-captain-coat",
@@ -788,8 +846,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Jaw Captain"
   },
   {
     "id": "scorching-sentinel-armor",
@@ -803,8 +864,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Valerii"
   },
   {
     "id": "scorching-sentinel-pauldrons",
@@ -818,8 +882,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Valerii"
   },
   {
     "id": "scorching-sentinel-helmet",
@@ -833,8 +900,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Valerii"
   },
   {
     "id": "scorching-sentinel-mask",
@@ -848,8 +918,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Valerii"
   },
   {
     "id": "scorching-sentinel-leggings",
@@ -863,8 +936,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Valerii"
   },
   {
     "id": "lost-crown-of-ravenna",
@@ -878,8 +954,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Calvus"
   },
   {
     "id": "ravenna-fallen-king-boots",
@@ -893,8 +972,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Calvus"
   },
   {
     "id": "mantello-of-ravennas-fallen-king",
@@ -908,8 +990,11 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Calvus"
   },
   {
     "id": "ravenna-fallen-king-armor",
@@ -923,7 +1008,1086 @@
     },
     "socketCount": 2,
     "maxLevel": 170,
-    "tags": ["boss-drop"],
-    "atlanteanOnly": true
+    "tags": [
+      "boss-drop"
+    ],
+    "atlanteanOnly": true,
+    "source": "Calvus"
+  },
+  {
+    "id": "power-amulet",
+    "name": "Power Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "power": 43
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Power",
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
+  },
+  {
+    "id": "defense-amulet",
+    "name": "Defense Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "defense": 382
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Defense",
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
+  },
+  {
+    "id": "size-amulet",
+    "name": "Size Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "size": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Size",
+    "atlanteanOnly": false,
+    "source": "Treasure Charts"
+  },
+  {
+    "id": "haste-amulet",
+    "name": "Haste Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "haste": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Haste",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "speed-amulet",
+    "name": "Speed Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "dexterity": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Speed",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "range-amulet",
+    "name": "Range Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "range": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Range",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "regeneration-amulet",
+    "name": "Regeneration Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "regeneration": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Regeneration",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "resistance-amulet",
+    "name": "Resistance Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "resistance": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Resistance",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "pierce-amulet",
+    "name": "Pierce Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "pierce": 127
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Pierce",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "jewel-amulet",
+    "name": "Jewel Amulet",
+    "slot": "accessory-A",
+    "baseStats": {},
+    "socketCount": 5,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Jewel"
+  },
+  {
+    "id": "ocean-amulet",
+    "name": "Ocean Amulet",
+    "slot": "accessory-A",
+    "baseStats": {
+      "power": 16,
+      "regeneration": 49,
+      "pierce": 49
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Ocean",
+    "source": "Crowe"
+  },
+  {
+    "id": "widows-tear",
+    "name": "Widow's Tear",
+    "slot": "accessory-A",
+    "baseStats": {
+      "power": 21,
+      "dexterity": 41,
+      "resistance": 41
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop",
+      "dark-sea"
+    ],
+    "setName": "Widow's",
+    "source": "Leviathan"
+  },
+  {
+    "id": "lion-of-ravenna-helmet",
+    "name": "Lion of Ravenna Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 201,
+      "haste": 34
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Lion of Ravenna",
+    "source": "Argos"
+  },
+  {
+    "id": "deluxe-iron-helmet",
+    "name": "Deluxe Iron Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 154,
+      "resistance": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Deluxe Iron",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "titanium-helmet",
+    "name": "Titanium Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 206
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Titanium",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "ravenna-undying-king-helmet",
+    "name": "Ravenna Undying King Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 172,
+      "dexterity": 19,
+      "pierce": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Ravenna Undying King",
+    "source": "Caesar"
+  },
+  {
+    "id": "fenrir-castellan-helmet",
+    "name": "Fenrir Castellan Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 206,
+      "haste": 22,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Fenrir Castellan",
+    "source": "Jarl Ivar"
+  },
+  {
+    "id": "warrior-of-gold-helmet",
+    "name": "Warrior of Gold Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 201,
+      "dexterity": 35
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Warrior of Gold",
+    "source": "Hathor"
+  },
+  {
+    "id": "crystal-fury-helmet",
+    "name": "Crystal Fury Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 275,
+      "resistance": 42,
+      "drawback": 2
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Crystal Fury",
+    "source": "Ormolu"
+  },
+  {
+    "id": "crystal-remnant-helmet",
+    "name": "Crystal Remnant Helmet",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 206,
+      "resistance": 31
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Crystal Remnant",
+    "source": "Ormolu"
+  },
+  {
+    "id": "blessed-knight-greathelm",
+    "name": "Blessed Knight Greathelm",
+    "slot": "accessory-H",
+    "baseStats": {
+      "defense": 206,
+      "resistance": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Blessed Knight",
+    "source": "Delamere"
+  },
+  {
+    "id": "caped-silver-pauldrons",
+    "name": "Caped Silver Pauldrons",
+    "slot": "accessory",
+    "baseStats": {
+      "dexterity": 51,
+      "range": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Caped Silver",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "caped-golden-pauldrons",
+    "name": "Caped Golden Pauldrons",
+    "slot": "accessory",
+    "baseStats": {
+      "haste": 25,
+      "dexterity": 51
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Caped Golden",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "elite-knights-pauldrons",
+    "name": "Elite Knight's Pauldrons",
+    "slot": "accessory",
+    "baseStats": {
+      "size": 51,
+      "haste": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Elite Knight's",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "elite-nobles-pauldrons",
+    "name": "Elite Noble's Pauldrons",
+    "slot": "accessory",
+    "baseStats": {
+      "size": 51,
+      "range": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Elite Noble's",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "sorcerer-hat",
+    "name": "Sorcerer Hat",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Sorcerer",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "samerian-commander-pauldrons",
+    "name": "Samerian Commander Pauldrons",
+    "slot": "accessory",
+    "baseStats": {
+      "defense": 206
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Samerian Commander",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "captain-marias-hat",
+    "name": "Captain Maria's Hat",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 23,
+      "resistance": 26
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Captain Maria's"
+  },
+  {
+    "id": "captain-marias-cape",
+    "name": "Captain Maria's Cape",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 23,
+      "resistance": 26
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Captain Maria's"
+  },
+  {
+    "id": "rear-admiral-amelias-tarnished-cloak",
+    "name": "Rear Admiral Amelia's Tarnished Cloak",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 17,
+      "defense": 137,
+      "haste": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Rear Admiral Amelia's Tarnished"
+  },
+  {
+    "id": "architect-kallistes-cape",
+    "name": "Architect Kalliste's Cape",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 25,
+      "pierce": 28
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Architect Kalliste's"
+  },
+  {
+    "id": "diatrys-hood",
+    "name": "Diatrys Hood",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 15,
+      "pierce": 47,
+      "warding": 1
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Diatrys"
+  },
+  {
+    "id": "dromeas-trappings",
+    "name": "Dromeas Trappings",
+    "slot": "accessory",
+    "baseStats": {
+      "defense": -138,
+      "range": 87,
+      "dexterity": 57
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Dromeas"
+  },
+  {
+    "id": "lost-diplomat-pauldrons",
+    "name": "Lost Diplomat Pauldrons",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 27,
+      "resistance": 28
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Lost Diplomat"
+  },
+  {
+    "id": "leviathan-robe",
+    "name": "Leviathan Robe",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 17,
+      "dexterity": 22,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Leviathan"
+  },
+  {
+    "id": "blessed-knight-cloak",
+    "name": "Blessed Knight Cloak",
+    "slot": "accessory",
+    "baseStats": {
+      "defense": 206,
+      "resistance": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Blessed Knight",
+    "source": "Delamere"
+  },
+  {
+    "id": "mountainbreaker-cape",
+    "name": "Mountainbreaker Cape",
+    "slot": "accessory",
+    "baseStats": {
+      "defense": 206,
+      "pierce": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Mountainbreaker",
+    "source": "Evander"
+  },
+  {
+    "id": "lion-of-ravenna-armor",
+    "name": "Lion of Ravenna Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 268,
+      "haste": 45
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Lion of Ravenna",
+    "source": "Argos"
+  },
+  {
+    "id": "deluxe-iron-armor",
+    "name": "Deluxe Iron Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 206,
+      "resistance": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Deluxe Iron",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "titanium-armor",
+    "name": "Titanium Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 276
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Titanium",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "sorcerer-robes",
+    "name": "Sorcerer Robes",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 29
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Sorcerer",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "captain-marias-cloak",
+    "name": "Captain Maria's Cloak",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 31,
+      "resistance": 35
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Captain Maria's"
+  },
+  {
+    "id": "diatrys-armor",
+    "name": "Diatrys Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 19,
+      "pierce": 62,
+      "warding": 1
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Diatrys"
+  },
+  {
+    "id": "dromeas-tunic",
+    "name": "Dromeas Tunic",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": -184,
+      "range": 116,
+      "dexterity": 76
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Dromeas"
+  },
+  {
+    "id": "lost-diplomat-robes",
+    "name": "Lost Diplomat Robes",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 36,
+      "resistance": 38
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Lost Diplomat"
+  },
+  {
+    "id": "ravenna-undying-king-armor",
+    "name": "Ravenna Undying King Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 29,
+      "dexterity": 25,
+      "pierce": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Ravenna Undying King",
+    "source": "Caesar"
+  },
+  {
+    "id": "leviathan-armor",
+    "name": "Leviathan Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 23,
+      "dexterity": 30,
+      "resistance": 30
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Leviathan"
+  },
+  {
+    "id": "fenrir-castellan-gauntlets",
+    "name": "Fenrir Castellan Gauntlets",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 275,
+      "haste": 30,
+      "resistance": 30
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "source": "Jarl Ivar"
+  },
+  {
+    "id": "warrior-of-gold-armor",
+    "name": "Warrior of Gold Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 268,
+      "dexterity": 45
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Warrior of Gold",
+    "source": "Hathor"
+  },
+  {
+    "id": "crystal-fury-armor",
+    "name": "Crystal Fury Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 367,
+      "resistance": 56,
+      "drawback": 3
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Crystal Fury",
+    "source": "Ormolu"
+  },
+  {
+    "id": "crystal-remnant-armor",
+    "name": "Crystal Remnant Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 275,
+      "resistance": 42
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Crystal Remnant",
+    "source": "Ormolu"
+  },
+  {
+    "id": "blessed-knight-armor",
+    "name": "Blessed Knight Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 275,
+      "resistance": 34
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Blessed Knight",
+    "source": "Delamere"
+  },
+  {
+    "id": "mountainbreaker-armor",
+    "name": "Mountainbreaker Armor",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 275,
+      "pierce": 34
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Mountainbreaker",
+    "source": "Evander"
+  },
+  {
+    "id": "lion-of-ravenna-leggings",
+    "name": "Lion of Ravenna Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 201,
+      "haste": 34
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Lion of Ravenna",
+    "source": "Argos"
+  },
+  {
+    "id": "deluxe-iron-boots",
+    "name": "Deluxe Iron Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 154,
+      "resistance": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Deluxe Iron",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "titanium-leggings",
+    "name": "Titanium Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 206
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Titanium",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "sorcerer-pants",
+    "name": "Sorcerer Pants",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "craftable"
+    ],
+    "setName": "Sorcerer",
+    "atlanteanOnly": false
+  },
+  {
+    "id": "captain-marias-boots",
+    "name": "Captain Maria's Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 23,
+      "resistance": 26
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [],
+    "setName": "Captain Maria's"
+  },
+  {
+    "id": "diatrys-leggings",
+    "name": "Diatrys Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 15,
+      "pierce": 47,
+      "warding": 1
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Diatrys"
+  },
+  {
+    "id": "dromeas-boots",
+    "name": "Dromeas Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": -138,
+      "range": 87,
+      "dexterity": 57
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Dromeas"
+  },
+  {
+    "id": "lost-diplomat-pants",
+    "name": "Lost Diplomat Pants",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 27,
+      "resistance": 28
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Lost Diplomat"
+  },
+  {
+    "id": "ravenna-undying-king-boots",
+    "name": "Ravenna Undying King Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 22,
+      "dexterity": 19,
+      "pierce": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Ravenna Undying King",
+    "source": "Caesar"
+  },
+  {
+    "id": "leviathan-boots",
+    "name": "Leviathan Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 17,
+      "dexterity": 22,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "dark-sea"
+    ],
+    "setName": "Leviathan"
+  },
+  {
+    "id": "fenrir-castellan-boots",
+    "name": "Fenrir Castellan Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 206,
+      "haste": 22,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Fenrir Castellan",
+    "source": "Jarl Ivar"
+  },
+  {
+    "id": "warrior-of-gold-leggings",
+    "name": "Warrior of Gold Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 201,
+      "dexterity": 35
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Warrior of Gold",
+    "source": "Hathor"
+  },
+  {
+    "id": "crystal-fury-leggings",
+    "name": "Crystal Fury Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 275,
+      "resistance": 42,
+      "drawback": 2
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Crystal Fury",
+    "source": "Ormolu"
+  },
+  {
+    "id": "crystal-remnant-leggings",
+    "name": "Crystal Remnant Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 206,
+      "resistance": 31
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Crystal Remnant",
+    "source": "Ormolu"
+  },
+  {
+    "id": "blessed-knight-leggings",
+    "name": "Blessed Knight Leggings",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 206,
+      "resistance": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Blessed Knight",
+    "source": "Delamere"
+  },
+  {
+    "id": "mountainbreaker-boots",
+    "name": "Mountainbreaker Boots",
+    "slot": "leggings",
+    "baseStats": {
+      "defense": 206,
+      "pierce": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": [
+      "boss-drop"
+    ],
+    "setName": "Mountainbreaker",
+    "source": "Evander"
   }
 ]

@@ -54,6 +54,8 @@ export const equipmentSchema = z
     tags: z.array(z.string()).readonly().optional().default([]),
     atlanteanOnly: z.boolean().optional(),
     variants: z.record(z.string(), partialStatsSchema).readonly().optional(),
+    /** Source of the item: boss name, NPC, location, or acquisition method. */
+    source: z.string().optional(),
   })
   .readonly();
 
