@@ -12,6 +12,8 @@ export function HelpPanel(): React.JSX.Element {
   return (
     <div className="p-4 space-y-6 max-w-3xl">
       <QuickStart />
+      <GearInventorySection />
+      <GameDataSection />
       <GoalsSection />
       <WeightsSection />
       <ConstraintTypesSection />
@@ -34,15 +36,75 @@ function QuickStart(): React.JSX.Element {
           <strong className="text-text-primary">Select a profile</strong> or create custom goals in the Optimizer tab
         </li>
         <li>
-          <strong className="text-text-primary">Enable gear</strong> in the Gear Pool tab (items are disabled by default)
+          <strong className="text-text-primary">Enable gear</strong> in the Gear Inventory tab (items are disabled by
+          default)
         </li>
         <li>
-          <strong className="text-text-primary">Choose an algorithm</strong> — Exhaustive for small pools, Genetic for large ones
+          <strong className="text-text-primary">Choose an algorithm</strong> — Exhaustive for small pools, Genetic for
+          large ones
         </li>
         <li>
           <strong className="text-text-primary">Click Start Search</strong> to find optimal loadouts
         </li>
       </ol>
+    </Section>
+  );
+}
+
+function GearInventorySection(): React.JSX.Element {
+  return (
+    <Section title="Gear Inventory">
+      <p className="text-text-secondary mb-3">
+        The Gear Inventory shows all equipment available for optimization. Toggle items on/off to control what the
+        optimizer can use.
+      </p>
+      <dl className="space-y-2">
+        <dt className="font-semibold text-accent-gold">Grouping</dt>
+        <dd className="text-text-secondary ml-4">
+          Organize items by <strong className="text-text-primary">Set</strong> (armor sets),{" "}
+          <strong className="text-text-primary">Slot</strong> (helmet, armor, accessory),{" "}
+          <strong className="text-text-primary">Source</strong> (craftable, boss drop, seasonal), or{" "}
+          <strong className="text-text-primary">None</strong> (flat list).
+        </dd>
+        <dt className="font-semibold text-accent-gold">Filtering</dt>
+        <dd className="text-text-secondary ml-4">
+          Use quick filters to show only enabled/disabled items, or search by name.
+        </dd>
+        <dt className="font-semibold text-accent-gold">Sources</dt>
+        <dd className="text-text-secondary ml-4">
+          Items show their source (Craftable, Boss, Seasonal, Quest, etc.) to help you filter by availability.
+        </dd>
+        <dt className="font-semibold text-accent-gold">Custom Items</dt>
+        <dd className="text-text-secondary ml-4">
+          Click <strong className="text-text-primary">+ Add</strong> to create custom equipment for theorycrafting
+          unreleased or hypothetical gear.
+        </dd>
+      </dl>
+    </Section>
+  );
+}
+
+function GameDataSection(): React.JSX.Element {
+  return (
+    <Section title="Game Data">
+      <p className="text-text-secondary mb-3">
+        The Game Data tab manages enchantments, modifiers, gems, and variants — the building blocks that define
+        equipment stats.
+      </p>
+      <dl className="space-y-2">
+        <dt className="font-semibold text-accent-gold">Enchantments</dt>
+        <dd className="text-text-secondary ml-4">Magic effects like Powerful, Forceful, Hard that modify equipment.</dd>
+        <dt className="font-semibold text-accent-gold">Modifiers</dt>
+        <dd className="text-text-secondary ml-4">Material/quality modifiers like Titanium, Virtuous that change stats.</dd>
+        <dt className="font-semibold text-accent-gold">Gems</dt>
+        <dd className="text-text-secondary ml-4">Socketable gems that add bonus stats to equipment.</dd>
+        <dt className="font-semibold text-accent-gold">Variants</dt>
+        <dd className="text-text-secondary ml-4">Equipment variants like Arcsphere, Sunken, etc.</dd>
+      </dl>
+      <p className="text-text-muted text-sm mt-3">
+        Most users won't need to edit game data — it's pre-loaded from the latest game version. Use{" "}
+        <strong className="text-text-primary">+ Add</strong> to add custom entries for theorycrafting.
+      </p>
     </Section>
   );
 }
@@ -226,7 +288,7 @@ function TipsSection(): React.JSX.Element {
           then add complexity as needed.
         </li>
         <li>
-          <strong className="text-text-primary">Check the Gear Pool</strong> — Results can only use enabled items.
+          <strong className="text-text-primary">Check the Gear Inventory</strong> — Results can only use enabled items.
           Enable more gear for better builds.
         </li>
         <li>
