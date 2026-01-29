@@ -1,36 +1,21 @@
 /**
- * Island Worker — single GA island with migration protocol support.
- *
- * Loaded via Vite's worker pattern. Runs a GeneticSearch instance and
- * communicates with the IslandCoordinator for migration.
+ * Island Worker — thin Worker shell that routes messages to IslandCore.
  *
  * Protocol:
  *   Incoming: IslandRequest  ("start" | "stop" | "requestMigrants" | "receiveMigrants")
  *   Outgoing: IslandResponse ("progress" | "stagnating" | "migrants" | "complete" | "error")
  */
 
-import type {
-  GearPool,
-  HardConstraints,
-  SearchOptions,
-  SearchResult,
-  SoftConstraint,
-} from "@/models/types";
-
-import type { Chromosome } from "@/search/genetic-core";
-import { GeneticSearch, type GAExitReason } from "@/search/genetic-core";
+import type { SearchResult } from "@/models/types";
+import type { Chromosome, GAExitReason } from "@/search/genetic-core";
+import type { IslandGAConfig } from "@/search/island-core";
+import { IslandCore } from "@/search/island-core";
 
 // ---------------------------------------------------------------------------
-// Message protocol types
+// Message protocol types (re-exported for coordinator)
 // ---------------------------------------------------------------------------
 
-/** GA configuration passed from coordinator */
-export interface IslandGAConfig {
-  readonly gearPool: GearPool;
-  readonly constraints: HardConstraints;
-  readonly fitness: SoftConstraint[];
-  readonly options: SearchOptions;
-}
+export type { IslandGAConfig } from "@/search/island-core";
 
 /** Messages the coordinator sends to this island worker */
 export type IslandRequest =
@@ -51,7 +36,7 @@ export type IslandResponse =
 // Worker state
 // ---------------------------------------------------------------------------
 
-let activeSearch: GeneticSearch | null = null;
+let island: IslandCore | null = null;
 let currentIslandId = 0;
 
 // ---------------------------------------------------------------------------
@@ -60,78 +45,26 @@ let currentIslandId = 0;
 
 function handleStart(msg: IslandRequest & { type: "start" }): void {
   currentIslandId = msg.islandId;
-  activeSearch = new GeneticSearch();
-
-  // Hook into progress updates
-  activeSearch.onProgress = (checked, _total, bestScore, topResults) => {
-    const response: IslandResponse = {
-      type: "progress",
-      islandId: currentIslandId,
-      generation: checked,
-      bestScore,
-      topResults,
-    };
-    postMessage(response);
-  };
-
-  // Hook into stagnation events
-  activeSearch.onStagnating = () => {
-    const response: IslandResponse = {
-      type: "stagnating",
-      islandId: currentIslandId,
-    };
-    postMessage(response);
-  };
-
-  // Run the search
-  const { gearPool, constraints, fitness, options } = msg.config;
-  activeSearch
-    .search(gearPool, constraints, fitness, options)
-    .then((results) => {
-      const response: IslandResponse = {
-        type: "complete",
-        islandId: currentIslandId,
-        results,
-        exitReason: activeSearch?.exitReason ?? "complete",
-        finalGeneration: activeSearch?.finalGeneration ?? 0,
-      };
-      postMessage(response);
-      activeSearch = null;
-    })
-    .catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown island worker error";
-      const response: IslandResponse = {
-        type: "error",
-        islandId: currentIslandId,
-        message,
-      };
-      postMessage(response);
-      activeSearch = null;
-    });
-}
-
-function handleStop(): void {
-  if (activeSearch != null) {
-    activeSearch.cancel();
-    activeSearch = null;
-  }
-}
-
-function handleRequestMigrants(msg: IslandRequest & { type: "requestMigrants" }): void {
-  if (activeSearch == null) return;
-
-  const individuals = activeSearch.exportTopN(msg.count);
-  const response: IslandResponse = {
-    type: "migrants",
-    islandId: currentIslandId,
-    individuals,
-  };
-  postMessage(response);
-}
-
-function handleReceiveMigrants(msg: IslandRequest & { type: "receiveMigrants" }): void {
-  if (activeSearch == null) return;
-  activeSearch.receiveMigrants(msg.individuals);
+  island = new IslandCore(msg.islandId, {
+    onProgress: (generation, bestScore, topResults) => {
+      postMessage({ type: "progress", islandId: currentIslandId, generation, bestScore, topResults } satisfies IslandResponse);
+    },
+    onStagnating: () => {
+      postMessage({ type: "stagnating", islandId: currentIslandId } satisfies IslandResponse);
+    },
+    onMigrants: (individuals) => {
+      postMessage({ type: "migrants", islandId: currentIslandId, individuals } satisfies IslandResponse);
+    },
+    onComplete: (results, exitReason, finalGeneration) => {
+      postMessage({ type: "complete", islandId: currentIslandId, results, exitReason, finalGeneration } satisfies IslandResponse);
+      island = null;
+    },
+    onError: (message) => {
+      postMessage({ type: "error", islandId: currentIslandId, message } satisfies IslandResponse);
+      island = null;
+    },
+  });
+  island.start(msg.config);
 }
 
 // ---------------------------------------------------------------------------
@@ -140,18 +73,20 @@ function handleReceiveMigrants(msg: IslandRequest & { type: "receiveMigrants" })
 
 self.onmessage = (event: MessageEvent<IslandRequest>): void => {
   const msg = event.data;
+
   switch (msg.type) {
     case "start":
       handleStart(msg);
       break;
     case "stop":
-      handleStop();
+      island?.stop();
+      island = null;
       break;
     case "requestMigrants":
-      handleRequestMigrants(msg);
+      island?.requestMigrants(msg.count);
       break;
     case "receiveMigrants":
-      handleReceiveMigrants(msg);
+      island?.receiveMigrants(msg.individuals);
       break;
   }
 };
