@@ -64,14 +64,26 @@ function randInt(max: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// Selection: tournament (k=3)
+// Diversity measurement
+// ---------------------------------------------------------------------------
+
+/** Measure population diversity as ratio of unique piece combos to population size. */
+function measureDiversity(pop: readonly EvaluatedIndividual[]): number {
+  if (pop.length === 0) return 0;
+  const uniqueKeys = new Set(pop.map(getPieceKey));
+  return uniqueKeys.size / pop.length;
+}
+
+// ---------------------------------------------------------------------------
+// Selection: tournament (k=3, or k=2 for reduced pressure)
 // ---------------------------------------------------------------------------
 
 function tournamentSelect(
   pop: readonly EvaluatedIndividual[],
+  tournamentSize = 3,
 ): EvaluatedIndividual {
   let best = pop[randInt(pop.length)];
-  for (let i = 1; i < 3; i++) {
+  for (let i = 1; i < tournamentSize; i++) {
     const candidate = pop[randInt(pop.length)];
     if (candidate != null && (best == null || candidate.score > best.score)) {
       best = candidate;
@@ -154,12 +166,25 @@ interface EvolveParams {
   readonly crossoverRate: number;
 }
 
+/** Diversity threshold below which we boost mutation and reduce selection pressure. */
+const DIVERSITY_THRESHOLD = 0.3;
+/** Mutation rate multiplier when diversity is low. */
+const LOW_DIVERSITY_MUTATION_BOOST = 3;
+
 function evolveOneGeneration(
   params: EvolveParams,
   population: readonly EvaluatedIndividual[],
 ): EvaluatedIndividual[] {
   const { populationSize } = params;
   const nextPop: EvaluatedIndividual[] = [];
+
+  // Measure diversity and adapt parameters
+  const diversity = measureDiversity(population);
+  const isLowDiversity = diversity < DIVERSITY_THRESHOLD;
+  const adaptedParams: EvolveParams = isLowDiversity
+    ? { ...params, mutationRate: Math.min(params.mutationRate * LOW_DIVERSITY_MUTATION_BOOST, 0.5) }
+    : params;
+  const tournamentSize = isLowDiversity ? 2 : 3;
 
   // Elitism: keep top 2
   const sorted = [...population].sort((a, b) => b.score - a.score);
@@ -169,7 +194,7 @@ function evolveOneGeneration(
   if (elite1 != null) nextPop.push(elite1);
 
   while (nextPop.length < populationSize) {
-    produceOffspring(params, population, nextPop);
+    produceOffspring(adaptedParams, population, nextPop, tournamentSize);
   }
 
   return nextPop.slice(0, populationSize);
@@ -179,10 +204,11 @@ function produceOffspring(
   params: EvolveParams,
   population: readonly EvaluatedIndividual[],
   nextPop: EvaluatedIndividual[],
+  tournamentSize: number,
 ): void {
   const { pool, constraints, fitness, mutationRate, crossoverRate } = params;
-  const p1 = tournamentSelect(population);
-  const p2 = tournamentSelect(population);
+  const p1 = tournamentSelect(population, tournamentSize);
+  const p2 = tournamentSelect(population, tournamentSize);
 
   const [c1, c2] = Math.random() < crossoverRate
     ? uniformCrossover(p1.chromosome, p2.chromosome)
@@ -226,9 +252,9 @@ interface LoopConfig {
 }
 
 /** Max diversity injections before final stagnation exit. */
-const MAX_INJECTIONS = 2;
+const MAX_INJECTIONS = 4;
 /** Stagnation threshold that triggers diversity injection. */
-const INJECTION_THRESHOLD = 25;
+const INJECTION_THRESHOLD = 20;
 /** Stagnation threshold for final exit (after all injections used). */
 const STAGNATION_LIMIT = 50;
 
@@ -306,6 +332,11 @@ function extractResultsWithArchive(
   return extractResults(combined, maxResults);
 }
 
+/** Critical diversity threshold - inject fresh individuals if diversity drops below this. */
+const CRITICAL_DIVERSITY_THRESHOLD = 0.25;
+/** Max diversity injections from low diversity (separate from stagnation injections). */
+const MAX_DIVERSITY_INJECTIONS = 3;
+
 async function runEvolutionLoop(
   config: LoopConfig,
   state: LoopState,
@@ -313,6 +344,7 @@ async function runEvolutionLoop(
   const { evolveParams, generations, maxResults, token, onProgress } = config;
   // Archive size limit: 2x maxResults to capture diverse solutions
   const archiveLimit = maxResults * 2;
+  let diversityInjections = 0;
 
   for (let gen = 0; gen < generations; gen++) {
     if (token.cancelled) {
@@ -324,6 +356,14 @@ async function runEvolutionLoop(
     state.population = evolveOneGeneration(evolveParams, state.population);
     updateStagnation(state);
     updateArchive(state, archiveLimit);
+
+    // Proactive diversity injection when population becomes too homogeneous
+    const diversity = measureDiversity(state.population);
+    if (diversity < CRITICAL_DIVERSITY_THRESHOLD && diversityInjections < MAX_DIVERSITY_INJECTIONS) {
+      injectDiversity(state, evolveParams);
+      diversityInjections++;
+    }
+
     const currentResults = extractResultsWithArchive(state, maxResults);
     onProgress?.(gen + 1, generations, state.bestScore, currentResults);
 
