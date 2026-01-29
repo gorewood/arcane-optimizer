@@ -51,7 +51,7 @@ export const equipmentSchema = z
     baseStats: partialStatsSchema,
     socketCount: z.number().int().nonnegative(),
     maxLevel: z.number().int().positive(),
-    tags: z.array(z.string()).readonly(),
+    tags: z.array(z.string()).readonly().optional().default([]),
     atlanteanOnly: z.boolean().optional(),
     variants: z.record(z.string(), partialStatsSchema).readonly().optional(),
   })

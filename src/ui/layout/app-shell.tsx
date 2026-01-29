@@ -57,6 +57,18 @@ export function AppShell(): React.JSX.Element {
       <main className="mx-auto max-w-5xl w-full flex-1">
         <PanelContent panel={activePanel} />
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border-default bg-bg-secondary py-3 text-center text-xs text-text-muted">
+        <a
+          href="https://github.com/gorewood/arcane-optimizer"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-accent-gold transition-colors"
+        >
+          GitHub
+        </a>
+      </footer>
     </div>
   );
 }

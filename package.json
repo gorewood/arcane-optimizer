@@ -1,8 +1,9 @@
 {
-  "name": "ao-armor-opt",
+  "name": "arcane-odyssey-armor-optimizer",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
   "description": "Arcane Odyssey gear loadout optimization engine",
   "scripts": {
     "dev": "vite",
