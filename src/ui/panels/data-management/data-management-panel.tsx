@@ -1,6 +1,7 @@
 /**
  * DataManagementPanel — main panel for managing user game data.
- * Provides CRUD operations for equipment, enchantments, modifiers, gems, and variants.
+ * Provides CRUD operations for enchantments, modifiers, gems, and variants.
+ * Equipment is managed in the Gear Inventory panel.
  */
 
 import { useState } from "react";
@@ -8,7 +9,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PanelHeader } from "./panel-header";
 import { SearchInput } from "./search-input";
 import { SortSelect, type SortOption } from "@/ui/panels/sort-select";
-import { EquipmentEditor } from "./equipment-editor";
 import { EnchantmentEditor } from "./enchantment-editor";
 import { ModifierEditor } from "./modifier-editor";
 import { GemEditor } from "./gem-editor";
@@ -30,18 +30,13 @@ export function DataManagementPanel(): React.JSX.Element {
         <SortSelect value={sortBy} onChange={setSortBy} />
       </div>
 
-      <Tabs defaultValue="equipment">
+      <Tabs defaultValue="enchantments">
         <TabsList variant="line">
-          <TabsTrigger value="equipment">Equipment</TabsTrigger>
           <TabsTrigger value="enchantments">Enchantments</TabsTrigger>
           <TabsTrigger value="modifiers">Modifiers</TabsTrigger>
           <TabsTrigger value="gems">Gems</TabsTrigger>
           <TabsTrigger value="variants">Variants</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="equipment">
-          <EquipmentEditor filter={filter} sortBy={sortBy} />
-        </TabsContent>
 
         <TabsContent value="enchantments">
           <EnchantmentEditor filter={filter} sortBy={sortBy} />

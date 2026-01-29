@@ -16,7 +16,7 @@ interface TabDef {
 const TABS: readonly TabDef[] = [
   { id: "optimizer", label: "Optimizer" },
   { id: "gear", label: "Gear Inventory" },
-  { id: "data", label: "Data" },
+  { id: "data", label: "Game Data" },
   { id: "help", label: "Help" },
 ] as const;
 
