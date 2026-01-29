@@ -3,30 +3,16 @@
  * modifiers, and gems are available to the optimizer.
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  loadEquipment,
-  loadEnchantments,
-  loadModifiers,
-  loadGems,
-} from "@/data/loaders";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
+import { useUserDataStore } from "@/stores/user-data-store";
 import { SortSelect, type SortOption } from "./sort-select";
 import { EquipmentSection } from "./equipment-section";
 import { EnchantmentSection } from "./enchantment-section";
 import { ModifierSection } from "./modifier-section";
 import { GemSection } from "./gem-section";
-
-// ---------------------------------------------------------------------------
-// Static data (loaders return cached, validated data — safe in render)
-// ---------------------------------------------------------------------------
-
-const equipment = loadEquipment();
-const enchantments = loadEnchantments();
-const modifiers = loadModifiers();
-const gems = loadGems();
 
 // ---------------------------------------------------------------------------
 // GearPoolPanel
@@ -37,6 +23,29 @@ export function GearPoolPanel(): React.JSX.Element {
   const [sortBy, setSortBy] = useState<SortOption>("set-name");
   const enableAll = useGearPoolStore((s) => s.enableAll);
   const disableAll = useGearPoolStore((s) => s.disableAll);
+
+  // Use merged data (bundled + user-added items)
+  const getMergedEquipment = useUserDataStore((s) => s.getMergedEquipment);
+  const getMergedEnchantments = useUserDataStore((s) => s.getMergedEnchantments);
+  const getMergedModifiers = useUserDataStore((s) => s.getMergedModifiers);
+  const getMergedGems = useUserDataStore((s) => s.getMergedGems);
+
+  const equipment = useMemo(
+    () => getMergedEquipment().filter((m) => !m.isDeleted).map((m) => m.item),
+    [getMergedEquipment]
+  );
+  const enchantments = useMemo(
+    () => getMergedEnchantments().filter((m) => !m.isDeleted).map((m) => m.item),
+    [getMergedEnchantments]
+  );
+  const modifiers = useMemo(
+    () => getMergedModifiers().filter((m) => !m.isDeleted).map((m) => m.item),
+    [getMergedModifiers]
+  );
+  const gems = useMemo(
+    () => getMergedGems().filter((m) => !m.isDeleted).map((m) => m.item),
+    [getMergedGems]
+  );
 
   return (
     <div className="space-y-4 p-4">
