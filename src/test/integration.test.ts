@@ -33,7 +33,7 @@ import {
   validateLoadout,
 } from "@/search/constraints";
 
-import { computeFitness, FITNESS_PRESETS } from "@/search/fitness";
+import { computeFitness } from "@/search/fitness";
 import { ExhaustiveSearch } from "@/search/exhaustive";
 
 import {
@@ -229,16 +229,22 @@ describe("integration: constraint validation", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. Fitness scoring against Mage preset
+// 3. Fitness scoring
 // ---------------------------------------------------------------------------
 
 describe("integration: fitness scoring", () => {
-  it("scores a known loadout against Mage preset", () => {
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    expect(magePreset).toBeDefined();
-    if (magePreset == null) return;
+  // Test fixture: typical mage-style constraints for integration testing
+  const TEST_MAGE_CONSTRAINTS: SoftConstraint[] = [
+    { stat: "defense", type: "atLeast", value: 700, weight: 100 },
+    { stat: "power", type: "atLeast", value: 100, weight: 90 },
+    { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
+    { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
+    { stat: "insanity", type: "atMost", value: 1, weight: 100 },
+    { stat: "drawback", type: "atMost", value: 2, weight: 100 },
+  ];
 
-    // Build stats that satisfy the Mage preset constraints:
+  it("scores a known loadout against test constraints", () => {
+    // Build stats that satisfy the test constraints:
     // defense >= 700, power >= 100, dexterity ~ 300, size ~ 300,
     // insanity atMost 1, drawback atMost 2
     const stats = makeStats({
@@ -250,7 +256,7 @@ describe("integration: fitness scoring", () => {
       drawback: 1,
     });
 
-    const score = computeFitness(stats, magePreset);
+    const score = computeFitness(stats, TEST_MAGE_CONSTRAINTS);
 
     // Manual computation per constraint (atLeast bonus capped at 1× weight):
     // 1. defense atLeast 700 w=100: above by 100 -> min(1000, 100) = 100 (capped)
@@ -599,12 +605,17 @@ describe("integration: full pipeline round-trip", () => {
     expect(stats.size).toBe(300);
     expect(stats.insanity).toBe(1);
 
-    // Step 3: score against Mage preset
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    expect(magePreset).toBeDefined();
-    if (magePreset == null) return;
+    // Step 3: score against test constraints
+    const testConstraints: SoftConstraint[] = [
+      { stat: "defense", type: "atLeast", value: 700, weight: 100 },
+      { stat: "power", type: "atLeast", value: 100, weight: 90 },
+      { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
+      { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
+      { stat: "insanity", type: "atMost", value: 1, weight: 100 },
+      { stat: "drawback", type: "atMost", value: 2, weight: 100 },
+    ];
 
-    const score = computeFitness(stats, magePreset);
+    const score = computeFitness(stats, testConstraints);
 
     // Manual computation (atLeast bonus capped at 1× weight):
     // defense atLeast 700 w=100: above by 50 -> min(50*100*0.1, 100) = 100 (capped)

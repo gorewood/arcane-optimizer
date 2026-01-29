@@ -1,7 +1,7 @@
 /**
- * FitnessPanel -- editor for configuring soft constraints and presets.
+ * FitnessPanel -- editor for configuring soft constraints and profiles.
  *
- * Allows users to select presets, add/edit/remove soft constraints.
+ * Allows users to manage profiles, add/edit/remove soft constraints.
  * Note: Heading and summary moved to FitnessSection collapsible wrapper.
  */
 
@@ -9,7 +9,7 @@ import type { SoftConstraint } from "@/models/types";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useFitnessStore } from "@/stores/fitness-store";
-import { PresetSelector } from "./preset-selector";
+import { ProfileSelector } from "./profile-selector";
 import { ConstraintRow } from "./constraint-row";
 import { VariantSelector } from "./variant-selector";
 
@@ -29,19 +29,16 @@ const DEFAULT_CONSTRAINT: SoftConstraint = {
 
 export function FitnessPanel(): React.JSX.Element {
   const constraints = useFitnessStore((s) => s.constraints);
-  const activePresetName = useFitnessStore((s) => s.activePresetName);
   const loadPreset = useFitnessStore((s) => s.loadPreset);
-  const clearPreset = useFitnessStore((s) => s.clearPreset);
   const addConstraint = useFitnessStore((s) => s.addConstraint);
   const updateConstraint = useFitnessStore((s) => s.updateConstraint);
   const removeConstraint = useFitnessStore((s) => s.removeConstraint);
 
   return (
     <div className="space-y-4 p-4">
-      <PresetSelector
-        activePresetName={activePresetName}
-        onLoadPreset={loadPreset}
-        onClear={clearPreset}
+      <ProfileSelector
+        constraints={constraints}
+        onApplyProfile={loadPreset}
       />
 
       <Separator className="bg-border-subtle" />

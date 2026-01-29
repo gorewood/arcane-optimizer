@@ -21,11 +21,7 @@ export {
   sumStats,
 } from "./stats";
 
-export {
-  computeFitness,
-  FITNESS_PRESETS,
-  PRESET_NAMES,
-} from "./fitness";
+export { computeFitness } from "./fitness";
 
 export { ExhaustiveSearch } from "./exhaustive";
 export { GeneticSearch } from "./genetic";

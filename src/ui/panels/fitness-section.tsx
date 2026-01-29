@@ -18,7 +18,7 @@ import { FitnessPanel } from "./fitness-panel";
 
 export function GoalsSection(): React.JSX.Element {
   const constraints = useFitnessStore((s) => s.constraints);
-  const activePresetName = useFitnessStore((s) => s.activePresetName);
+  const activeProfileName = useFitnessStore((s) => s.activeProfileName);
   const searchStatus = useSearchStore((s) => s.status);
 
   const [goalsOpen, setGoalsOpen] = useState(false);
@@ -35,7 +35,7 @@ export function GoalsSection(): React.JSX.Element {
     return unsubscribe;
   }, []);
 
-  const summary = buildSummary(constraints, activePresetName);
+  const summary = buildSummary(constraints, activeProfileName);
   const isRunning = searchStatus === "running";
 
   return (

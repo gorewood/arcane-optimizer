@@ -7,10 +7,12 @@
 
 import { describe, expect, it } from "vitest";
 
+import type { SoftConstraint } from "@/models/types";
 import { loadGearPool } from "@/data/loaders";
 import { DEFAULT_HARD_CONSTRAINTS, validateLoadout } from "@/search/constraints";
-import { computeFitness, FITNESS_PRESETS } from "@/search/fitness";
+import { computeFitness } from "@/search/fitness";
 import { computeLoadoutStats } from "@/search/stats";
+import { getTestProfiles } from "@/test/profile-fixtures";
 import {
   buildIndexedPool,
   decodeChromosome,
@@ -25,8 +27,10 @@ const pool = loadGearPool();
 const indexed = buildIndexedPool(pool);
 const constraints = DEFAULT_HARD_CONSTRAINTS;
 
+const testProfiles = getTestProfiles();
+
 describe("GA diagnostic: root cause investigation", () => {
-  it.each(Object.entries(FITNESS_PRESETS))(
+  it.each(Object.entries(testProfiles))(
     "measures initial population survival rate for '%s'",
     (_name, preset) => {
       const targetSize = 200;
@@ -110,7 +114,7 @@ describe("GA diagnostic: root cause investigation", () => {
     expect(total).toBeGreaterThan(0);
   });
 
-  it.each(Object.entries(FITNESS_PRESETS))(
+  it.each(Object.entries(testProfiles))(
     "measures convergence and diversity for '%s'",
     async (_name, preset) => {
       const search = new GeneticSearch();
@@ -151,9 +155,16 @@ describe("GA diagnostic: root cause investigation", () => {
     },
   );
 
+  // Test fixture for diversity measurement
+  const diversityTestConstraints: SoftConstraint[] = [
+    { stat: "defense", type: "atLeast", value: 500, weight: 100 },
+    { stat: "power", type: "atLeast", value: 50, weight: 90 },
+    { stat: "insanity", type: "atMost", value: 2, weight: 100 },
+    { stat: "drawback", type: "atMost", value: 3, weight: 100 },
+  ];
+
   it("measures population diversity at stagnation exit", () => {
-    const preset = FITNESS_PRESETS["Mage Build"];
-    if (preset == null) return;
+    const preset = diversityTestConstraints;
 
     // Build population manually to inspect diversity
     const targetSize = 200;
@@ -182,8 +193,7 @@ describe("GA diagnostic: root cause investigation", () => {
   });
 
   it("measures dedup key coverage — full loadout vs pieces only", async () => {
-    const preset = FITNESS_PRESETS["Mage Build"];
-    if (preset == null) return;
+    const preset = diversityTestConstraints;
 
     const search = new GeneticSearch();
     const results = await search.search(

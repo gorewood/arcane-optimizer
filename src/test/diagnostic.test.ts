@@ -6,15 +6,17 @@
 
 import { describe, expect, it } from "vitest";
 
+import type { SoftConstraint } from "@/models/types";
 import { loadGearPool } from "@/data/loaders";
 import { DEFAULT_HARD_CONSTRAINTS, validateLoadout } from "@/search/constraints";
-import { computeFitness, FITNESS_PRESETS } from "@/search/fitness";
+import { computeFitness } from "@/search/fitness";
 import { computeLoadoutStats } from "@/search/stats";
 import {
   ExhaustiveSearch,
   generateAccessoryCombinations,
 } from "@/search/exhaustive";
 import { GeneticSearch } from "@/search/genetic";
+import { getTestProfiles } from "@/test/profile-fixtures";
 
 describe("diagnostic: real data produces results", () => {
   const pool = loadGearPool();
@@ -77,8 +79,10 @@ describe("diagnostic: real data produces results", () => {
     gems: pool.gems.slice(0, 3),
   };
 
-  it.each(Object.entries(FITNESS_PRESETS))(
-    "preset '%s' produces positive scores with enhanced search",
+  const testProfiles = getTestProfiles();
+
+  it.each(Object.entries(testProfiles))(
+    "profile '%s' produces positive scores with enhanced search",
     async (name, preset) => {
       const search = new ExhaustiveSearch();
       const results = await search.search(smallPool, constraints, preset, {
@@ -98,17 +102,23 @@ describe("diagnostic: real data produces results", () => {
     },
   );
 
+  // Test fixture for GA convergence test
+  const gaTestConstraints: SoftConstraint[] = [
+    { stat: "power", type: "atLeast", value: 50, weight: 100 },
+    { stat: "defense", type: "atLeast", value: 500, weight: 80 },
+    { stat: "insanity", type: "atMost", value: 2, weight: 100 },
+    { stat: "drawback", type: "atMost", value: 3, weight: 100 },
+  ];
+
   it(
     "GA converges on small pool",
     async () => {
       const search = new GeneticSearch();
-      const fitness = FITNESS_PRESETS["Warrior Build"];
-      if (fitness == null) return;
 
       const results = await search.search(
         smallPool,
         constraints,
-        fitness,
+        gaTestConstraints,
         {
           maxResults: 5,
           populationSize: 30,
@@ -121,28 +131,39 @@ describe("diagnostic: real data produces results", () => {
     15_000,
   );
 
+  // Test fixture for insanity/drawback test
+  const insanityTestConstraints: SoftConstraint[] = [
+    { stat: "defense", type: "atLeast", value: 500, weight: 100 },
+    { stat: "power", type: "atLeast", value: 50, weight: 90 },
+    { stat: "insanity", type: "atMost", value: 2, weight: 100 },
+    { stat: "drawback", type: "atMost", value: 3, weight: 100 },
+  ];
+
   it("search respects insanity/drawback soft constraints", async () => {
     const search = new ExhaustiveSearch();
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    if (magePreset == null) return;
 
-    const results = await search.search(smallPool, constraints, magePreset, {
+    const results = await search.search(smallPool, constraints, insanityTestConstraints, {
       maxResults: 5,
     });
 
     for (const r of results) {
       const stats = r.stats;
-      // Soft constraints in the preset penalize high insanity/drawback through fitness scoring
+      // Soft constraints penalize high insanity/drawback through fitness scoring
       // No hard limits - users control tolerances through goal system
       expect(stats.insanity).toBeGreaterThanOrEqual(0);
       expect(stats.drawback).toBeGreaterThanOrEqual(0);
     }
   });
 
-  it("Mage Build preset does not disqualify all loadouts", () => {
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    expect(magePreset).toBeDefined();
-    if (magePreset == null) return;
+  // Test fixture for disqualification test
+  const disqualTestConstraints: SoftConstraint[] = [
+    { stat: "defense", type: "atLeast", value: 500, weight: 100 },
+    { stat: "power", type: "atLeast", value: 50, weight: 90 },
+    { stat: "insanity", type: "atMost", value: 2, weight: 100 },
+    { stat: "drawback", type: "atMost", value: 3, weight: 100 },
+  ];
+
+  it("test constraints do not disqualify all loadouts", () => {
     let scored = 0;
     let disqualified = 0;
 
@@ -167,7 +188,7 @@ describe("diagnostic: real data produces results", () => {
           if (!validation.valid) continue;
 
           const stats = computeLoadoutStats(loadout);
-          const score = computeFitness(stats, magePreset);
+          const score = computeFitness(stats, disqualTestConstraints);
 
           if (score === -Infinity) {
             disqualified++;
@@ -184,7 +205,7 @@ describe("diagnostic: real data produces results", () => {
     expect(
       scored,
       `All ${String(disqualified)} loadouts were disqualified — ` +
-        `Mage Build likely has an "exactly" or overly tight hardCap constraint`,
+        `test constraints likely have an "exactly" or overly tight hardCap constraint`,
     ).toBeGreaterThan(0);
   });
 });

@@ -132,3 +132,69 @@ const variantTypeEntrySchema = z
 export const variantTypesSchema = z
   .record(z.string(), variantTypeEntrySchema)
   .readonly();
+
+// ---------------------------------------------------------------------------
+// Soft Constraints (for profiles)
+// ---------------------------------------------------------------------------
+
+const constraintTypeSchema = z.enum([
+  "minimize",
+  "maximize",
+  "atLeast",
+  "atMost",
+  "between",
+  "target",
+  "exactly",
+]);
+
+export const softConstraintSchema = z
+  .object({
+    stat: statNameSchema,
+    type: constraintTypeSchema,
+    value: z.number().optional(),
+    weight: z.number(),
+    hardCap: z.number().optional(),
+  })
+  .readonly();
+
+// ---------------------------------------------------------------------------
+// Profiles
+// ---------------------------------------------------------------------------
+
+/** A default profile shipped with the app. */
+export const defaultProfileSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    version: z.number().int().positive(),
+    constraints: z.array(softConstraintSchema).readonly(),
+  })
+  .readonly();
+
+/** The default profiles config file format. */
+export const defaultProfilesConfigSchema = z
+  .object({
+    version: z.number().int().positive(),
+    profiles: z.array(defaultProfileSchema).readonly(),
+  })
+  .readonly();
+
+/** A user profile stored in localStorage. */
+export const userProfileSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    constraints: z.array(softConstraintSchema).readonly(),
+    baseVersion: z.number().int().optional(), // Version of default it was based on
+    deleted: z.boolean().optional(), // True if user deleted a default profile
+    createdAt: z.number(),
+    updatedAt: z.number(),
+  })
+  .readonly();
+
+/** User profiles storage format. */
+export const userProfilesStorageSchema = z
+  .object({
+    profiles: z.array(userProfileSchema).readonly(),
+  })
+  .readonly();

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { SoftConstraint, Stats } from "@/models/types";
+import { getTestProfileNames, getTestProfiles } from "@/test/profile-fixtures";
 
 import { emptyStats } from "./stats";
-import { computeFitness, FITNESS_PRESETS, PRESET_NAMES } from "./fitness";
+import { computeFitness } from "./fitness";
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -190,17 +191,20 @@ describe("computeFitness", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Presets
+// Default Profiles
 // ---------------------------------------------------------------------------
 
-describe("FITNESS_PRESETS", () => {
+describe("Default Profiles", () => {
+  const TEST_PROFILES = getTestProfiles();
+  const TEST_PROFILE_NAMES = getTestProfileNames();
+
   // 19. Has 3 entries
-  it("has exactly 3 presets", () => {
-    expect(Object.keys(FITNESS_PRESETS)).toHaveLength(3);
+  it("has exactly 3 profiles", () => {
+    expect(Object.keys(TEST_PROFILES)).toHaveLength(3);
   });
 
-  // 20. Each preset has valid constraint structure
-  it("each preset has valid constraint structure", () => {
+  // 20. Each profile has valid constraint structure
+  it("each profile has valid constraint structure", () => {
     const validTypes = new Set([
       "minimize",
       "maximize",
@@ -211,7 +215,7 @@ describe("FITNESS_PRESETS", () => {
       "exactly",
     ]);
 
-    for (const [name, constraints] of Object.entries(FITNESS_PRESETS)) {
+    for (const [name, constraints] of Object.entries(TEST_PROFILES)) {
       expect(constraints.length).toBeGreaterThan(0);
 
       for (const c of constraints) {
@@ -233,14 +237,14 @@ describe("FITNESS_PRESETS", () => {
     }
   });
 
-  // 21. Mage Build scores higher for defense-heavy stats
-  it("Mage Build scores higher for defense-heavy stats than low-defense stats", () => {
-    const magePreset = FITNESS_PRESETS["Mage Build"];
-    expect(magePreset).toBeDefined();
+  // 21. First profile (Dexterity Mage) scores higher for defense-heavy stats
+  it("first profile scores higher for defense-heavy stats than low-defense stats", () => {
+    const firstProfile = TEST_PROFILES[TEST_PROFILE_NAMES[0] ?? ""];
+    expect(firstProfile).toBeDefined();
 
     const highDefense = makeStats({
-      defense: 800,
-      power: 120,
+      defense: 1100,
+      power: 130,
       dexterity: 300,
       size: 300,
       insanity: 1,
@@ -257,22 +261,22 @@ describe("FITNESS_PRESETS", () => {
     });
 
     // Both satisfy exactly/atMost constraints; high-defense should score better
-    if (magePreset == null) throw new Error("Mage Build preset missing");
-    const highScore = computeFitness(highDefense, magePreset);
-    const lowScore = computeFitness(lowDefense, magePreset);
+    if (firstProfile == null) throw new Error("First profile missing");
+    const highScore = computeFitness(highDefense, firstProfile);
+    const lowScore = computeFitness(lowDefense, firstProfile);
     expect(highScore).toBeGreaterThan(lowScore);
   });
 });
 
-describe("PRESET_NAMES", () => {
-  it("matches the keys of FITNESS_PRESETS", () => {
-    expect(PRESET_NAMES).toEqual(Object.keys(FITNESS_PRESETS));
+describe("Profile Names", () => {
+  const TEST_PROFILES = getTestProfiles();
+  const TEST_PROFILE_NAMES = getTestProfileNames();
+
+  it("matches the keys of profiles", () => {
+    expect(TEST_PROFILE_NAMES).toEqual(Object.keys(TEST_PROFILES));
   });
 
-  it("contains all 3 preset names", () => {
-    expect(PRESET_NAMES).toHaveLength(3);
-    expect(PRESET_NAMES).toContain("Mage Build");
-    expect(PRESET_NAMES).toContain("Warrior Build");
-    expect(PRESET_NAMES).toContain("Tank Build");
+  it("contains all 3 profile names", () => {
+    expect(TEST_PROFILE_NAMES).toHaveLength(3);
   });
 });

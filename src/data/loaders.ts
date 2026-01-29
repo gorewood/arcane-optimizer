@@ -13,8 +13,10 @@ import type {
   Modifier,
   VariantTypes,
 } from "@/models/types";
+import type { DefaultProfile } from "./profile-types";
 
 import {
+  defaultProfilesConfigSchema,
   enchantmentArraySchema,
   equipmentArraySchema,
   gemArraySchema,
@@ -27,6 +29,7 @@ import rawEnchantments from "./enchantments.json";
 import rawModifiers from "./modifiers.json";
 import rawGems from "./gems.json";
 import rawVariantTypes from "./variant-types.json";
+import rawDefaultProfiles from "./default-profiles.json";
 
 // ---------------------------------------------------------------------------
 // Individual loaders
@@ -55,6 +58,12 @@ export function loadGems(): readonly Gem[] {
 /** Validate and return variant type groupings. */
 export function loadVariantTypes(): VariantTypes {
   return variantTypesSchema.parse(rawVariantTypes);
+}
+
+/** Validate and return default profiles from config. */
+export function loadDefaultProfiles(): readonly DefaultProfile[] {
+  const config = defaultProfilesConfigSchema.parse(rawDefaultProfiles);
+  return config.profiles;
 }
 
 // ---------------------------------------------------------------------------

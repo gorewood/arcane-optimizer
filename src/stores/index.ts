@@ -13,3 +13,6 @@ export type { SearchState, SearchActions, SearchStatus } from "./search-store";
 
 export { useUIStore } from "./ui-store";
 export type { UIState, UIActions } from "./ui-store";
+
+export { useProfileStore } from "./profile-store";
+export type { ProfileState, ProfileActions } from "./profile-store";

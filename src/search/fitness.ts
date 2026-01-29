@@ -125,37 +125,3 @@ export function computeFitness(
   return score;
 }
 
-// ---------------------------------------------------------------------------
-// Presets
-// ---------------------------------------------------------------------------
-
-/** Built-in fitness presets. */
-export const FITNESS_PRESETS: Readonly<Record<string, readonly SoftConstraint[]>> = {
-  "Mage Build": [
-    { stat: "defense", type: "atLeast", value: 700, weight: 100 },
-    { stat: "power", type: "atLeast", value: 100, weight: 90 },
-    { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
-    { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
-    { stat: "insanity", type: "atMost", value: 1, weight: 100 },
-    { stat: "drawback", type: "atMost", value: 2, weight: 100 },
-  ],
-  "Warrior Build": [
-    { stat: "power", type: "atLeast", value: 120, weight: 100 },
-    { stat: "dexterity", type: "maximize", weight: 90 },
-    { stat: "defense", type: "atLeast", value: 500, weight: 80 },
-    { stat: "size", type: "maximize", weight: 60 },
-    { stat: "insanity", type: "atMost", value: 1, weight: 100 },
-    { stat: "drawback", type: "atMost", value: 2, weight: 100 },
-  ],
-  "Tank Build": [
-    { stat: "defense", type: "maximize", weight: 100 },
-    { stat: "warding", type: "atLeast", value: 2, weight: 90 },
-    { stat: "power", type: "atLeast", value: 50, weight: 70 },
-    { stat: "regeneration", type: "maximize", weight: 60 },
-    { stat: "insanity", type: "atMost", value: 0, weight: 100 },
-    { stat: "drawback", type: "atMost", value: 1, weight: 100 },
-  ],
-};
-
-/** All available preset names. */
-export const PRESET_NAMES: readonly string[] = Object.keys(FITNESS_PRESETS);

@@ -6,7 +6,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { SoftConstraint } from "@/models/types";
-import { loadVariantTypes } from "@/data/loaders";
+import { loadDefaultProfiles, loadVariantTypes } from "@/data/loaders";
 
 // ---------------------------------------------------------------------------
 // State & Action Types
@@ -14,7 +14,7 @@ import { loadVariantTypes } from "@/data/loaders";
 
 export interface FitnessState {
   constraints: readonly SoftConstraint[];
-  activePresetName: string | null;
+  activeProfileName: string | null;
   enabledVariants: ReadonlySet<string>;
 }
 
@@ -35,20 +35,17 @@ export interface FitnessActions {
 // Defaults
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MAGE_CONSTRAINTS: SoftConstraint[] = [
-  { stat: "defense", type: "atLeast", value: 700, weight: 100 },
-  { stat: "power", type: "atLeast", value: 100, weight: 90 },
-  { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
-  { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
-  { stat: "insanity", type: "atMost", value: 1, weight: 100 },
-  { stat: "drawback", type: "atMost", value: 2, weight: 100 },
-];
+function getInitialState(): FitnessState {
+  const defaults = loadDefaultProfiles();
+  const firstProfile = defaults[0];
+  return {
+    constraints: firstProfile?.constraints ?? [],
+    activeProfileName: firstProfile?.name ?? null,
+    enabledVariants: new Set<string>(),
+  };
+}
 
-const INITIAL_STATE: FitnessState = {
-  constraints: DEFAULT_MAGE_CONSTRAINTS,
-  activePresetName: "Mage Build",
-  enabledVariants: new Set<string>(),
-};
+const INITIAL_STATE: FitnessState = getInitialState();
 
 // ---------------------------------------------------------------------------
 // Serialized Shape (Sets -> Arrays for JSON)
@@ -56,7 +53,7 @@ const INITIAL_STATE: FitnessState = {
 
 interface FitnessSerialized {
   constraints: SoftConstraint[];
-  activePresetName: string | null;
+  activeProfileName: string | null;
   enabledVariants: string[];
 }
 
@@ -114,7 +111,7 @@ function migrateFitnessState(
 
   return {
     constraints,
-    activePresetName: raw.activePresetName ?? null,
+    activeProfileName: raw.activeProfileName ?? null,
     enabledVariants,
   };
 }
@@ -132,7 +129,7 @@ function mergePersistedState(
     constraints: Array.isArray(raw.constraints)
       ? raw.constraints
       : current.constraints,
-    activePresetName: raw.activePresetName ?? current.activePresetName,
+    activeProfileName: raw.activeProfileName ?? current.activeProfileName,
     enabledVariants: Array.isArray(raw.enabledVariants)
       ? new Set<string>(raw.enabledVariants)
       : current.enabledVariants,
@@ -163,36 +160,36 @@ export const useFitnessStore = create<FitnessState & FitnessActions>()(
       ...INITIAL_STATE,
 
       setConstraints: (constraints: readonly SoftConstraint[]): void => {
-        set({ constraints, activePresetName: null });
+        set({ constraints, activeProfileName: null });
       },
 
       addConstraint: (constraint: SoftConstraint): void => {
         set((s) => ({
           constraints: [...s.constraints, constraint],
-          activePresetName: null,
+          activeProfileName: null,
         }));
       },
 
       removeConstraint: (index: number): void => {
         set((s) => ({
           constraints: s.constraints.filter((_, i) => i !== index),
-          activePresetName: null,
+          activeProfileName: null,
         }));
       },
 
       updateConstraint: (index: number, constraint: SoftConstraint): void => {
         set((s) => ({
           constraints: s.constraints.map((c, i) => (i === index ? constraint : c)),
-          activePresetName: null,
+          activeProfileName: null,
         }));
       },
 
       loadPreset: (name: string, constraints: readonly SoftConstraint[]): void => {
-        set({ constraints, activePresetName: name });
+        set({ constraints, activeProfileName: name });
       },
 
       clearPreset: (): void => {
-        set({ constraints: [], activePresetName: null });
+        set({ constraints: [], activeProfileName: null });
       },
 
       toggleVariant: (variant: string): void => {
