@@ -685,5 +685,245 @@
     "maxLevel": 170,
     "tags": [],
     "atlanteanOnly": true
+  },
+  {
+    "id": "broken-prince-cape",
+    "name": "Broken Prince Cape",
+    "setName": "Broken Prince",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 16,
+      "regeneration": 38,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "broken-prince-pants",
+    "name": "Broken Prince Pants",
+    "setName": "Broken Prince",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 16,
+      "regeneration": 38,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "broken-prince-shirt",
+    "name": "Broken Prince Shirt",
+    "setName": "Broken Prince",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 21,
+      "regeneration": 51,
+      "resistance": 30
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "lost-coronet-of-skyhall",
+    "name": "The Lost Coronet of Skyhall",
+    "setName": "Broken Prince",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 16,
+      "regeneration": 38,
+      "resistance": 22
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "jaw-captain-hat",
+    "name": "Jaw Captain Hat",
+    "setName": "Jaw Captain",
+    "slot": "accessory",
+    "baseStats": {
+      "defense": 103,
+      "pierce": 31,
+      "resistance": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "jaw-captain-cape",
+    "name": "Jaw Captain Cape",
+    "setName": "Jaw Captain",
+    "slot": "accessory",
+    "baseStats": {
+      "defense": 103,
+      "pierce": 31,
+      "resistance": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "jaw-captain-coat",
+    "name": "Jaw Captain Coat",
+    "setName": "Jaw Captain",
+    "slot": "chestplate",
+    "baseStats": {
+      "defense": 137,
+      "pierce": 42,
+      "resistance": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "scorching-sentinel-armor",
+    "name": "Scorching Sentinel Armor",
+    "setName": "Scorching Sentinel",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 26,
+      "haste": 28,
+      "pierce": 28
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "scorching-sentinel-pauldrons",
+    "name": "Scorching Sentinel Pauldrons",
+    "setName": "Scorching Sentinel",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 20,
+      "haste": 21,
+      "pierce": 21
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "scorching-sentinel-helmet",
+    "name": "Scorching Sentinel Helmet",
+    "setName": "Scorching Sentinel",
+    "slot": "accessory-H",
+    "baseStats": {
+      "power": 20,
+      "haste": 21,
+      "pierce": 21
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "scorching-sentinel-mask",
+    "name": "Scorching Sentinel Mask",
+    "setName": "Scorching Sentinel",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 20,
+      "haste": 21,
+      "pierce": 21
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "scorching-sentinel-leggings",
+    "name": "Scorching Sentinel Leggings",
+    "setName": "Scorching Sentinel",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 20,
+      "haste": 21,
+      "pierce": 21
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "lost-crown-of-ravenna",
+    "name": "The Lost Crown of Ravenna",
+    "setName": "Ravenna Fallen King",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 22,
+      "size": 19,
+      "range": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "ravenna-fallen-king-boots",
+    "name": "Ravenna Fallen King Boots",
+    "setName": "Ravenna Fallen King",
+    "slot": "leggings",
+    "baseStats": {
+      "power": 22,
+      "size": 19,
+      "range": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "mantello-of-ravennas-fallen-king",
+    "name": "Mantello of Ravenna's Fallen King",
+    "setName": "Ravenna Fallen King",
+    "slot": "accessory",
+    "baseStats": {
+      "power": 22,
+      "size": 19,
+      "range": 19
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
+  },
+  {
+    "id": "ravenna-fallen-king-armor",
+    "name": "Ravenna Fallen King Armor",
+    "setName": "Ravenna Fallen King",
+    "slot": "chestplate",
+    "baseStats": {
+      "power": 29,
+      "size": 25,
+      "range": 25
+    },
+    "socketCount": 2,
+    "maxLevel": 170,
+    "tags": ["boss-drop"],
+    "atlanteanOnly": true
   }
 ]
