@@ -17,8 +17,6 @@ import { SourceBadge } from "@/ui/panels/data-management/source-badge";
 
 interface InventoryEquipmentRowProps {
   readonly merged: MergedItem<EquipmentPiece>;
-  readonly hideSet: boolean;
-  readonly hideSource: boolean;
   readonly onEdit: () => void;
   readonly onDelete: () => void;
   readonly onReset?: (() => void) | undefined;
@@ -30,8 +28,6 @@ interface InventoryEquipmentRowProps {
 
 export function InventoryEquipmentRow({
   merged,
-  hideSet,
-  hideSource,
   onEdit,
   onDelete,
   onReset,
@@ -39,9 +35,6 @@ export function InventoryEquipmentRow({
   const item = merged.item;
   const enabled = useGearPoolStore((s) => s.enabledEquipmentIds.has(item.id));
   const toggle = useGearPoolStore((s) => s.toggleEquipment);
-
-  const showSetName = !hideSet && item.setName !== undefined;
-  const showSource = !hideSource && item.source !== undefined;
 
   return (
     <div className="flex items-center gap-2 px-2 py-1.5 bg-bg-surface hover:bg-bg-elevated transition-colors">
@@ -52,11 +45,7 @@ export function InventoryEquipmentRow({
         className="size-3.5 rounded border-border-default accent-accent-gold shrink-0"
         title={enabled ? "Disable for optimizer" : "Enable for optimizer"}
       />
-      <NameWithMetadata
-        name={item.name}
-        setName={showSetName ? item.setName : undefined}
-        source={showSource ? item.source : undefined}
-      />
+      <NameWithSource name={item.name} source={item.source} />
       <SourceBadge item={merged} />
       <SlotBadge slot={item.slot} />
       <SocketBadge count={item.socketCount} />
@@ -73,36 +62,21 @@ export function InventoryEquipmentRow({
 }
 
 // ---------------------------------------------------------------------------
-// NameWithMetadata
+// NameWithSource
 // ---------------------------------------------------------------------------
 
-function NameWithMetadata({
+function NameWithSource({
   name,
-  setName,
   source,
 }: {
   readonly name: string;
-  readonly setName?: string | undefined;
   readonly source?: string | undefined;
 }): React.JSX.Element {
-  const hasMetadata = setName !== undefined || source !== undefined;
-
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0 flex-1">
       <span className="text-sm text-text-primary truncate">{name}</span>
-      {hasMetadata && (
-        <div className="flex items-center gap-1.5">
-          {setName !== undefined && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-accent-purple/20 text-accent-purple truncate max-w-32">
-              {setName}
-            </span>
-          )}
-          {source !== undefined && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-accent-teal/20 text-accent-teal truncate max-w-32">
-              {source}
-            </span>
-          )}
-        </div>
+      {source !== undefined && (
+        <span className="text-xs text-text-muted truncate">{source}</span>
       )}
     </div>
   );

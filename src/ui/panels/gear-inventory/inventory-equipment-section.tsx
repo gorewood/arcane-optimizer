@@ -7,7 +7,6 @@ import type { EquipmentPiece, SlotType } from "@/models/types";
 import type { MergedItem } from "@/data/user-data-types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import type { GroupByOption } from "@/ui/panels/group-by-select";
-import type { SortOption } from "@/ui/panels/sort-select";
 import { InventoryEquipmentRow } from "./inventory-equipment-row";
 
 // ---------------------------------------------------------------------------
@@ -86,12 +85,10 @@ function groupItems(
 export function InventoryEquipmentSection({
   equipment,
   groupBy,
-  sortBy,
   onEdit,
 }: {
   readonly equipment: readonly MergedEquipment[];
   readonly groupBy: GroupByOption;
-  readonly sortBy: SortOption;
   readonly onEdit: (equipment: EquipmentPiece) => void;
 }): React.JSX.Element {
   const groups = useMemo(() => groupItems(equipment, groupBy), [equipment, groupBy]);
@@ -101,10 +98,6 @@ export function InventoryEquipmentSection({
 
   const handleDelete = useCallback((id: string) => { deleteEquipment(id); }, [deleteEquipment]);
   const handleReset = useCallback((id: string) => { restoreEquipment(id); }, [restoreEquipment]);
-
-  // Hide metadata that's redundant with current sort
-  const hideSet = sortBy === "set-name";
-  const hideSource = sortBy === "source-name";
 
   return (
     <div className="space-y-1">
@@ -116,8 +109,6 @@ export function InventoryEquipmentSection({
           <ItemGroupBlock
             key={group.name}
             group={group}
-            hideSet={hideSet}
-            hideSource={hideSource}
             onEdit={onEdit}
             onDelete={handleDelete}
             onReset={handleReset}
@@ -134,15 +125,11 @@ export function InventoryEquipmentSection({
 
 function ItemGroupBlock({
   group,
-  hideSet,
-  hideSource,
   onEdit,
   onDelete,
   onReset,
 }: {
   readonly group: ItemGroup;
-  readonly hideSet: boolean;
-  readonly hideSource: boolean;
   readonly onEdit: (equipment: EquipmentPiece) => void;
   readonly onDelete: (id: string) => void;
   readonly onReset: (id: string) => void;
@@ -168,8 +155,6 @@ function ItemGroupBlock({
             <InventoryEquipmentRow
               key={merged.item.id}
               merged={merged}
-              hideSet={hideSet}
-              hideSource={hideSource}
               onEdit={() => { onEdit(merged.item); }}
               onDelete={() => { onDelete(merged.item.id); }}
               onReset={merged.isModified ? () => { onReset(merged.item.id); } : undefined}
