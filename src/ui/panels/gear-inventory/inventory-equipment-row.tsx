@@ -25,17 +25,6 @@ interface InventoryEquipmentRowProps {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function buildMetadata(item: EquipmentPiece, hideSet: boolean, hideSource: boolean): string {
-  const parts: string[] = [];
-  if (!hideSet && item.setName) parts.push(item.setName);
-  if (!hideSource && item.source) parts.push(item.source);
-  return parts.join(" · ");
-}
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -50,7 +39,9 @@ export function InventoryEquipmentRow({
   const item = merged.item;
   const enabled = useGearPoolStore((s) => s.enabledEquipmentIds.has(item.id));
   const toggle = useGearPoolStore((s) => s.toggleEquipment);
-  const metadata = buildMetadata(item, hideSet, hideSource);
+
+  const showSetName = !hideSet && item.setName !== undefined;
+  const showSource = !hideSource && item.source !== undefined;
 
   return (
     <div className="flex items-center gap-2 px-2 py-1.5 bg-bg-surface hover:bg-bg-elevated transition-colors">
@@ -61,7 +52,11 @@ export function InventoryEquipmentRow({
         className="size-3.5 rounded border-border-default accent-accent-gold shrink-0"
         title={enabled ? "Disable for optimizer" : "Enable for optimizer"}
       />
-      <NameBlock name={item.name} metadata={metadata} />
+      <NameWithMetadata
+        name={item.name}
+        setName={showSetName ? item.setName : undefined}
+        source={showSource ? item.source : undefined}
+      />
       <SourceBadge item={merged} />
       <SlotBadge slot={item.slot} />
       <SocketBadge count={item.socketCount} />
@@ -78,21 +73,36 @@ export function InventoryEquipmentRow({
 }
 
 // ---------------------------------------------------------------------------
-// NameBlock
+// NameWithMetadata
 // ---------------------------------------------------------------------------
 
-function NameBlock({
+function NameWithMetadata({
   name,
-  metadata,
+  setName,
+  source,
 }: {
   readonly name: string;
-  readonly metadata: string;
+  readonly setName?: string | undefined;
+  readonly source?: string | undefined;
 }): React.JSX.Element {
+  const hasMetadata = setName !== undefined || source !== undefined;
+
   return (
-    <div className="flex flex-col justify-center min-w-0 flex-1">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0 flex-1">
       <span className="text-sm text-text-primary truncate">{name}</span>
-      {metadata !== "" && (
-        <span className="text-xs text-text-muted truncate">{metadata}</span>
+      {hasMetadata && (
+        <div className="flex items-center gap-1.5">
+          {setName !== undefined && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-accent-purple/20 text-accent-purple truncate max-w-32">
+              {setName}
+            </span>
+          )}
+          {source !== undefined && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-accent-teal/20 text-accent-teal truncate max-w-32">
+              {source}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
