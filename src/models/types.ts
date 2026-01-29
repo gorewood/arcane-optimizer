@@ -169,7 +169,6 @@ export type ConstraintType =
   | "atLeast"
   | "atMost"
   | "between"
-  | "target"
   | "exactly";
 
 /** A weighted objective targeting a specific stat. */
@@ -178,6 +177,7 @@ export interface SoftConstraint {
   readonly type: ConstraintType;
   readonly value?: number | undefined;
   readonly weight: number;
+  /** For 'between' constraints: the maximum value (value is min, hardCap is max). */
   readonly hardCap?: number | undefined;
 }
 

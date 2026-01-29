@@ -214,7 +214,7 @@ describe("budgetAwareAssign", () => {
     expect(stats.drawback).toBeLessThanOrEqual(2);
   });
 
-  it("uses drawback cap from soft constraints when present", () => {
+  it("uses drawback value from soft constraints as hard limit", () => {
     const drawbackGem: Gem = {
       id: "painite", name: "Painite", tier: 2, stats: { defense: 224, drawback: 1 },
     };
@@ -236,17 +236,17 @@ describe("budgetAwareAssign", () => {
       gems: [drawbackGem],
     };
 
-    // Soft constraint with hardCap of 5 controls the drawback budget
+    // Soft constraint value of 5 is the hard drawback limit
     const fitness: SoftConstraint[] = [
       { stat: "defense", type: "maximize", weight: 1 },
-      { stat: "drawback", type: "atMost", value: 3, weight: 100, hardCap: 5 },
+      { stat: "drawback", type: "atMost", value: 5, weight: 100 },
     ];
 
-    // Soft constraint hardCap: 5 is used as the budget limit
+    // Constraint value: 5 is used as the budget limit
     const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
-    // Should use the hardCap of 5, allowing up to 5 gems worth of drawback
+    // Should use the value of 5 as hard limit
     expect(stats.drawback).toBeGreaterThan(0);
     expect(stats.drawback).toBeLessThanOrEqual(5);
   });

@@ -102,7 +102,7 @@ function AlgorithmToggle({
 }): React.JSX.Element {
   return (
     <div className="flex rounded-md border border-border-default overflow-hidden">
-      <ToggleOption label="Exhaust" selected={value === "exhaustive"} onClick={() => { onChange("exhaustive"); }} disabled={disabled} />
+      <ToggleOption label="Exhaustive" selected={value === "exhaustive"} onClick={() => { onChange("exhaustive"); }} disabled={disabled} />
       <ToggleOption label="Genetic" selected={value === "genetic"} onClick={() => { onChange("genetic"); }} disabled={disabled} />
     </div>
   );

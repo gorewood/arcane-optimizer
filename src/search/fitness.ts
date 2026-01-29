@@ -43,25 +43,12 @@ function scoreAtLeast(val: number, weight: number, value: number): number {
 
 function scoreAtMost(
   val: number,
-  weight: number,
+  _weight: number,
   value: number,
-  hardCap: number | undefined,
 ): number | null {
-  if (hardCap != null && val > hardCap) return null;
-  if (val > value) {
-    return -((val - value) * weight * 10);
-  }
+  // Value is a hard limit - exceeding disqualifies the loadout
+  if (val > value) return null;
   return 0;
-}
-
-function scoreTarget(
-  val: number,
-  weight: number,
-  value: number,
-  hardCap: number | undefined,
-): number | null {
-  if (hardCap != null && val > hardCap) return null;
-  return -(Math.abs(val - value) * weight);
 }
 
 function scoreBetween(
@@ -92,7 +79,6 @@ const SCORERS: Readonly<Record<ConstraintType, ConstraintScorer>> = {
   atLeast: scoreAtLeast,
   atMost: scoreAtMost,
   between: scoreBetween,
-  target: scoreTarget,
   exactly: scoreExactly,
 };
 
@@ -116,6 +102,7 @@ export function computeFitness(
     const val = stats[c.stat];
     const value = c.value ?? 0;
     const scorer = SCORERS[c.type];
+    // hardCap is only used by 'between' (as max value)
     const result = scorer(val, c.weight, value, c.hardCap);
 
     if (result === null) return -Infinity;

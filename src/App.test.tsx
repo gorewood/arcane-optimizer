@@ -9,7 +9,7 @@ describe("App", () => {
 
   it("displays the app title", () => {
     render(<App />);
-    expect(screen.getByText("AO Armor Optimizer")).toBeInTheDocument();
+    expect(screen.getByText("Arcane Odyssey Armor Optimizer")).toBeInTheDocument();
   });
 
   it("displays both tab labels", () => {

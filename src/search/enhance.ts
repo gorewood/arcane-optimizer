@@ -90,25 +90,34 @@ function getSocketCount(
 }
 
 // ---------------------------------------------------------------------------
-// Greedy gem assignment — pick best gem per socket
+// Budget-aware gem assignment — pick best gem per socket within drawback limit
 // ---------------------------------------------------------------------------
 
-function greedyAssignGems(
-  baseStats: Stats,
-  availableGems: readonly Gem[],
-  socketCount: number,
-  fitness: readonly SoftConstraint[],
-): readonly Gem[] {
+interface GemAssignParams {
+  readonly baseStats: Stats;
+  readonly availableGems: readonly Gem[];
+  readonly socketCount: number;
+  readonly fitness: readonly SoftConstraint[];
+  readonly maxDrawback: number;
+}
+
+function assignGemsWithinBudget(params: GemAssignParams): readonly Gem[] {
+  const { baseStats, availableGems, socketCount, fitness, maxDrawback } = params;
   if (socketCount <= 0 || availableGems.length === 0) return [];
 
   const gems: Gem[] = [];
   let currentStats = baseStats;
+  let usedDrawback = 0;
 
   for (let s = 0; s < socketCount; s++) {
     let bestGem: Gem | undefined;
     let bestScore = -Infinity;
 
     for (const gem of availableGems) {
+      // Skip gems that would exceed drawback budget
+      const gemDrawback = gem.stats.drawback ?? 0;
+      if (usedDrawback + gemDrawback > maxDrawback) continue;
+
       const trialStats = sumStats(currentStats, gem.stats);
       const score = computeFitness(trialStats, fitness);
       if (score > bestScore) {
@@ -120,6 +129,7 @@ function greedyAssignGems(
     if (bestGem != null) {
       gems.push(bestGem);
       currentStats = sumStats(currentStats, bestGem.stats);
+      usedDrawback += bestGem.stats.drawback ?? 0;
     }
   }
 
@@ -195,6 +205,7 @@ interface EvalContext {
   readonly pool: GearPool;
   readonly otherSlotStats: Stats;
   readonly fitness: readonly SoftConstraint[];
+  readonly gemDrawbackBudget: number;
 }
 
 function evaluateEnchantModPair(
@@ -210,9 +221,20 @@ function evaluateEnchantModPair(
     gems: [],
   };
 
+  // Calculate drawback used by enchant+modifier, remaining goes to gems
+  const enchModDrawback =
+    (enchantment?.stats.drawback ?? 0) + (modifier?.stats.drawback ?? 0);
+  const gemBudget = Math.max(0, ctx.gemDrawbackBudget - enchModDrawback);
+
   const baseSlotStats = computeSlotStats(enhancedSlot);
   const baseTotal = sumStats(ctx.otherSlotStats, baseSlotStats);
-  const gems = greedyAssignGems(baseTotal, ctx.pool.gems, sockets, ctx.fitness);
+  const gems = assignGemsWithinBudget({
+    baseStats: baseTotal,
+    availableGems: ctx.pool.gems,
+    socketCount: sockets,
+    fitness: ctx.fitness,
+    maxDrawback: gemBudget,
+  });
 
   const fullSlot: EquippedSlot = {
     piece: ctx.slot.piece,
@@ -313,7 +335,7 @@ function updateSlotState(
 }
 
 // ---------------------------------------------------------------------------
-// Greedy enhancement assignment (public)
+// Enhancement result types
 // ---------------------------------------------------------------------------
 
 export interface EnhancedLoadoutResult {
@@ -332,7 +354,7 @@ interface BudgetCaps {
 
 /**
  * Extract insanity and drawback caps from user's soft constraints.
- * Uses hardCap from "atMost" constraints, falling back to Infinity (no limit).
+ * Uses value from "atMost" constraints as a hard limit.
  * Users control these limits through the goal system's soft constraints.
  */
 function extractBudgetCaps(
@@ -344,10 +366,10 @@ function extractBudgetCaps(
 
   for (const c of fitness) {
     if (c.stat === "drawback" && c.type === "atMost") {
-      maxDrawback = c.hardCap ?? c.value ?? maxDrawback;
+      maxDrawback = c.value ?? maxDrawback;
     }
     if (c.stat === "insanity" && c.type === "atMost") {
-      maxInsanity = c.hardCap ?? c.value ?? maxInsanity;
+      maxInsanity = c.value ?? maxInsanity;
     }
   }
 
@@ -366,7 +388,9 @@ export function budgetAwareAssign(
 ): EnhancedLoadoutResult {
   const state = initSlotState(loadout);
   const caps = extractBudgetCaps(fitness, hardConstraints);
-  let remainingDrawback = caps.maxDrawback;
+  // Account for base equipment drawback when initializing enhancement budget
+  const baseDrawback = state.runningTotal.drawback;
+  let remainingDrawback = Math.max(0, caps.maxDrawback - baseDrawback);
 
   for (let i = 0; i < state.slots.length; i++) {
     const slot = state.slots[i];
@@ -400,7 +424,9 @@ function findBestBudgetSlot(
   const category = slotCategory(slot);
   const enchantments = getApplicableEnchantments(category, pool.enchantments);
   const applicableMods = getApplicableModifiers(slot.piece, pool.modifiers);
-  const ctx: EvalContext = { slot, pool, otherSlotStats, fitness };
+  const ctx: EvalContext = {
+    slot, pool, otherSlotStats, fitness, gemDrawbackBudget: drawbackBudget,
+  };
 
   let best: SlotCandidate = {
     enchantment: undefined, modifier: undefined,

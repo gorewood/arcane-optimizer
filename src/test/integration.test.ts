@@ -237,15 +237,15 @@ describe("integration: fitness scoring", () => {
   const TEST_MAGE_CONSTRAINTS: SoftConstraint[] = [
     { stat: "defense", type: "atLeast", value: 700, weight: 100 },
     { stat: "power", type: "atLeast", value: 100, weight: 90 },
-    { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
-    { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
+    { stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 },
+    { stat: "size", type: "between", value: 280, weight: 70, hardCap: 320 },
     { stat: "insanity", type: "atMost", value: 1, weight: 100 },
     { stat: "drawback", type: "atMost", value: 2, weight: 100 },
   ];
 
   it("scores a known loadout against test constraints", () => {
     // Build stats that satisfy the test constraints:
-    // defense >= 700, power >= 100, dexterity ~ 300, size ~ 300,
+    // defense >= 700, power >= 100, dexterity in 280-320, size in 280-320,
     // insanity atMost 1, drawback atMost 2
     const stats = makeStats({
       defense: 800,
@@ -261,10 +261,11 @@ describe("integration: fitness scoring", () => {
     // Manual computation per constraint (atLeast bonus capped at 1× weight):
     // 1. defense atLeast 700 w=100: above by 100 -> min(1000, 100) = 100 (capped)
     // 2. power atLeast 100 w=90:   above by 20 -> min(180, 90) = 90 (capped)
-    // 3. dexterity target 300 w=80 hardCap=330: at target -> 0
-    // 4. size target 300 w=70 hardCap=330: at target -> 0
-    // 5. insanity atMost 1 w=100: 1 <= 1 -> 0
-    // 6. drawback atMost 2 w=100: 1 <= 2 -> 0
+    // 3. dexterity between 280-320 w=80: 300 in range -> 0
+    // 4. size between 280-320 w=70: 300 in range -> 0
+    // 5. insanity atMost 1 w=100: 1 <= 1 -> -Infinity (hard limit)
+    // 6. drawback atMost 2 w=100: 1 <= 2 -> -Infinity (hard limit)
+    // Wait, atMost now returns -Infinity if exceeded, but 1 <= 1 is fine -> 0
     // Total = 190
     expect(score).toBe(190);
   });
@@ -609,8 +610,8 @@ describe("integration: full pipeline round-trip", () => {
     const testConstraints: SoftConstraint[] = [
       { stat: "defense", type: "atLeast", value: 700, weight: 100 },
       { stat: "power", type: "atLeast", value: 100, weight: 90 },
-      { stat: "dexterity", type: "target", value: 300, weight: 80, hardCap: 330 },
-      { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
+      { stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 },
+      { stat: "size", type: "between", value: 280, weight: 70, hardCap: 320 },
       { stat: "insanity", type: "atMost", value: 1, weight: 100 },
       { stat: "drawback", type: "atMost", value: 2, weight: 100 },
     ];
@@ -620,8 +621,8 @@ describe("integration: full pipeline round-trip", () => {
     // Manual computation (atLeast bonus capped at 1× weight):
     // defense atLeast 700 w=100: above by 50 -> min(50*100*0.1, 100) = 100 (capped)
     // power atLeast 100 w=90:   above by 10 -> min(10*90*0.1, 90) = 90
-    // dexterity target 300 w=80: at target -> 0
-    // size target 300 w=70: at target -> 0
+    // dexterity between 280-320 w=80: 300 in range -> 0
+    // size between 280-320 w=70: 300 in range -> 0
     // insanity atMost 1 w=100: 1 <= 1 -> 0
     // drawback atMost 2 w=100: 0 <= 2 -> 0
     // Total = 190

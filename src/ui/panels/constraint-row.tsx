@@ -28,7 +28,6 @@ const CONSTRAINT_TYPES: readonly ConstraintType[] = [
   "atLeast",
   "atMost",
   "between",
-  "target",
   "exactly",
 ];
 
@@ -37,12 +36,11 @@ const VALUE_TYPES = new Set<ConstraintType>([
   "atLeast",
   "atMost",
   "between",
-  "target",
   "exactly",
 ]);
 
-/** Constraint types that support a hardCap input (as max for between). */
-const HARDCAP_TYPES = new Set<ConstraintType>(["atMost", "between", "target"]);
+/** Constraint types that support a hardCap input (max value for 'between'). */
+const HARDCAP_TYPES = new Set<ConstraintType>(["between"]);
 
 /** Human-readable labels for constraint types. */
 const TYPE_LABELS: Readonly<Record<ConstraintType, string>> = {
@@ -51,7 +49,6 @@ const TYPE_LABELS: Readonly<Record<ConstraintType, string>> = {
   atLeast: "\u2265",
   atMost: "\u2264",
   between: "\u2194",
-  target: "\u2248",
   exactly: "=",
 };
 

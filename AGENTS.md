@@ -1,4 +1,4 @@
-# AO Armor Optimizer
+# Arcane Odyssey Armor Optimizer
 
 Arcane Odyssey gear loadout optimization engine. Static web app — pure client-side, no backend.
 

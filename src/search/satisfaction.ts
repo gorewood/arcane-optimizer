@@ -34,14 +34,6 @@ function checkAtMost(value: number, target: number): SatisfactionLevel {
   return "negative";
 }
 
-/** Check target constraint: green within 10%, yellow within 20%, red otherwise. */
-function checkTarget(value: number, target: number): SatisfactionLevel {
-  const diff = Math.abs(value - target);
-  if (diff <= target * 0.1) return "positive";
-  if (diff <= target * 0.2) return "warning";
-  return "negative";
-}
-
 /** Check between constraint: green in range, yellow within 10% of bounds, red otherwise. */
 function checkBetween(value: number, min: number, max: number): SatisfactionLevel {
   if (value >= min && value <= max) return "positive";
@@ -64,7 +56,6 @@ const CHECKERS: Record<
   atLeast: (v, t) => (t != null ? checkAtLeast(v, t) : "neutral"),
   atMost: (v, t) => (t != null ? checkAtMost(v, t) : "neutral"),
   between: (v, t, hc) => (t != null && hc != null ? checkBetween(v, t, hc) : "neutral"),
-  target: (v, t) => (t != null ? checkTarget(v, t) : "neutral"),
 };
 
 // ---------------------------------------------------------------------------

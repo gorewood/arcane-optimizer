@@ -72,63 +72,23 @@ describe("computeFitness", () => {
     expect(score).toBe(0);
   });
 
-  // 8. atMost above limit — penalty
-  it("atMost above limit applies penalty", () => {
-    const c: SoftConstraint[] = [{ stat: "drawback", type: "atMost", value: 2, weight: 100 }];
-    const score = computeFitness(makeStats({ drawback: 5 }), c);
-    // Penalty: -(5 - 2) * 100 * 10 = -3000
-    expect(score).toBe(-3000);
-  });
-
-  // 9. atMost with hardCap exceeded — returns -Infinity
-  it("atMost with hardCap exceeded returns -Infinity", () => {
+  // 8. atMost exceeded — returns -Infinity (value is hard limit)
+  it("atMost exceeded returns -Infinity", () => {
     const c: SoftConstraint[] = [
-      { stat: "drawback", type: "atMost", value: 2, weight: 100, hardCap: 4 },
+      { stat: "drawback", type: "atMost", value: 2, weight: 100 },
     ];
-    const score = computeFitness(makeStats({ drawback: 5 }), c);
+    const score = computeFitness(makeStats({ drawback: 3 }), c);
     expect(score).toBe(-Infinity);
   });
 
-  // 10. target at target — zero penalty
-  it("target at target value returns 0", () => {
-    const c: SoftConstraint[] = [{ stat: "dexterity", type: "target", value: 300, weight: 80 }];
-    const score = computeFitness(makeStats({ dexterity: 300 }), c);
-    expect(score).toBe(0);
-  });
-
-  // 11. target above target — proportional penalty
-  it("target above target applies proportional penalty", () => {
-    const c: SoftConstraint[] = [{ stat: "dexterity", type: "target", value: 300, weight: 80 }];
-    const score = computeFitness(makeStats({ dexterity: 350 }), c);
-    // Penalty: -|350 - 300| * 80 = -4000
-    expect(score).toBe(-4000);
-  });
-
-  // 12. target below target — proportional penalty
-  it("target below target applies proportional penalty", () => {
-    const c: SoftConstraint[] = [{ stat: "dexterity", type: "target", value: 300, weight: 80 }];
-    const score = computeFitness(makeStats({ dexterity: 250 }), c);
-    // Penalty: -|250 - 300| * 80 = -4000
-    expect(score).toBe(-4000);
-  });
-
-  // 13. target with hardCap exceeded — returns -Infinity
-  it("target with hardCap exceeded returns -Infinity", () => {
-    const c: SoftConstraint[] = [
-      { stat: "size", type: "target", value: 300, weight: 70, hardCap: 330 },
-    ];
-    const score = computeFitness(makeStats({ size: 350 }), c);
-    expect(score).toBe(-Infinity);
-  });
-
-  // 14. between — in range returns 0
+  // 10. between — in range returns 0
   it("between in range returns 0", () => {
     const c: SoftConstraint[] = [{ stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 }];
     const score = computeFitness(makeStats({ dexterity: 300 }), c);
     expect(score).toBe(0);
   });
 
-  // 15. between — below range applies penalty
+  // 11. between — below range applies penalty
   it("between below range applies penalty", () => {
     const c: SoftConstraint[] = [{ stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 }];
     const score = computeFitness(makeStats({ dexterity: 260 }), c);
@@ -136,7 +96,7 @@ describe("computeFitness", () => {
     expect(score).toBe(-16000);
   });
 
-  // 16. between — above range applies penalty
+  // 12. between — above range applies penalty
   it("between above range applies penalty", () => {
     const c: SoftConstraint[] = [{ stat: "dexterity", type: "between", value: 280, weight: 80, hardCap: 320 }];
     const score = computeFitness(makeStats({ dexterity: 350 }), c);
@@ -144,7 +104,7 @@ describe("computeFitness", () => {
     expect(score).toBe(-24000);
   });
 
-  // 17. exactly matching — small bonus (weight-based tie-breaker)
+  // 13. exactly matching — small bonus (weight-based tie-breaker)
   it("exactly matching value returns small bonus", () => {
     const c: SoftConstraint[] = [{ stat: "insanity", type: "exactly", value: 1, weight: 100 }];
     const score = computeFitness(makeStats({ insanity: 1 }), c);
@@ -211,7 +171,6 @@ describe("Default Profiles", () => {
       "atLeast",
       "atMost",
       "between",
-      "target",
       "exactly",
     ]);
 
@@ -227,7 +186,7 @@ describe("Default Profiles", () => {
         expect(c.weight).toBeGreaterThan(0);
 
         // Constraints with value-dependent types should have value
-        if (c.type === "atLeast" || c.type === "atMost" || c.type === "between" || c.type === "target" || c.type === "exactly") {
+        if (c.type === "atLeast" || c.type === "atMost" || c.type === "between" || c.type === "exactly") {
           expect(typeof c.value).toBe("number");
         }
 
