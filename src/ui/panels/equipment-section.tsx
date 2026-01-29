@@ -12,6 +12,7 @@ import type { GroupByOption } from "./group-by-select";
 import { SlotBadge } from "./slot-badge";
 import { StatSummary } from "./stat-summary";
 import { SourceBadge } from "./data-management/source-badge";
+import { matchesActiveFilters, type FilterChipId } from "./filter-chips";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -110,14 +111,17 @@ export function EquipmentSection({
   filter,
   sortBy,
   groupBy = "set",
+  activeFilters = new Set(),
 }: {
   readonly equipment: readonly MergedEquipment[];
   readonly filter: string;
   readonly sortBy: SortOption;
   readonly groupBy?: GroupByOption;
+  readonly activeFilters?: ReadonlySet<FilterChipId>;
 }): React.JSX.Element {
   const filtered = useMemo(() => {
     let result = equipment;
+    // Text filter
     if (filter !== "") {
       const lower = filter.toLowerCase();
       result = result.filter(
@@ -127,12 +131,18 @@ export function EquipmentSection({
           (m.item.source?.toLowerCase().includes(lower) ?? false),
       );
     }
+    // Quick filter chips
+    if (activeFilters.size > 0) {
+      result = result.filter((m) =>
+        matchesActiveFilters(m.item.source, m.source === "user", activeFilters)
+      );
+    }
     // Sort by the inner item
     const sortedItems = sortItems(result.map((m) => m.item), sortBy);
     // Rebuild merged array in sorted order
     const itemToMerged = new Map(result.map((m) => [m.item.id, m]));
     return sortedItems.map((item) => itemToMerged.get(item.id)).filter((m): m is MergedEquipment => m !== undefined);
-  }, [equipment, filter, sortBy]);
+  }, [equipment, filter, sortBy, activeFilters]);
 
   const groups = useMemo(
     () => groupItems(filtered, groupBy),

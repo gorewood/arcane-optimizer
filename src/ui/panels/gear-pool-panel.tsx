@@ -3,7 +3,7 @@
  * modifiers, and gems are available to the optimizer.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { EquipmentPiece, Enchantment, Modifier, Gem } from "@/models/types";
@@ -12,6 +12,7 @@ import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { SortSelect, type SortOption } from "./sort-select";
 import { GroupBySelect, type GroupByOption } from "./group-by-select";
+import { FilterChips, type FilterChipId } from "./filter-chips";
 import { EquipmentSection } from "./equipment-section";
 import { EnchantmentSection } from "./enchantment-section";
 import { ModifierSection } from "./modifier-section";
@@ -50,9 +51,22 @@ export function GearPoolPanel(): React.JSX.Element {
   const [filter, setFilter] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("set-name");
   const [groupBy, setGroupBy] = useState<GroupByOption>("set");
+  const [activeFilters, setActiveFilters] = useState<ReadonlySet<FilterChipId>>(new Set());
   const enableAll = useGearPoolStore((s) => s.enableAll);
   const disableAll = useGearPoolStore((s) => s.disableAll);
   const { equipment, enchantments, modifiers, gems } = useMergedGearData();
+
+  const toggleFilter = useCallback((id: FilterChipId) => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   return (
     <div className="space-y-4 p-4">
@@ -63,6 +77,8 @@ export function GearPoolPanel(): React.JSX.Element {
         onSortChange={setSortBy}
         groupBy={groupBy}
         onGroupByChange={setGroupBy}
+        activeFilters={activeFilters}
+        onToggleFilter={toggleFilter}
         onEnableAll={enableAll}
         onDisableAll={disableAll}
       />
@@ -74,7 +90,7 @@ export function GearPoolPanel(): React.JSX.Element {
           <TabsTrigger value="gems">Gems</TabsTrigger>
         </TabsList>
         <TabsContent value="equipment">
-          <EquipmentSection equipment={equipment} filter={filter} sortBy={sortBy} groupBy={groupBy} />
+          <EquipmentSection equipment={equipment} filter={filter} sortBy={sortBy} groupBy={groupBy} activeFilters={activeFilters} />
         </TabsContent>
         <TabsContent value="enchantments">
           <EnchantmentSection enchantments={enchantments} filter={filter} sortBy={sortBy} />
@@ -101,6 +117,8 @@ function PanelHeader({
   onSortChange,
   groupBy,
   onGroupByChange,
+  activeFilters,
+  onToggleFilter,
   onEnableAll,
   onDisableAll,
 }: {
@@ -110,6 +128,8 @@ function PanelHeader({
   readonly onSortChange: (value: SortOption) => void;
   readonly groupBy: GroupByOption;
   readonly onGroupByChange: (value: GroupByOption) => void;
+  readonly activeFilters: ReadonlySet<FilterChipId>;
+  readonly onToggleFilter: (id: FilterChipId) => void;
   readonly onEnableAll: () => void;
   readonly onDisableAll: () => void;
 }): React.JSX.Element {
@@ -128,11 +148,12 @@ function PanelHeader({
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <SearchInput value={filter} onChange={onFilterChange} />
         <SortSelect value={sortBy} onChange={onSortChange} />
         <GroupBySelect value={groupBy} onChange={onGroupByChange} />
       </div>
+      <FilterChips activeFilters={activeFilters} onToggle={onToggleFilter} />
     </div>
   );
 }
