@@ -109,22 +109,30 @@ function TabButton({
 // Panel content
 // ---------------------------------------------------------------------------
 
+/**
+ * Renders all panels but hides inactive ones with CSS.
+ * This keeps components mounted so search state, workers, etc. persist
+ * when switching tabs.
+ */
 function PanelContent({
   panel,
 }: {
   panel: UIState["activePanel"];
 }): React.JSX.Element {
-  if (panel === "gear") {
-    return <GearInventoryPanel />;
-  }
-
-  if (panel === "data") {
-    return <DataManagementPanel />;
-  }
-
-  if (panel === "help") {
-    return <HelpPanel />;
-  }
-
-  return <OptimizerPage />;
+  return (
+    <>
+      <div className={panel === "optimizer" ? "" : "hidden"}>
+        <OptimizerPage />
+      </div>
+      <div className={panel === "gear" ? "" : "hidden"}>
+        <GearInventoryPanel />
+      </div>
+      <div className={panel === "data" ? "" : "hidden"}>
+        <DataManagementPanel />
+      </div>
+      <div className={panel === "help" ? "" : "hidden"}>
+        <HelpPanel />
+      </div>
+    </>
+  );
 }
