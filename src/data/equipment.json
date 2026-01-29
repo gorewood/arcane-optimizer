@@ -485,7 +485,7 @@
   },
   {
     "id": "dexterity-amulet",
-    "name": "Dexterity Amulet",
+    "name": "Dexterity Amulet (Fair)",
     "slot": "accessory-A",
     "baseStats": {
       "dexterity": 127
@@ -499,7 +499,7 @@
   },
   {
     "id": "size-amulet",
-    "name": "Size Amulet",
+    "name": "Size Amulet (Fair)",
     "slot": "accessory-A",
     "baseStats": {
       "size": 127
@@ -513,7 +513,7 @@
   },
   {
     "id": "power-amulet",
-    "name": "Power Amulet",
+    "name": "Power Amulet (Fair)",
     "slot": "accessory-A",
     "baseStats": {
       "power": 43
@@ -527,7 +527,7 @@
   },
   {
     "id": "defense-amulet",
-    "name": "Defense Amulet",
+    "name": "Defense Amulet (Fair)",
     "slot": "accessory-A",
     "baseStats": {
       "defense": 382
