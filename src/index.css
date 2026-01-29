@@ -135,6 +135,23 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* Subtle scrollbars app-wide (when OS supports) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-default) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-border-default);
+    border-radius: 3px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-accent);
   }
   body {
     @apply bg-background text-foreground;
