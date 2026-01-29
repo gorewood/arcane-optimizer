@@ -99,6 +99,45 @@ function buildFilteredGearPool(
   };
 }
 
+/**
+ * Count total combinations for exhaustive search.
+ */
+function countCombinations(pool: GearPool): number {
+  const n = pool.accessories.length;
+  const accCombos = n >= 3 ? (n * (n - 1) * (n - 2)) / 6 : 0;
+  return pool.chestplates.length * pool.leggings.length * accCombos;
+}
+
+/** Threshold above which we recommend genetic algorithm */
+const LARGE_SEARCH_THRESHOLD = 1_000_000;
+
+/**
+ * Check if exhaustive search is too large and prompt user to switch.
+ * Returns the algorithm to use (may switch to genetic if user agrees).
+ */
+function checkLargeSearchPrompt(
+  algorithm: Algorithm,
+  combinations: number,
+  setAlgorithm: (a: Algorithm) => void,
+): Algorithm {
+  if (algorithm !== "exhaustive" || combinations <= LARGE_SEARCH_THRESHOLD) {
+    return algorithm;
+  }
+
+  const formatted = combinations.toLocaleString();
+  const shouldSwitch = window.confirm(
+    `This search has ${formatted} combinations, which may take a while.\n\n` +
+    `Switch to Genetic algorithm for faster results?\n\n` +
+    `Click OK to switch to Genetic, or Cancel to continue with Exhaustive.`
+  );
+
+  if (shouldSwitch) {
+    setAlgorithm("genetic");
+    return "genetic";
+  }
+  return algorithm;
+}
+
 // ---------------------------------------------------------------------------
 // Worker lifecycle
 // ---------------------------------------------------------------------------
@@ -317,6 +356,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const setError = useSearchStore((s) => s.setError);
   const reset = useSearchStore((s) => s.reset);
   const algorithm = useSearchStore((s) => s.algorithm);
+  const setAlgorithm = useSearchStore((s) => s.setAlgorithm);
   const gaParams = useSearchStore((s) => s.gaParams);
   const constraints = useFitnessStore((s) => s.constraints);
   const enabledVariants = useFitnessStore((s) => s.enabledVariants);
@@ -347,11 +387,19 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     const msg = validatePreSearch(eqIds.size, enIds.size, constraints.length);
     if (msg != null) { setWarning(msg); return; }
     setWarning(null);
+
     const ids: EnabledIds = { equipment: eqIds, enchantments: enIds, modifiers: modIds, gems: gemIds };
     const getters: MergedGetters = { getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems };
-    const ctx: SearchContext = { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, islandCoordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults };
+    const gearPool = buildFilteredGearPool(getters, ids, enabledVariants);
+    const effectiveAlgorithm = checkLargeSearchPrompt(algorithm, countCombinations(gearPool), setAlgorithm);
+
+    const ctx: SearchContext = {
+      startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress,
+      workerRef, coordinatorRef, islandCoordinatorRef,
+      algorithm: effectiveAlgorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults,
+    };
     executeSearch(ctx);
-  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError, setExpandedCards, getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems]);
+  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError, setExpandedCards, setAlgorithm, getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;

@@ -74,7 +74,7 @@ const INITIAL_STATE: SearchState = {
   results: [],
   previewResults: [],
   error: null,
-  algorithm: "exhaustive",
+  algorithm: "genetic",
   gaParams: DEFAULT_GA_PARAMS,
   exitMetadata: null,
 };
