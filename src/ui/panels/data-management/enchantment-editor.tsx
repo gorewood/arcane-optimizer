@@ -2,11 +2,10 @@
  * EnchantmentEditor — enchantment list with CRUD operations.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { Enchantment } from "@/models/types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { sortItems, type SortOption } from "@/ui/panels/sort-select";
-import { EnchantmentEditorHeader } from "./enchantment-editor-header";
 import { EnchantmentList } from "./enchantment-list";
 import { EnchantmentEditDialog } from "./enchantment-edit-dialog";
 
@@ -17,9 +16,11 @@ import { EnchantmentEditDialog } from "./enchantment-edit-dialog";
 export function EnchantmentEditor({
   filter,
   sortBy,
+  addRequest,
 }: {
   readonly filter: string;
   readonly sortBy: SortOption;
+  readonly addRequest: number;
 }): React.JSX.Element {
   // Subscribe to userEnchantments to trigger re-render on changes
   const userEnchantments = useUserDataStore((s) => s.userEnchantments);
@@ -59,9 +60,18 @@ export function EnchantmentEditor({
 
   const handleClose = useCallback((): void => { setEditingItem(null); }, []);
 
+  // Respond to add requests from parent
+  const prevAddRequest = useRef(addRequest);
+  useEffect(() => {
+    if (addRequest > 0 && addRequest !== prevAddRequest.current) {
+      // Use requestAnimationFrame to avoid sync setState in effect
+      requestAnimationFrame(() => { handleAddNew(); });
+    }
+    prevAddRequest.current = addRequest;
+  }, [addRequest, handleAddNew]);
+
   return (
     <div className="space-y-2">
-      <EnchantmentEditorHeader count={filtered.length} onAddNew={handleAddNew} />
       <EnchantmentList items={filtered} deletedItems={deletedItems} onEdit={handleEdit} />
       <EnchantmentEditDialog enchantment={editingItem} isNew={isNew} onClose={handleClose} />
     </div>

@@ -2,11 +2,10 @@
  * GemEditor — gem list with CRUD operations.
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { Gem } from "@/models/types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { sortItems, type SortOption } from "@/ui/panels/sort-select";
-import { GemEditorHeader } from "./gem-editor-header";
 import { GemList } from "./gem-list";
 import { GemEditDialog } from "./gem-edit-dialog";
 
@@ -17,9 +16,11 @@ import { GemEditDialog } from "./gem-edit-dialog";
 export function GemEditor({
   filter,
   sortBy,
+  addRequest,
 }: {
   readonly filter: string;
   readonly sortBy: SortOption;
+  readonly addRequest: number;
 }): React.JSX.Element {
   // Subscribe to userGems to trigger re-render on changes
   const userGems = useUserDataStore((s) => s.userGems);
@@ -59,9 +60,18 @@ export function GemEditor({
 
   const handleClose = useCallback((): void => { setEditingItem(null); }, []);
 
+  // Respond to add requests from parent
+  const prevAddRequest = useRef(addRequest);
+  useEffect(() => {
+    if (addRequest > 0 && addRequest !== prevAddRequest.current) {
+      // Use requestAnimationFrame to avoid sync setState in effect
+      requestAnimationFrame(() => { handleAddNew(); });
+    }
+    prevAddRequest.current = addRequest;
+  }, [addRequest, handleAddNew]);
+
   return (
     <div className="space-y-2">
-      <GemEditorHeader count={filtered.length} onAddNew={handleAddNew} />
       <GemList items={filtered} deletedItems={deletedItems} onEdit={handleEdit} />
       <GemEditDialog gem={editingItem} isNew={isNew} onClose={handleClose} />
     </div>
