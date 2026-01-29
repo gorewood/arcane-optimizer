@@ -12,7 +12,7 @@ import { create } from "zustand";
 export interface UIState {
   selectedResultIndex: number | null;
   expandedCardIndices: ReadonlySet<number>;
-  activePanel: "gear" | "optimizer";
+  activePanel: "gear" | "optimizer" | "data";
 }
 
 export interface UIActions {

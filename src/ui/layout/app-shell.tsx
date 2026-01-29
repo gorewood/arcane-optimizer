@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GearPoolPanel } from "@/ui/panels";
+import { GearPoolPanel, DataManagementPanel } from "@/ui/panels";
 import { OptimizerPage } from "@/ui/panels/optimizer-page";
 import { useUIStore } from "@/stores/ui-store";
 import type { UIState } from "@/stores/ui-store";
@@ -16,6 +16,7 @@ interface TabDef {
 const TABS: readonly TabDef[] = [
   { id: "optimizer", label: "Optimizer" },
   { id: "gear", label: "Gear Pool" },
+  { id: "data", label: "Data" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -102,6 +103,10 @@ function PanelContent({
 }): React.JSX.Element {
   if (panel === "gear") {
     return <GearPoolPanel />;
+  }
+
+  if (panel === "data") {
+    return <DataManagementPanel />;
   }
 
   return <OptimizerPage />;

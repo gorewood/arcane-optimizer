@@ -1,0 +1,68 @@
+/**
+ * GemEditDialog — dialog for creating/editing gems.
+ */
+
+import { useState, useEffect } from "react";
+import type { Gem } from "@/models/types";
+import { useUserDataStore } from "@/stores/user-data-store";
+import { ItemEditorDialog } from "./item-editor-dialog";
+import { GemForm } from "./gem-form";
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
+
+interface GemEditDialogProps {
+  readonly gem: Gem | null;
+  readonly isNew: boolean;
+  readonly onClose: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function GemEditDialog({
+  gem,
+  isNew,
+  onClose,
+}: GemEditDialogProps): React.JSX.Element {
+  const addGem = useUserDataStore((s) => s.addGem);
+  const updateGem = useUserDataStore((s) => s.updateGem);
+
+  const [draft, setDraft] = useState<Gem | null>(null);
+
+  useEffect(() => {
+    setDraft(gem);
+  }, [gem]);
+
+  const handleSave = (): void => {
+    if (draft === null) return;
+    if (isNew) {
+      addGem(draft);
+    } else {
+      updateGem(draft.id, draft);
+    }
+    onClose();
+  };
+
+  const isValid =
+    draft !== null &&
+    draft.name.trim() !== "" &&
+    draft.id.trim() !== "";
+
+  return (
+    <ItemEditorDialog
+      open={gem !== null}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      title={isNew ? "Add Gem" : "Edit Gem"}
+      onSave={handleSave}
+      onCancel={onClose}
+      isValid={isValid}
+    >
+      {draft !== null && (
+        <GemForm gem={draft} onChange={setDraft} isNew={isNew} />
+      )}
+    </ItemEditorDialog>
+  );
+}

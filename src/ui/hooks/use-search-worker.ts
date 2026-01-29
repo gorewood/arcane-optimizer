@@ -7,12 +7,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  loadEquipment,
-  loadEnchantments,
-  loadModifiers,
-  loadGems,
-} from "@/data/loaders";
+import { buildMergedGearPool } from "@/data/merged-loaders";
 import type { EquipmentPiece, GearPool, SearchResult, SoftConstraint } from "@/models/types";
 import { expandEquipment } from "@/search/expand-variants";
 import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
@@ -20,6 +15,7 @@ import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore, type GAParams } from "@/stores/search-store";
 import { useUIStore } from "@/stores/ui-store";
+import { useUserDataStore } from "@/stores/user-data-store";
 import type { ExitMetadata, WorkerRequest, WorkerResponse } from "@/workers/search-worker";
 import { ExhaustiveCoordinator } from "@/workers/exhaustive-coordinator";
 
@@ -68,36 +64,37 @@ function validatePreSearch(
 // Gear pool builder
 // ---------------------------------------------------------------------------
 
-interface EnabledIds {
-  readonly equipment: ReadonlySet<string>;
-  readonly enchantments: ReadonlySet<string>;
-  readonly modifiers: ReadonlySet<string>;
-  readonly gems: ReadonlySet<string>;
-}
+import type { MergedGetters, EnabledIds } from "@/data/merged-loaders";
 
+/**
+ * Build gear pool from merged user data with variant expansion.
+ */
 function buildFilteredGearPool(
+  getters: MergedGetters,
   ids: EnabledIds,
   enabledVariants: ReadonlySet<string>,
 ): GearPool {
-  const allEquipment = loadEquipment();
-  const enabled = allEquipment.filter((e) => ids.equipment.has(e.id));
+  // Build base gear pool from merged data
+  const basePool = buildMergedGearPool(getters, ids);
 
   // Expand equipment with variants into multiple candidates
-  const expanded = expandEquipment(enabled, enabledVariants);
+  const expandedChestplates = expandEquipment(basePool.chestplates, enabledVariants);
+  const expandedLeggings = expandEquipment(basePool.leggings, enabledVariants);
+  const expandedAccessories = expandEquipment(basePool.accessories, enabledVariants);
 
-  // Filter by slot type
+  // Filter by slot type (expansion preserves slot, so just reassign)
   const isAccessory = (e: EquipmentPiece): boolean =>
     e.slot === "accessory" ||
     e.slot === "accessory-H" ||
     e.slot === "accessory-A";
 
   return {
-    chestplates: expanded.filter((e) => e.slot === "chestplate"),
-    leggings: expanded.filter((e) => e.slot === "leggings"),
-    accessories: expanded.filter(isAccessory),
-    enchantments: loadEnchantments().filter((e) => ids.enchantments.has(e.id)),
-    modifiers: loadModifiers().filter((m) => ids.modifiers.has(m.id)),
-    gems: loadGems().filter((g) => ids.gems.has(g.id)),
+    chestplates: expandedChestplates.filter((e) => e.slot === "chestplate"),
+    leggings: expandedLeggings.filter((e) => e.slot === "leggings"),
+    accessories: expandedAccessories.filter(isAccessory),
+    enchantments: basePool.enchantments,
+    modifiers: basePool.modifiers,
+    gems: basePool.gems,
   };
 }
 
@@ -202,6 +199,56 @@ function launchCoordinator(config: CoordinatorLaunchConfig, cb: CoordinatorCallb
 }
 
 // ---------------------------------------------------------------------------
+// Hook helpers
+// ---------------------------------------------------------------------------
+
+interface SearchContext {
+  readonly startSearch: () => void;
+  readonly setResults: (r: readonly SearchResult[], m: ExitMetadata | undefined) => void;
+  readonly setPreviewResults: (r: readonly SearchResult[]) => void;
+  readonly setError: (m: string) => void;
+  readonly setExpandedCards: (s: ReadonlySet<number>) => void;
+  readonly setProgress: React.Dispatch<React.SetStateAction<ProgressState>>;
+  readonly workerRef: React.RefObject<Worker | null>;
+  readonly coordinatorRef: React.RefObject<ExhaustiveCoordinator | null>;
+  readonly algorithm: Algorithm;
+  readonly gaParams: GAParams;
+  readonly constraints: readonly SoftConstraint[];
+  readonly enabledVariants: ReadonlySet<string>;
+  readonly ids: EnabledIds;
+  readonly getters: MergedGetters;
+  readonly maxResults: number;
+}
+
+function executeSearch(ctx: SearchContext): void {
+  const { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults } = ctx;
+  const gearPool = buildFilteredGearPool(getters, ids, enabledVariants);
+  startSearch();
+  setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
+
+  const onProg = (c: number, t: number, b: number, r: readonly SearchResult[]): void => {
+    setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b, resultsCount: r.length }));
+    setPreviewResults(r);
+  };
+  const onComplete = (r: readonly SearchResult[], meta?: ExitMetadata): void => {
+    setResults(r, meta);
+    if (r.length > 0) setExpandedCards(new Set([0]));
+  };
+
+  if (algorithm === "exhaustive") {
+    coordinatorRef.current = launchCoordinator(
+      { gearPool, fitness: constraints, maxResults },
+      { onProgress: onProg, onComplete: (r) => { onComplete(r, undefined); }, onError: setError },
+    );
+  } else {
+    workerRef.current = launchWorker(
+      { gearPool, fitness: constraints, maxResults, algorithm, gaParams },
+      { onProgress: onProg, onComplete, onError: setError },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -221,12 +268,15 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const gaParams = useSearchStore((s) => s.gaParams);
   const constraints = useFitnessStore((s) => s.constraints);
   const enabledVariants = useFitnessStore((s) => s.enabledVariants);
-
   const eqIds = useGearPoolStore((s) => s.enabledEquipmentIds);
   const enIds = useGearPoolStore((s) => s.enabledEnchantmentIds);
   const modIds = useGearPoolStore((s) => s.enabledModifierIds);
   const gemIds = useGearPoolStore((s) => s.enabledGemIds);
   const setExpandedCards = useUIStore((s) => s.setExpandedCards);
+  const getMergedEquipment = useUserDataStore((s) => s.getMergedEquipment);
+  const getMergedEnchantments = useUserDataStore((s) => s.getMergedEnchantments);
+  const getMergedModifiers = useUserDataStore((s) => s.getMergedModifiers);
+  const getMergedGems = useUserDataStore((s) => s.getMergedGems);
 
   const [progress, setProgress] = useState<ProgressState>(INITIAL_PROGRESS);
   const [warning, setWarning] = useState<string | null>(null);
@@ -243,34 +293,11 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
     const msg = validatePreSearch(eqIds.size, enIds.size, constraints.length);
     if (msg != null) { setWarning(msg); return; }
     setWarning(null);
-
     const ids: EnabledIds = { equipment: eqIds, enchantments: enIds, modifiers: modIds, gems: gemIds };
-    const gearPool = buildFilteredGearPool(ids, enabledVariants);
-    startSearch();
-    setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
-
-    const onProg = (c: number, t: number, b: number, r: readonly SearchResult[]): void => {
-      setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b, resultsCount: r.length }));
-      setPreviewResults(r);
-    };
-
-    const onComplete = (r: readonly SearchResult[], meta?: ExitMetadata): void => {
-      setResults(r, meta);
-      if (r.length > 0) setExpandedCards(new Set([0]));
-    };
-
-    if (algorithm === "exhaustive") {
-      coordinatorRef.current = launchCoordinator(
-        { gearPool, fitness: constraints, maxResults },
-        { onProgress: onProg, onComplete: (r) => { onComplete(r, undefined); }, onError: setError },
-      );
-    } else {
-      workerRef.current = launchWorker(
-        { gearPool, fitness: constraints, maxResults, algorithm, gaParams },
-        { onProgress: onProg, onComplete: onComplete, onError: setError },
-      );
-    }
-  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError, setExpandedCards]);
+    const getters: MergedGetters = { getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems };
+    const ctx: SearchContext = { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults };
+    executeSearch(ctx);
+  }, [eqIds, enIds, modIds, gemIds, constraints, enabledVariants, maxResults, algorithm, gaParams, startSearch, setResults, setPreviewResults, setError, setExpandedCards, getMergedEquipment, getMergedEnchantments, getMergedModifiers, getMergedGems]);
 
   const stop = useCallback(() => {
     workerRef.current?.terminate(); workerRef.current = null;

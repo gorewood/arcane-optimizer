@@ -143,7 +143,6 @@ const constraintTypeSchema = z.enum([
   "atLeast",
   "atMost",
   "between",
-  "target",
   "exactly",
 ]);
 
@@ -153,6 +152,7 @@ export const softConstraintSchema = z
     type: constraintTypeSchema,
     value: z.number().optional(),
     weight: z.number(),
+    /** For 'between' constraints: the maximum value. */
     hardCap: z.number().optional(),
   })
   .readonly();

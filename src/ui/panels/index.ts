@@ -3,6 +3,7 @@ export { GearPoolPanel } from "./gear-pool-panel";
 export { FitnessPanel } from "./fitness-panel";
 export { ResultsPanel } from "./results-panel";
 export { OptimizerPage } from "./optimizer-page";
+export { DataManagementPanel } from "./data-management";
 
 // Sub-components
 export { GoalsSection } from "./fitness-section";

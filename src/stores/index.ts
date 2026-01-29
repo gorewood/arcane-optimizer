@@ -16,3 +16,6 @@ export type { UIState, UIActions } from "./ui-store";
 
 export { useProfileStore } from "./profile-store";
 export type { ProfileState, ProfileActions } from "./profile-store";
+
+export { useUserDataStore } from "./user-data-store";
+export type { UserDataState, UserDataActions } from "./user-data-store";
