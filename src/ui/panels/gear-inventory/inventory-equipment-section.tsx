@@ -40,6 +40,50 @@ function isSlotType(value: string): value is SlotType {
   return SLOT_TYPE_SET.has(value);
 }
 
+function getGroupKey(item: EquipmentPiece, groupBy: GroupByOption): string {
+  switch (groupBy) {
+    case "set": return item.setName ?? "Standalone";
+    case "slot": return item.slot;
+    case "source": return item.source ?? "Unknown";
+    case "none": return "All Equipment";
+  }
+}
+
+function mergeSingleItemSets(groups: Map<string, MergedEquipment[]>): void {
+  const standalone = groups.get("Standalone") ?? [];
+  const keysToRemove: string[] = [];
+  for (const [key, items] of groups) {
+    if (key !== "Standalone" && items.length === 1) {
+      standalone.push(...items);
+      keysToRemove.push(key);
+    }
+  }
+  for (const key of keysToRemove) { groups.delete(key); }
+  if (standalone.length > 0) { groups.set("Standalone", standalone); }
+}
+
+function sortGroupEntries(
+  entries: [string, MergedEquipment[]][],
+  groupBy: GroupByOption,
+): void {
+  if (groupBy === "slot") {
+    entries.sort((a, b) => {
+      const aIdx = isSlotType(a[0]) ? SLOT_DISPLAY_ORDER.indexOf(a[0]) : -1;
+      const bIdx = isSlotType(b[0]) ? SLOT_DISPLAY_ORDER.indexOf(b[0]) : -1;
+      return aIdx - bIdx;
+    });
+  } else {
+    // Sort alphabetically, but put "Standalone" and "Unknown" at the end
+    entries.sort((a, b) => {
+      const aIsSpecial = a[0] === "Standalone" || a[0] === "Unknown";
+      const bIsSpecial = b[0] === "Standalone" || b[0] === "Unknown";
+      if (aIsSpecial && !bIsSpecial) return 1;
+      if (!aIsSpecial && bIsSpecial) return -1;
+      return a[0].localeCompare(b[0]);
+    });
+  }
+}
+
 function groupItems(
   equipment: readonly MergedEquipment[],
   groupBy: GroupByOption,
@@ -50,27 +94,15 @@ function groupItems(
 
   const groups = new Map<string, MergedEquipment[]>();
   for (const merged of equipment) {
-    const item = merged.item;
-    let key: string;
-    switch (groupBy) {
-      case "set": key = item.setName ?? "Standalone"; break;
-      case "slot": key = item.slot; break;
-      case "source": key = item.source ?? "Unknown"; break;
-    }
+    const key = getGroupKey(merged.item, groupBy);
     const existing = groups.get(key);
     if (existing) { existing.push(merged); } else { groups.set(key, [merged]); }
   }
 
+  if (groupBy === "set") { mergeSingleItemSets(groups); }
+
   const entries = Array.from(groups.entries());
-  if (groupBy === "slot") {
-    entries.sort((a, b) => {
-      const aIdx = isSlotType(a[0]) ? SLOT_DISPLAY_ORDER.indexOf(a[0]) : -1;
-      const bIdx = isSlotType(b[0]) ? SLOT_DISPLAY_ORDER.indexOf(b[0]) : -1;
-      return aIdx - bIdx;
-    });
-  } else {
-    entries.sort((a, b) => a[0].localeCompare(b[0]));
-  }
+  sortGroupEntries(entries, groupBy);
 
   return entries.map(([key, items]) => ({
     name: groupBy === "slot" && isSlotType(key) ? SLOT_LABELS[key] : key,
