@@ -16,6 +16,8 @@ import { ProfileSelector } from "./profile-selector";
 import { ConstraintRow } from "./constraint-row";
 import { VariantSelector } from "./variant-selector";
 import { StatWeightsEditor } from "./stat-weights-editor";
+import { LimitsEditor } from "./limits-editor";
+import { MinimumsEditor } from "./minimums-editor";
 
 // ---------------------------------------------------------------------------
 // Default constraints for the "Add" button
@@ -82,20 +84,27 @@ export function FitnessPanel(): React.JSX.Element {
 
       <Separator className="bg-border-subtle" />
 
-      <ConstraintList
-        constraints={constraints}
-        onUpdate={updateConstraint}
-        onRemove={removeConstraint}
-        isConstraintMode={isConstraintMode}
-      />
-
-      <div className="flex items-center gap-3">
-        <AddConstraintButton onAdd={addConstraint} isConstraintMode={isConstraintMode} />
-        <HelpLink />
-      </div>
-
-      {!isConstraintMode && (
+      {isConstraintMode ? (
+        // Constraints mode: full constraint editor
         <>
+          <ConstraintList
+            constraints={constraints}
+            onUpdate={updateConstraint}
+            onRemove={removeConstraint}
+            isConstraintMode={isConstraintMode}
+          />
+
+          <div className="flex items-center gap-3">
+            <AddConstraintButton onAdd={addConstraint} isConstraintMode={isConstraintMode} />
+            <HelpLink />
+          </div>
+        </>
+      ) : (
+        // Efficiency/Multiplier mode: fixed slider panels
+        <>
+          <LimitsEditor />
+          <Separator className="bg-border-subtle" />
+          <MinimumsEditor />
           <Separator className="bg-border-subtle" />
           <StatWeightsEditor />
         </>
