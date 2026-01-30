@@ -5,7 +5,9 @@
  */
 
 import { useState, useCallback } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useUserDataStore } from "@/stores/user-data-store";
 import { PanelHeader } from "./panel-header";
 import { SearchInput } from "./search-input";
 import { SortSelect, type SortOption } from "@/ui/panels/sort-select";
@@ -15,7 +17,7 @@ import { GemEditor } from "./gem-editor";
 import { VariantTypesEditor } from "./variant-types-editor";
 
 // ---------------------------------------------------------------------------
-// Types
+// Types & Hooks
 // ---------------------------------------------------------------------------
 
 type GameDataTab = "enchantments" | "modifiers" | "gems" | "variants";
@@ -24,6 +26,16 @@ const VALID_TABS = new Set<string>(["enchantments", "modifiers", "gems", "varian
 
 function isGameDataTab(value: string): value is GameDataTab {
   return VALID_TABS.has(value);
+}
+
+/** Returns item counts for each data type tab. */
+function useDataCounts(): Record<GameDataTab, number> {
+  return useUserDataStore(useShallow((s) => ({
+    enchantments: s.getMergedEnchantments().length,
+    modifiers: s.getMergedModifiers().length,
+    gems: s.getMergedGems().length,
+    variants: s.getMergedVariantTypes().length,
+  })));
 }
 
 // ---------------------------------------------------------------------------
@@ -35,6 +47,7 @@ export function DataManagementPanel(): React.JSX.Element {
   const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const [activeTab, setActiveTab] = useState<GameDataTab>("enchantments");
   const [addRequest, setAddRequest] = useState(0);
+  const counts = useDataCounts();
 
   const handleAdd = useCallback((): void => {
     setAddRequest((prev) => prev + 1);
@@ -50,10 +63,10 @@ export function DataManagementPanel(): React.JSX.Element {
 
       <Tabs value={activeTab} onValueChange={(v) => { if (isGameDataTab(v)) setActiveTab(v); }}>
         <TabsList variant="line">
-          <TabsTrigger value="enchantments">Enchantments</TabsTrigger>
-          <TabsTrigger value="modifiers">Modifiers</TabsTrigger>
-          <TabsTrigger value="gems">Gems</TabsTrigger>
-          <TabsTrigger value="variants">Variants</TabsTrigger>
+          <TabsTrigger value="enchantments">Enchantments ({counts.enchantments})</TabsTrigger>
+          <TabsTrigger value="modifiers">Modifiers ({counts.modifiers})</TabsTrigger>
+          <TabsTrigger value="gems">Gems ({counts.gems})</TabsTrigger>
+          <TabsTrigger value="variants">Variants ({counts.variants})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="enchantments">
