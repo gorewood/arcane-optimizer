@@ -39,14 +39,12 @@ function ToggleIcon({ disabled, open }: { disabled: boolean; open: boolean }): R
   );
 }
 
-/** Trailing content: summary when collapsed, disabled reason when locked */
+/** Trailing content: summary (always visible), disabled reason when locked */
 function TrailingContent({
-  open,
   disabled,
   summary,
   disabledReason,
 }: {
-  open: boolean;
   disabled: boolean;
   summary: React.ReactNode | undefined;
   disabledReason: string | undefined;
@@ -54,7 +52,7 @@ function TrailingContent({
   if (disabled && disabledReason != null) {
     return <span className="ml-auto text-xs text-text-muted italic">{disabledReason}</span>;
   }
-  if (!open && summary != null) {
+  if (summary != null) {
     return <span className="ml-auto text-xs text-text-secondary truncate max-w-[60%]">{summary}</span>;
   }
   return null;
@@ -97,7 +95,7 @@ export function CollapsibleSection({
         <button type="button" disabled={disabled} className={buttonClass}>
           <ToggleIcon disabled={disabled} open={effectiveOpen} />
           <span className="text-sm font-semibold text-accent-gold">{title}</span>
-          <TrailingContent open={effectiveOpen} disabled={disabled} summary={summary} disabledReason={disabledReason} />
+          <TrailingContent disabled={disabled} summary={summary} disabledReason={disabledReason} />
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>
