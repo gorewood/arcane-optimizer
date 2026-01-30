@@ -7,6 +7,10 @@
  */
 
 import { useState, useEffect } from "react";
+import type { ScoringMode } from "@/search/scoring-mode";
+import type { StatLimits, StatMinimums, StatWeights } from "@/data/profile-types";
+import { DEFAULT_STAT_WEIGHTS } from "@/search/scoring-mode";
+import { STAT_NAMES } from "@/search/stats";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useSearchStore } from "@/stores/search-store";
 import { CollapsibleSection } from "./collapsible-section";
@@ -17,8 +21,10 @@ import { FitnessPanel } from "./fitness-panel";
 // ---------------------------------------------------------------------------
 
 export function GoalsSection(): React.JSX.Element {
+  const scoringMode = useFitnessStore((s) => s.scoringMode);
   const constraints = useFitnessStore((s) => s.constraintsConfig.constraints);
-  const activeProfileId = useFitnessStore((s) => s.activeProfileId);
+  const efficiencyConfig = useFitnessStore((s) => s.efficiencyConfig);
+  const multiplierConfig = useFitnessStore((s) => s.multiplierConfig);
   const searchStatus = useSearchStore((s) => s.status);
 
   const [goalsOpen, setGoalsOpen] = useState(false);
@@ -35,7 +41,11 @@ export function GoalsSection(): React.JSX.Element {
     return unsubscribe;
   }, []);
 
-  const summary = buildSummary(constraints, activeProfileId);
+  const summary = buildSummary(
+    scoringMode,
+    constraints,
+    scoringMode === "multiplier" ? multiplierConfig : efficiencyConfig,
+  );
   const isRunning = searchStatus === "running";
 
   return (
@@ -56,16 +66,32 @@ export function GoalsSection(): React.JSX.Element {
 // Summary builder
 // ---------------------------------------------------------------------------
 
-function buildSummary(
-  constraints: readonly { stat: string; type: string; value?: number | undefined }[],
-  profileId: string | null,
-): string {
-  const parts: string[] = [];
+interface WeightsConfig {
+  readonly limits: StatLimits;
+  readonly minimums: StatMinimums;
+  readonly weights: StatWeights;
+}
 
-  // Profile ID shown in summary (could look up name, but ID is simpler)
-  if (profileId != null) {
-    parts.push("Profile loaded");
+function buildSummary(
+  mode: ScoringMode,
+  constraints: readonly { stat: string; type: string; value?: number | undefined }[],
+  weightsConfig: WeightsConfig,
+): string {
+  if (mode === "linear") {
+    return buildConstraintsSummary(constraints);
   }
+  return buildWeightsSummary(mode, weightsConfig);
+}
+
+/** Summary for Constraints mode: show top constraints. */
+function buildConstraintsSummary(
+  constraints: readonly { stat: string; type: string; value?: number | undefined }[],
+): string {
+  if (constraints.length === 0) {
+    return "Constraints · No constraints";
+  }
+
+  const parts: string[] = ["Constraints"];
 
   // Show top 3 constraints in summary
   const topConstraints = constraints.slice(0, 3);
@@ -82,7 +108,38 @@ function buildSummary(
     parts.push(`+${String(constraints.length - 3)} more`);
   }
 
-  return parts.length > 0 ? parts.join(" | ") : "No constraints";
+  return parts.join(" · ");
+}
+
+/** Summary for Efficiency/Multiplier modes: show limits, minimums, weights status. */
+function buildWeightsSummary(mode: ScoringMode, config: WeightsConfig): string {
+  const parts: string[] = [mode === "efficiency" ? "Efficiency" : "Multiplier"];
+
+  // Active limits (non-zero values)
+  const activeLimits: string[] = [];
+  if (config.limits.insanity > 0) activeLimits.push(`Ins≤${String(config.limits.insanity)}`);
+  if (config.limits.warding > 0) activeLimits.push(`War≤${String(config.limits.warding)}`);
+  if (config.limits.drawback > 0) activeLimits.push(`Drw≤${String(config.limits.drawback)}`);
+
+  if (activeLimits.length > 0) {
+    parts.push(activeLimits.join(", "));
+  }
+
+  // Active minimums count
+  const minimumCount = Object.keys(config.minimums).length;
+  if (minimumCount > 0) {
+    parts.push(`${String(minimumCount)} min${minimumCount > 1 ? "s" : ""}`);
+  }
+
+  // Check if weights are modified
+  const hasModifiedWeights = STAT_NAMES.some(
+    (stat) => config.weights[stat] !== DEFAULT_STAT_WEIGHTS[stat],
+  );
+  if (hasModifiedWeights) {
+    parts.push("weights modified");
+  }
+
+  return parts.join(" · ");
 }
 
 function getTypeSymbol(type: string): string {
