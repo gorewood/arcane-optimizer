@@ -1,13 +1,13 @@
 /**
- * EquipmentExtraFields — tags and atlantean fields.
+ * EquipmentExtraFields — tags, source, and atlantean fields.
  */
 
 import { useMemo } from "react";
-import { Input } from "@/components/ui/input";
 import type { EquipmentPiece } from "@/models/types";
 import { useUserDataStore } from "@/stores/user-data-store";
 import { FormField } from "./form-field";
 import { EquipmentNumericFields } from "./equipment-numeric-fields";
+import { AutocompleteInput } from "./autocomplete-input";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -28,15 +28,15 @@ export function EquipmentExtraFields({
 }: EquipmentExtraFieldsProps): React.JSX.Element {
   const getMergedEquipment = useUserDataStore((s) => s.getMergedEquipment);
 
-  // Extract all known tags from existing equipment for autocomplete
-  const knownTags = useMemo(() => {
+  // Extract known values from existing equipment for autocomplete
+  const { knownTags, knownSources } = useMemo(() => {
     const tags = new Set<string>();
-    for (const item of getMergedEquipment()) {
-      for (const tag of item.item.tags) {
-        tags.add(tag);
-      }
+    const sources = new Set<string>();
+    for (const { item } of getMergedEquipment()) {
+      for (const tag of item.tags) tags.add(tag);
+      if (item.source !== undefined) sources.add(item.source);
     }
-    return [...tags].sort();
+    return { knownTags: [...tags].sort(), knownSources: [...sources].sort() };
   }, [getMergedEquipment]);
 
   return (
@@ -44,25 +44,27 @@ export function EquipmentExtraFields({
       <EquipmentNumericFields equipment={equipment} onChange={onChange} />
 
       <FormField label="Tags (comma-separated, optional)">
-        <Input
+        <AutocompleteInput
           value={equipment.tags.join(", ")}
           placeholder="e.g., sunken, boss-drop"
-          list="equipment-tags-list"
-          className="h-8 text-sm"
-          onChange={(e) => {
-            const value = e.target.value;
-            const tags = value
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean);
+          options={knownTags}
+          onChange={(value) => {
+            const tags = value.split(",").map((t) => t.trim()).filter(Boolean);
             onChange({ ...equipment, tags: tags.length > 0 ? tags : [] });
           }}
         />
-        <datalist id="equipment-tags-list">
-          {knownTags.map((tag) => (
-            <option key={tag} value={tag} />
-          ))}
-        </datalist>
+      </FormField>
+
+      <FormField label="Source (optional)">
+        <AutocompleteInput
+          value={equipment.source ?? ""}
+          placeholder="e.g., Sunken Chests, Elius"
+          options={knownSources}
+          onChange={(value) => {
+            const trimmed = value.trim();
+            onChange({ ...equipment, source: trimmed !== "" ? trimmed : undefined });
+          }}
+        />
       </FormField>
 
       <label className="flex items-center gap-2 text-sm text-text-primary">

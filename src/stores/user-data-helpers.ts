@@ -96,7 +96,8 @@ export function restoreEquipmentRecord(
   records: readonly UserEquipmentRecord[],
   id: string,
 ): readonly UserEquipmentRecord[] {
-  return records.filter((r) => r.id !== id || !r.deleted);
+  // Remove entire record to restore bundled original (works for both deleted and modified)
+  return records.filter((r) => r.id !== id);
 }
 
 // ---------------------------------------------------------------------------
@@ -163,7 +164,8 @@ export function restoreEnchantmentRecord(
   records: readonly UserEnchantmentRecord[],
   id: string,
 ): readonly UserEnchantmentRecord[] {
-  return records.filter((r) => r.id !== id || !r.deleted);
+  // Remove entire record to restore bundled original (works for both deleted and modified)
+  return records.filter((r) => r.id !== id);
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +232,8 @@ export function restoreModifierRecord(
   records: readonly UserModifierRecord[],
   id: string,
 ): readonly UserModifierRecord[] {
-  return records.filter((r) => r.id !== id || !r.deleted);
+  // Remove entire record to restore bundled original (works for both deleted and modified)
+  return records.filter((r) => r.id !== id);
 }
 
 // ---------------------------------------------------------------------------
@@ -297,7 +300,8 @@ export function restoreGemRecord(
   records: readonly UserGemRecord[],
   id: string,
 ): readonly UserGemRecord[] {
-  return records.filter((r) => r.id !== id || !r.deleted);
+  // Remove entire record to restore bundled original (works for both deleted and modified)
+  return records.filter((r) => r.id !== id);
 }
 
 // ---------------------------------------------------------------------------
