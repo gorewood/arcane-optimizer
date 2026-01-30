@@ -80,7 +80,7 @@ export function MinimumsEditor(): React.JSX.Element {
       </button>
 
       {isExpanded && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-6">
+        <div className="grid grid-cols-3 gap-x-4 gap-y-1 pl-6">
           {MIN_STATS.map((stat) => (
             <MinimumSlider
               key={stat}
@@ -112,7 +112,7 @@ function MinimumSlider({
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`text-xs w-14 truncate ${isActive ? "text-text-secondary" : "text-text-muted"}`}
+        className={`text-xs w-20 shrink-0 ${isActive ? "text-text-secondary" : "text-text-muted"}`}
       >
         {STAT_LABELS[stat]}
       </span>
@@ -128,9 +128,9 @@ function MinimumSlider({
         min={0}
         max={max}
         step={Math.max(1, Math.floor(max / 20))}
-        className={`flex-1 ${isActive ? "" : "opacity-50"}`}
+        className={`flex-1 min-w-12 ${isActive ? "" : "opacity-50"}`}
       />
-      <span className="text-xs text-text-muted w-10 text-right">
+      <span className="text-xs text-text-muted w-10 text-right shrink-0">
         {isActive ? value : "off"}
       </span>
     </div>

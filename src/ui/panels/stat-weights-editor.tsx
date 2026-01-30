@@ -44,7 +44,7 @@ const STAT_LABELS: Record<StatName, string> = {
 };
 
 export function StatWeightsEditor(): React.JSX.Element {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const scoringMode = useFitnessStore((s) => s.scoringMode);
   const efficiencyWeights = useFitnessStore((s) => s.efficiencyConfig.weights);
   const multiplierWeights = useFitnessStore((s) => s.multiplierConfig.weights);
@@ -71,7 +71,7 @@ export function StatWeightsEditor(): React.JSX.Element {
         onReset={resetWeights}
       />
       {isExpanded && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-6">
+        <div className="grid grid-cols-3 gap-x-4 gap-y-1 pl-6">
           {STAT_ORDER.map((stat) => (
             <StatWeightSlider
               key={stat}
@@ -101,23 +101,23 @@ function StatWeightsHeader({
 }): React.JSX.Element {
   const Icon = isExpanded ? ChevronDown : ChevronRight;
   return (
-    <div className="flex items-center justify-between">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex items-center gap-2 text-left"
-      >
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex items-center justify-between w-full text-left"
+    >
+      <span className="flex items-center gap-2">
         <Icon className="w-4 h-4 text-text-secondary" />
         <h3 className="text-sm font-semibold text-accent-gold">Stat Weights</h3>
         {hasChanges && (
           <span className="text-xs text-text-muted">(modified)</span>
         )}
-      </button>
+      </span>
       {isExpanded && (
         <Button
           variant="ghost"
           size="xs"
-          onClick={onReset}
+          onClick={(e) => { e.stopPropagation(); onReset(); }}
           disabled={!hasChanges}
           className="text-text-muted hover:text-accent-gold"
         >
@@ -125,7 +125,7 @@ function StatWeightsHeader({
           Reset
         </Button>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -140,7 +140,7 @@ function StatWeightSlider({
 }): React.JSX.Element {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-text-secondary w-14 truncate">
+      <span className="text-xs text-text-secondary w-20 shrink-0">
         {STAT_LABELS[stat]}
       </span>
       <Slider
@@ -153,9 +153,9 @@ function StatWeightSlider({
         min={0}
         max={200}
         step={5}
-        className="flex-1"
+        className="flex-1 min-w-12"
       />
-      <span className="text-xs text-text-muted w-6 text-right">{value}</span>
+      <span className="text-xs text-text-muted w-8 text-right shrink-0">{value}</span>
     </div>
   );
 }
