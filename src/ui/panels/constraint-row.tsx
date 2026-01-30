@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { STAT_NAMES } from "@/search/stats";
+import { useFitnessStore } from "@/stores/fitness-store";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -30,6 +31,9 @@ const CONSTRAINT_TYPES: readonly ConstraintType[] = [
   "between",
   "exactly",
 ];
+
+/** Hard filter types that work in ALL scoring modes. */
+const HARD_FILTER_TYPES: readonly ConstraintType[] = ["atLeast", "atMost"];
 
 /** Constraint types that require a value input. */
 const VALUE_TYPES = new Set<ConstraintType>([
@@ -106,6 +110,7 @@ function useHardCapHandler(
 // ---------------------------------------------------------------------------
 
 export function ConstraintRow({ constraint, index, onUpdate, onRemove }: ConstraintRowProps): React.JSX.Element {
+  const scoringMode = useFitnessStore((s) => s.scoringMode);
   const showValue = VALUE_TYPES.has(constraint.type);
   const showHardCap = HARDCAP_TYPES.has(constraint.type);
   const isBetween = constraint.type === "between";
@@ -113,12 +118,15 @@ export function ConstraintRow({ constraint, index, onUpdate, onRemove }: Constra
   const handleValue = useValueHandler(constraint, index, onUpdate, statMax);
   const handleHardCap = useHardCapHandler(constraint, index, onUpdate, statMax);
 
+  // In efficiency/multiplier modes, only hard filter types are available
+  const availableTypes = scoringMode === "linear" ? CONSTRAINT_TYPES : HARD_FILTER_TYPES;
+
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-bg-surface px-2 py-1.5 transition-colors hover:border-border-default">
       {/* Row 1: stat + operator (always together) */}
       <div className="flex items-center gap-2 shrink-0">
         <StatSelect value={constraint.stat} onChange={(s) => { onUpdate(index, { ...constraint, stat: s }); }} />
-        <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} />
+        <TypeSelect value={constraint.type} onChange={(t) => { handleTypeChange(constraint, index, t, onUpdate); }} availableTypes={availableTypes} />
       </div>
       {/* Row 2 on narrow, continues row 1 on wide: value, cap, weight, remove */}
       <div className="flex flex-1 items-center gap-2 min-w-[16rem]">
@@ -231,9 +239,11 @@ function StatSelect({
 function TypeSelect({
   value,
   onChange,
+  availableTypes,
 }: {
   readonly value: ConstraintType;
   readonly onChange: (type: ConstraintType) => void;
+  readonly availableTypes: readonly ConstraintType[];
 }): React.JSX.Element {
   return (
     <Select
@@ -246,7 +256,7 @@ function TypeSelect({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {CONSTRAINT_TYPES.map((ct) => (
+        {availableTypes.map((ct) => (
           <SelectItem key={ct} value={ct}>
             <span className="font-stat">{TYPE_LABELS[ct]}</span>
             <span className="ml-1 text-text-muted">{ct}</span>

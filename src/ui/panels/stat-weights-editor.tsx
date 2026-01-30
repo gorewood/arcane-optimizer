@@ -12,12 +12,20 @@ import type { StatName } from "@/models/types";
 import { DEFAULT_STAT_WEIGHTS } from "@/search/scoring-mode";
 import { STAT_NAMES } from "@/search/stats";
 
-// Stat display names and groupings
-const STAT_GROUPS: { label: string; stats: StatName[] }[] = [
-  { label: "Primary", stats: ["power", "defense"] },
-  { label: "Secondary", stats: ["size", "dexterity", "range", "haste"] },
-  { label: "Special", stats: ["regeneration", "resistance", "pierce"] },
-  { label: "Drawbacks", stats: ["insanity", "warding", "drawback"] },
+// Flat list of stats in a sensible order for 2-column display
+const STAT_ORDER: StatName[] = [
+  "power",
+  "defense",
+  "size",
+  "dexterity",
+  "range",
+  "haste",
+  "regeneration",
+  "resistance",
+  "pierce",
+  "insanity",
+  "warding",
+  "drawback",
 ];
 
 const STAT_LABELS: Record<StatName, string> = {
@@ -28,7 +36,7 @@ const STAT_LABELS: Record<StatName, string> = {
   range: "Range",
   haste: "Haste",
   regeneration: "Regen",
-  resistance: "Resistance",
+  resistance: "Resist",
   pierce: "Pierce",
   insanity: "Insanity",
   warding: "Warding",
@@ -36,63 +44,81 @@ const STAT_LABELS: Record<StatName, string> = {
 };
 
 export function StatWeightsEditor(): React.JSX.Element {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const statWeights = useFitnessStore((s) => s.statWeights);
   const setStatWeight = useFitnessStore((s) => s.setStatWeight);
   const resetStatWeights = useFitnessStore((s) => s.resetStatWeights);
 
-  // Check if weights differ from defaults
   const hasChanges = STAT_NAMES.some(
     (stat) => statWeights[stat] !== DEFAULT_STAT_WEIGHTS[stat],
   );
 
+  const toggle = (): void => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <div className="space-y-2">
+      <StatWeightsHeader
+        isExpanded={isExpanded}
+        hasChanges={hasChanges}
+        onToggle={toggle}
+        onReset={resetStatWeights}
+      />
+      {isExpanded && (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-6">
+          {STAT_ORDER.map((stat) => (
+            <StatWeightSlider
+              key={stat}
+              stat={stat}
+              value={statWeights[stat]}
+              onChange={(v) => {
+                setStatWeight(stat, v);
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatWeightsHeader({
+  isExpanded,
+  hasChanges,
+  onToggle,
+  onReset,
+}: {
+  isExpanded: boolean;
+  hasChanges: boolean;
+  onToggle: () => void;
+  onReset: () => void;
+}): React.JSX.Element {
+  const Icon = isExpanded ? ChevronDown : ChevronRight;
+  return (
+    <div className="flex items-center justify-between">
       <button
         type="button"
-        onClick={() => { setIsExpanded(!isExpanded); }}
-        className="flex items-center gap-2 w-full text-left"
+        onClick={onToggle}
+        className="flex items-center gap-2 text-left"
       >
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-text-secondary" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-text-secondary" />
-        )}
+        <Icon className="w-4 h-4 text-text-secondary" />
         <h3 className="text-sm font-semibold text-accent-gold">Stat Weights</h3>
         {hasChanges && (
           <span className="text-xs text-text-muted">(modified)</span>
         )}
       </button>
-
       {isExpanded && (
-        <div className="space-y-4 pl-6">
-          {STAT_GROUPS.map((group) => (
-            <div key={group.label} className="space-y-2">
-              <h4 className="text-xs text-text-muted uppercase tracking-wide">
-                {group.label}
-              </h4>
-              {group.stats.map((stat) => (
-                <StatWeightSlider
-                  key={stat}
-                  stat={stat}
-                  value={statWeights[stat]}
-                  onChange={(v) => { setStatWeight(stat, v); }}
-                />
-              ))}
-            </div>
-          ))}
-
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={resetStatWeights}
-            disabled={!hasChanges}
-            className="text-text-muted hover:text-accent-gold"
-          >
-            <RotateCcw className="w-3 h-3 mr-1" />
-            Reset to Defaults
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={onReset}
+          disabled={!hasChanges}
+          className="text-text-muted hover:text-accent-gold"
+        >
+          <RotateCcw className="w-3 h-3 mr-1" />
+          Reset
+        </Button>
       )}
     </div>
   );
@@ -108,8 +134,8 @@ function StatWeightSlider({
   onChange: (value: number) => void;
 }): React.JSX.Element {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-text-secondary w-20">
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-text-secondary w-14 truncate">
         {STAT_LABELS[stat]}
       </span>
       <Slider
@@ -124,7 +150,7 @@ function StatWeightSlider({
         step={5}
         className="flex-1"
       />
-      <span className="text-xs text-text-muted w-8 text-right">{value}</span>
+      <span className="text-xs text-text-muted w-6 text-right">{value}</span>
     </div>
   );
 }

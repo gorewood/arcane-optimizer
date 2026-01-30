@@ -18,12 +18,19 @@ import { VariantSelector } from "./variant-selector";
 import { StatWeightsEditor } from "./stat-weights-editor";
 
 // ---------------------------------------------------------------------------
-// Default constraint for the "Add" button
+// Default constraints for the "Add" button
 // ---------------------------------------------------------------------------
 
 const DEFAULT_CONSTRAINT: SoftConstraint = {
   stat: "power",
   type: "maximize",
+  weight: 50,
+};
+
+const DEFAULT_LIMIT: SoftConstraint = {
+  stat: "drawback",
+  type: "atMost",
+  value: 0,
   weight: 50,
 };
 
@@ -79,10 +86,11 @@ export function FitnessPanel(): React.JSX.Element {
         constraints={constraints}
         onUpdate={updateConstraint}
         onRemove={removeConstraint}
+        isConstraintMode={isConstraintMode}
       />
 
       <div className="flex items-center gap-3">
-        <AddConstraintButton onAdd={addConstraint} />
+        <AddConstraintButton onAdd={addConstraint} isConstraintMode={isConstraintMode} />
         <HelpLink />
       </div>
 
@@ -155,15 +163,22 @@ function ConstraintList({
   constraints,
   onUpdate,
   onRemove,
+  isConstraintMode,
 }: {
   readonly constraints: readonly SoftConstraint[];
   readonly onUpdate: (index: number, constraint: SoftConstraint) => void;
   readonly onRemove: (index: number) => void;
+  readonly isConstraintMode: boolean;
 }): React.JSX.Element {
+  const headerLabel = isConstraintMode ? "Constraints" : "Hard Limits";
+  const emptyMessage = isConstraintMode
+    ? "No constraints configured. Add one or load a preset."
+    : "No limits configured. Add hard filters to exclude builds.";
+
   return (
     <div className="space-y-1.5">
       <h3 className="text-sm font-semibold text-accent-gold px-1">
-        Constraints
+        {headerLabel}
         <span className="ml-2 text-xs text-text-muted font-normal">
           ({constraints.length})
         </span>
@@ -171,7 +186,7 @@ function ConstraintList({
 
       {constraints.length === 0 ? (
         <p className="text-text-muted text-xs px-1">
-          No constraints configured. Add one or load a preset.
+          {emptyMessage}
         </p>
       ) : (
         constraints.map((c, i) => (
@@ -194,19 +209,24 @@ function ConstraintList({
 
 function AddConstraintButton({
   onAdd,
+  isConstraintMode,
 }: {
   readonly onAdd: (constraint: SoftConstraint) => void;
+  readonly isConstraintMode: boolean;
 }): React.JSX.Element {
+  const defaultValue = isConstraintMode ? DEFAULT_CONSTRAINT : DEFAULT_LIMIT;
+  const buttonLabel = isConstraintMode ? "+ Add Constraint" : "+ Add Limit";
+
   return (
     <Button
       variant="outline"
       size="sm"
       className="border-dashed border-border-default text-text-secondary hover:text-accent-gold hover:border-accent-gold"
       onClick={() => {
-        onAdd(DEFAULT_CONSTRAINT);
+        onAdd(defaultValue);
       }}
     >
-      + Add Constraint
+      {buttonLabel}
     </Button>
   );
 }
