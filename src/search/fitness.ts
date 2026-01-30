@@ -88,26 +88,35 @@ const SCORERS: Readonly<Record<ConstraintType, ConstraintScorer>> = {
 };
 
 // ---------------------------------------------------------------------------
-// Hard constraint checking (applies to ALL scoring modes)
+// Hard constraint checking (for efficiency/multiplier modes)
 // ---------------------------------------------------------------------------
 
 /**
- * Check hard constraints (atMost/atLeast) that apply in ALL scoring modes.
+ * Check hard constraints that apply in efficiency/multiplier scoring modes.
  * Returns true if all hard constraints pass, false if any are violated.
  *
- * - atMost: stat must not exceed the target value
- * - atLeast: stat must meet or exceed the target value
+ * - atMost: stat must not exceed the target value (always hard)
+ * - atLeast: stat must meet or exceed the target value (only hard in non-linear modes)
+ *
+ * In linear/constraints mode, atLeast is a soft penalty, not a hard disqualifier.
  */
 export function checkHardConstraints(
   stats: Stats,
   constraints: readonly SoftConstraint[],
+  scoringMode: ScoringMode = "linear",
 ): boolean {
   for (const c of constraints) {
     const val = stats[c.stat];
     const target = c.value ?? 0;
 
+    // atMost is always a hard constraint (exceeding limit = disqualified)
     if (c.type === "atMost" && val > target) return false;
-    if (c.type === "atLeast" && val < target) return false;
+
+    // atLeast is only hard in efficiency/multiplier modes
+    // In linear mode, it's a soft penalty handled by scoreAtLeast
+    if (scoringMode !== "linear" && c.type === "atLeast" && val < target) {
+      return false;
+    }
   }
   return true;
 }
@@ -165,8 +174,8 @@ export function computeFitness(
   scoringMode: ScoringMode = "linear",
   statWeights: Readonly<Record<StatName, number>> = DEFAULT_STAT_WEIGHTS,
 ): number {
-  // Hard constraints (atMost/atLeast) apply in ALL scoring modes
-  if (!checkHardConstraints(stats, constraints)) {
+  // Hard constraints check (mode-aware)
+  if (!checkHardConstraints(stats, constraints, scoringMode)) {
     return -Infinity;
   }
 

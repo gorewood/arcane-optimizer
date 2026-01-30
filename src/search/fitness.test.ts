@@ -42,12 +42,13 @@ describe("computeFitness", () => {
     expect(low).toBeGreaterThan(high);
   });
 
-  // 4. atLeast below threshold — hard constraint disqualifies
-  it("atLeast below threshold disqualifies build", () => {
+  // 4. atLeast below threshold — soft penalty in linear mode
+  it("atLeast below threshold applies negative penalty", () => {
     const c: SoftConstraint[] = [{ stat: "defense", type: "atLeast", value: 700, weight: 100 }];
     const score = computeFitness(makeStats({ defense: 500 }), c);
-    // Hard constraint: atLeast violations disqualify in ALL scoring modes
-    expect(score).toBe(-Infinity);
+    // Soft penalty: -((700 - 500) * 100 * 10) = -200000
+    // This allows builds to still be considered, just with lower scores
+    expect(score).toBe(-200000);
   });
 
   // 5. atLeast above threshold — small bonus (capped at 1× weight)
@@ -63,6 +64,14 @@ describe("computeFitness", () => {
     const c: SoftConstraint[] = [{ stat: "defense", type: "atLeast", value: 700, weight: 100 }];
     const score = computeFitness(makeStats({ defense: 700 }), c);
     expect(score).toBe(0);
+  });
+
+  // 6b. atLeast below threshold in efficiency mode — hard disqualification
+  it("atLeast below threshold disqualifies in efficiency mode", () => {
+    const c: SoftConstraint[] = [{ stat: "defense", type: "atLeast", value: 700, weight: 100 }];
+    const score = computeFitness(makeStats({ defense: 500 }), c, "efficiency");
+    // In efficiency/multiplier modes, atLeast is a hard constraint
+    expect(score).toBe(-Infinity);
   });
 
   // 7. atMost within limit — zero penalty

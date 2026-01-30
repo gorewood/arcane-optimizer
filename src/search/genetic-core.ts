@@ -150,6 +150,12 @@ function initPopulation(
     if (individual != null) pop.push(individual);
   }
 
+  if (pop.length === 0) {
+    throw new Error(
+      "No valid builds found. Constraints may be too strict for the available gear.",
+    );
+  }
+
   return pop;
 }
 
