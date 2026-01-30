@@ -4,6 +4,8 @@
 
 A gear loadout optimization tool for [Arcane Odyssey](https://arcane-odyssey.fandom.com/wiki/Arcane_Odyssey_Wiki). Find the best armor, accessories, enchantments, and gems to maximize your build's stats.
 
+**🎮 [Try It Now](https://gorewood.github.io/arcane-optimizer/)** — runs entirely in your browser, no account required.
+
 **Repository:** [github.com/gorewood/arcane-optimizer](https://github.com/gorewood/arcane-optimizer)
 
 ## Features
@@ -93,6 +95,18 @@ The optimizer multiplies each constraint's score by its weight, so a weight-10 c
 - No duplicate equipment pieces
 - Atlantean modifier restrictions
 
+### Scoring Modes
+
+The optimizer supports three scoring modes that determine how stat values translate to fitness:
+
+| Mode | Description | Best For |
+|------|-------------|----------|
+| **Linear** | Direct stat values × weights | Simple optimization, balanced builds |
+| **Efficiency** | Normalized scoring with diminishing returns | Builds with stat caps or thresholds |
+| **Multiplier** | In-game damage/defense formula | Accurate combat effectiveness |
+
+Each mode can be configured with stat-specific limits, minimums, and efficiency curves to match your playstyle.
+
 ## Stats Reference
 
 All stat names follow Arcane Odyssey Full Release v1.20:
@@ -124,7 +138,7 @@ All stat names follow Arcane Odyssey Full Release v1.20:
 
 ### Exhaustive Search (Default)
 
-The default search enumerates all valid equipment combinations for your enabled gear pool. Best for:
+The default search enumerates all valid equipment combinations for your enabled gear pool. It automatically filters items that don't contribute to your goal stats, reducing the search space. Best for:
 - Small to medium gear pools
 - Finding guaranteed optimal solutions
 - Quick searches with limited item selection
