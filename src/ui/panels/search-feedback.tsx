@@ -18,6 +18,8 @@ export interface ProgressState {
   readonly bestScore: number;
   readonly startTime: number;
   readonly resultsCount?: number;
+  /** Filter stats message for exhaustive search (null if no filtering). */
+  readonly filterMessage?: string | null;
 }
 
 export const INITIAL_PROGRESS: ProgressState = {
@@ -26,6 +28,7 @@ export const INITIAL_PROGRESS: ProgressState = {
   bestScore: 0,
   startTime: 0,
   resultsCount: 0,
+  filterMessage: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -64,6 +67,9 @@ export function SearchStatusBar(props: SearchStatusBarProps): React.JSX.Element 
     <Card className={`${cardClass} p-3 space-y-2`}>
       {isRunning && <ProgressBar checked={progress.checked} total={progress.total} />}
       <StatusRow isRunning={isRunning} isComplete={isComplete} stats={stats} exitMetadata={exitMetadata} />
+      {progress.filterMessage != null && (
+        <div className="text-xs text-text-muted">{progress.filterMessage}</div>
+      )}
     </Card>
   );
 }

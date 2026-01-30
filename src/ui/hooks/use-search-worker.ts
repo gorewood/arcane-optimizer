@@ -11,6 +11,7 @@ import { buildMergedGearPool } from "@/data/merged-loaders";
 import type { EquipmentPiece, GearPool, SearchResult, SoftConstraint } from "@/models/types";
 import { expandEquipment } from "@/search/expand-variants";
 import { DEFAULT_HARD_CONSTRAINTS } from "@/search/constraints";
+import { filterPoolByGoals, formatFilterStats } from "@/search/pool-filter";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useGearPoolStore } from "@/stores/gear-pool-store";
 import { useSearchStore, type GAParams } from "@/stores/search-store";
@@ -30,6 +31,8 @@ export interface ProgressState {
   readonly bestScore: number;
   readonly startTime: number;
   readonly resultsCount: number;
+  /** Filter stats for exhaustive search (null if no filtering applied). */
+  readonly filterMessage: string | null;
 }
 
 export const INITIAL_PROGRESS: ProgressState = {
@@ -38,6 +41,7 @@ export const INITIAL_PROGRESS: ProgressState = {
   bestScore: 0,
   startTime: 0,
   resultsCount: 0,
+  filterMessage: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -302,9 +306,19 @@ interface SearchContext {
 
 function executeSearch(ctx: SearchContext): void {
   const { startSearch, setResults, setPreviewResults, setError, setExpandedCards, setProgress, workerRef, coordinatorRef, islandCoordinatorRef, algorithm, gaParams, constraints, enabledVariants, ids, getters, maxResults } = ctx;
-  const gearPool = buildFilteredGearPool(getters, ids, enabledVariants);
+  const basePool = buildFilteredGearPool(getters, ids, enabledVariants);
+
+  // For exhaustive search, filter pool to items contributing to goal stats (or with sockets)
+  let gearPool = basePool;
+  let filterMessage: string | null = null;
+  if (algorithm === "exhaustive") {
+    const { pool: filteredPool, stats } = filterPoolByGoals(basePool, constraints);
+    gearPool = filteredPool;
+    filterMessage = formatFilterStats(stats);
+  }
+
   startSearch();
-  setProgress({ ...INITIAL_PROGRESS, startTime: Date.now() });
+  setProgress({ ...INITIAL_PROGRESS, startTime: Date.now(), filterMessage });
 
   const onProg = (c: number, t: number, b: number, r: readonly SearchResult[]): void => {
     setProgress((p) => ({ ...p, checked: c, total: t, bestScore: b, resultsCount: r.length }));
