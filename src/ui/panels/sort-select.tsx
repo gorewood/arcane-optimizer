@@ -11,9 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export type SortOption =
   | "name-asc"
   | "name-desc"
-  | "defense-desc"
-  | "power-desc"
-  | "dexterity-desc"
   | "sockets-desc"
   | "set-name"
   | "source-name";
@@ -21,9 +18,6 @@ export type SortOption =
 export const SORT_OPTIONS: readonly { readonly value: SortOption; readonly label: string }[] = [
   { value: "name-asc", label: "Name (A-Z)" },
   { value: "name-desc", label: "Name (Z-A)" },
-  { value: "defense-desc", label: "Defense (High)" },
-  { value: "power-desc", label: "Power (High)" },
-  { value: "dexterity-desc", label: "Dexterity (High)" },
   { value: "sockets-desc", label: "Sockets (High)" },
   { value: "set-name", label: "Set Name" },
   { value: "source-name", label: "Source" },
@@ -70,7 +64,6 @@ interface Sortable {
   readonly setName?: string | undefined;
   readonly source?: string | undefined;
   readonly socketCount?: number | undefined;
-  readonly baseStats?: Partial<Record<string, number>> | undefined;
 }
 
 export function sortItems<T extends Sortable>(
@@ -85,15 +78,6 @@ export function sortItems<T extends Sortable>(
       break;
     case "name-desc":
       sorted.sort((a, b) => b.name.localeCompare(a.name));
-      break;
-    case "defense-desc":
-      sorted.sort((a, b) => (b.baseStats?.defense ?? 0) - (a.baseStats?.defense ?? 0));
-      break;
-    case "power-desc":
-      sorted.sort((a, b) => (b.baseStats?.power ?? 0) - (a.baseStats?.power ?? 0));
-      break;
-    case "dexterity-desc":
-      sorted.sort((a, b) => (b.baseStats?.dexterity ?? 0) - (a.baseStats?.dexterity ?? 0));
       break;
     case "sockets-desc":
       sorted.sort((a, b) => (b.socketCount ?? 0) - (a.socketCount ?? 0));
