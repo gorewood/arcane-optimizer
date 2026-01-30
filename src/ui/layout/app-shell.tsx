@@ -3,6 +3,7 @@ import { GearInventoryPanel, DataManagementPanel, HelpPanel } from "@/ui/panels"
 import { OptimizerPage } from "@/ui/panels/optimizer-page";
 import { useUIStore } from "@/stores/ui-store";
 import type { UIState } from "@/stores/ui-store";
+import { DataControls } from "./data-controls";
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -42,7 +43,7 @@ export function AppShell(): React.JSX.Element {
 
       {/* Tab bar */}
       <nav className="border-b border-border-default bg-bg-secondary">
-        <div className="mx-auto max-w-5xl flex flex-wrap gap-1 px-4">
+        <div className="mx-auto max-w-5xl flex items-center gap-1 px-4">
           {TABS.map((tab) => (
             <TabButton
               key={tab.id}
@@ -51,6 +52,8 @@ export function AppShell(): React.JSX.Element {
               onSelect={setActivePanel}
             />
           ))}
+          <div className="flex-1" />
+          <DataControls />
         </div>
       </nav>
 

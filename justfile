@@ -75,3 +75,7 @@ add-component name:
 # Remove build artifacts
 clean:
     rm -rf dist node_modules/.tmp coverage
+
+# Merge a user data export into bundled equipment.json
+merge-export file:
+    node scripts/merge-user-export.cjs {{file}}
