@@ -163,13 +163,35 @@ export const softConstraintSchema = z
 // Profiles
 // ---------------------------------------------------------------------------
 
+/** Scoring mode for fitness evaluation. */
+const scoringModeSchema = z.enum(["linear", "efficiency", "multiplier"]);
+
+/** Stat weights schema (all 12 stats required). */
+const statWeightsSchema = z.object({
+  power: z.number(),
+  defense: z.number(),
+  size: z.number(),
+  dexterity: z.number(),
+  range: z.number(),
+  haste: z.number(),
+  insanity: z.number(),
+  warding: z.number(),
+  drawback: z.number(),
+  regeneration: z.number(),
+  pierce: z.number(),
+  resistance: z.number(),
+}).readonly();
+
 /** A default profile shipped with the app. */
 export const defaultProfileSchema = z
   .object({
     id: z.string(),
     name: z.string(),
     version: z.number().int().positive(),
+    scoringMode: scoringModeSchema,
     constraints: z.array(softConstraintSchema).readonly(),
+    statWeights: statWeightsSchema,
+    enabledVariants: z.array(z.string()).readonly(),
   })
   .readonly();
 
@@ -186,7 +208,10 @@ export const userProfileSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    scoringMode: scoringModeSchema,
     constraints: z.array(softConstraintSchema).readonly(),
+    statWeights: statWeightsSchema,
+    enabledVariants: z.array(z.string()).readonly(),
     baseVersion: z.number().int().optional(), // Version of default it was based on
     deleted: z.boolean().optional(), // True if user deleted a default profile
     createdAt: z.number(),

@@ -19,7 +19,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useProfileStore } from "@/stores/profile-store";
 import type { SoftConstraint } from "@/models/types";
@@ -185,43 +184,37 @@ function ImportDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Action Row Components
+// Profile Secondary Actions
 // ---------------------------------------------------------------------------
 
-function ProfileActionsRow({
-  selectedProfile,
-  selectedProfileId,
+function ProfileSecondaryActions({
+  profile,
+  profileId,
   onReset,
   onDelete,
-  onExport,
-  onOpenImport,
 }: {
-  readonly selectedProfile: Profile | undefined;
-  readonly selectedProfileId: string | null;
+  readonly profile: Profile | undefined;
+  readonly profileId: string | null;
   readonly onReset: () => void;
   readonly onDelete: () => void;
-  readonly onExport: () => void;
-  readonly onOpenImport: () => void;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
+  const showReset = profile?.isDefault && profile.isModified;
+  const showDelete = profileId && !profile?.isDefault;
+
+  if (!showReset && !showDelete) return null;
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {selectedProfile?.isDefault && selectedProfile.isModified && (
+    <div className="flex items-center gap-2">
+      {showReset && (
         <Button variant="ghost" size="xs" onClick={onReset} className="text-text-muted hover:text-accent-gold" title="Reset to default">
           <RotateCcw className="w-3 h-3 mr-1" />Reset
         </Button>
       )}
-      {selectedProfileId && (
+      {showDelete && (
         <Button variant="ghost" size="xs" onClick={onDelete} className="text-text-muted hover:text-red-400" title="Delete profile">
           <Trash2 className="w-3 h-3 mr-1" />Delete
         </Button>
       )}
-      <div className="flex-1" />
-      <Button variant="ghost" size="xs" onClick={onExport} className="text-text-muted hover:text-accent-gold" title="Export profiles">
-        <Download className="w-3 h-3 mr-1" />Export
-      </Button>
-      <Button variant="ghost" size="xs" onClick={onOpenImport} className="text-text-muted hover:text-accent-gold" title="Import profiles">
-        <Upload className="w-3 h-3 mr-1" />Import
-      </Button>
     </div>
   );
 }
@@ -249,8 +242,8 @@ export function ProfileSelector({ constraints, onApplyProfile }: ProfileSelector
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
   const handleApply = (): void => { if (selectedProfile) onApplyProfile(selectedProfile.name, selectedProfile.constraints); };
-  const handleSave = (): void => { if (selectedProfileId) updateProfile(selectedProfileId, constraints); };
-  const handleSaveAsNew = (name: string): void => { selectProfile(createProfile(name, constraints)); setSaveDialogOpen(false); };
+  const handleSave = (): void => { if (selectedProfileId) updateProfile(selectedProfileId, { constraints }); };
+  const handleSaveAsNew = (name: string): void => { selectProfile(createProfile(name, { constraints })); setSaveDialogOpen(false); };
   const handleDelete = (): void => { if (selectedProfileId && confirm("Delete this profile?")) deleteProfile(selectedProfileId); };
   const handleReset = (): void => { if (selectedProfileId && selectedProfile?.isDefault && confirm("Reset to default?")) resetToDefault(selectedProfileId); };
   const handleExport = (): void => { navigator.clipboard.writeText(exportProfiles()).then(() => { alert("Copied"); }, () => { /* ignore */ }); };
@@ -262,9 +255,15 @@ export function ProfileSelector({ constraints, onApplyProfile }: ProfileSelector
         <ProfileDropdown profiles={profiles} selectedId={selectedProfileId} onSelect={selectProfile} onSaveNew={() => { setSaveDialogOpen(true); }} />
         <Button variant="outline" size="xs" onClick={handleApply} disabled={!selectedProfile}>Apply</Button>
         <Button variant="outline" size="xs" onClick={handleSave} disabled={!selectedProfileId}>Save</Button>
-        {selectedProfile && <Badge className="bg-accent-gold/20 text-accent-gold border border-accent-gold/40">{selectedProfile.name}</Badge>}
+        <div className="flex-1" />
+        <Button variant="ghost" size="xs" onClick={handleExport} className="text-text-muted hover:text-accent-gold" title="Export profiles">
+          <Download className="w-3 h-3 mr-1" />Export
+        </Button>
+        <Button variant="ghost" size="xs" onClick={() => { setImportDialogOpen(true); }} className="text-text-muted hover:text-accent-gold" title="Import profiles">
+          <Upload className="w-3 h-3 mr-1" />Import
+        </Button>
       </div>
-      <ProfileActionsRow selectedProfile={selectedProfile} selectedProfileId={selectedProfileId} onReset={handleReset} onDelete={handleDelete} onExport={handleExport} onOpenImport={() => { setImportDialogOpen(true); }} />
+      <ProfileSecondaryActions profile={selectedProfile} profileId={selectedProfileId} onReset={handleReset} onDelete={handleDelete} />
       <SaveDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen} onSave={handleSaveAsNew} />
       <ImportDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} onImport={importProfiles} />
     </div>

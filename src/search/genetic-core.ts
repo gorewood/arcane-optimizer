@@ -146,7 +146,7 @@ function initPopulation(
     attempts++;
     const chromo = randomChromosome(pool);
     repair(chromo, pool, undefined);
-    const individual = evaluate(chromo, pool, constraints, fitness);
+    const individual = evaluate({ chromo, pool, constraints, fitness });
     if (individual != null) pop.push(individual);
   }
 
@@ -220,8 +220,8 @@ function produceOffspring(
   repair(c1, pool, undefined);
   repair(c2, pool, undefined);
 
-  const eval1 = evaluate(c1, pool, constraints, fitness);
-  const eval2 = evaluate(c2, pool, constraints, fitness);
+  const eval1 = evaluate({ chromo: c1, pool, constraints, fitness });
+  const eval2 = evaluate({ chromo: c2, pool, constraints, fitness });
   if (eval1 != null) nextPop.push(eval1);
   if (eval2 != null) nextPop.push(eval2);
 }
@@ -270,7 +270,7 @@ function incorporateMigrants(
   const evaluatedMigrants: EvaluatedIndividual[] = [];
   for (const chromo of migrants) {
     repair(chromo, pool, undefined);
-    const ind = evaluate(chromo, pool, constraints, fitness);
+    const ind = evaluate({ chromo, pool, constraints, fitness });
     if (ind != null) evaluatedMigrants.push(ind);
   }
 

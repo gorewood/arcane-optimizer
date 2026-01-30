@@ -6,13 +6,16 @@
  */
 
 import type { SoftConstraint } from "@/models/types";
+import type { ScoringMode } from "@/search/scoring-mode";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFitnessStore } from "@/stores/fitness-store";
 import { useUIStore } from "@/stores/ui-store";
 import { ProfileSelector } from "./profile-selector";
 import { ConstraintRow } from "./constraint-row";
 import { VariantSelector } from "./variant-selector";
+import { StatWeightsEditor } from "./stat-weights-editor";
 
 // ---------------------------------------------------------------------------
 // Default constraint for the "Add" button
@@ -25,6 +28,25 @@ const DEFAULT_CONSTRAINT: SoftConstraint = {
 };
 
 // ---------------------------------------------------------------------------
+// Scoring Mode Descriptions
+// ---------------------------------------------------------------------------
+
+const SCORING_MODE_INFO: Record<ScoringMode, { label: string; description: string }> = {
+  linear: {
+    label: "Constraints",
+    description: "Target specific stat values with thresholds and priorities.",
+  },
+  efficiency: {
+    label: "Efficiency",
+    description: "Normalized stat sum. Power 3:1, defense 1:3.",
+  },
+  multiplier: {
+    label: "Multiplier",
+    description: "Game-accurate with diminishing returns. Rewards balance.",
+  },
+};
+
+// ---------------------------------------------------------------------------
 // FitnessPanel
 // ---------------------------------------------------------------------------
 
@@ -34,13 +56,18 @@ export function FitnessPanel(): React.JSX.Element {
   const addConstraint = useFitnessStore((s) => s.addConstraint);
   const updateConstraint = useFitnessStore((s) => s.updateConstraint);
   const removeConstraint = useFitnessStore((s) => s.removeConstraint);
+  const scoringMode = useFitnessStore((s) => s.scoringMode);
+  const setScoringMode = useFitnessStore((s) => s.setScoringMode);
+
+  const isConstraintMode = scoringMode === "linear";
 
   return (
     <div className="space-y-4 p-4">
-      <ProfileSelector
-        constraints={constraints}
-        onApplyProfile={loadPreset}
-      />
+      <ProfileSelector constraints={constraints} onApplyProfile={loadPreset} />
+
+      <Separator className="bg-border-subtle" />
+
+      <ScoringModeSelector value={scoringMode} onChange={setScoringMode} />
 
       <Separator className="bg-border-subtle" />
 
@@ -57,6 +84,64 @@ export function FitnessPanel(): React.JSX.Element {
       <div className="flex items-center gap-3">
         <AddConstraintButton onAdd={addConstraint} />
         <HelpLink />
+      </div>
+
+      {!isConstraintMode && (
+        <>
+          <Separator className="bg-border-subtle" />
+          <StatWeightsEditor />
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ScoringModeSelector
+// ---------------------------------------------------------------------------
+
+/** Type-safe list of scoring modes for iteration. */
+const SCORING_MODES: readonly ScoringMode[] = ["linear", "efficiency", "multiplier"] as const;
+
+function ScoringModeSelector({
+  value,
+  onChange,
+}: {
+  readonly value: ScoringMode;
+  readonly onChange: (mode: ScoringMode) => void;
+}): React.JSX.Element {
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-accent-gold px-1">
+        Scoring Mode
+      </h3>
+      <div className="flex gap-1">
+        {SCORING_MODES.map((mode) => {
+          const info = SCORING_MODE_INFO[mode];
+          const isActive = value === mode;
+          return (
+            <Tooltip key={mode}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => { onChange(mode); }}
+                  className={`
+                    px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+                    ${isActive
+                      ? "bg-accent-gold/20 text-accent-gold border border-accent-gold/50"
+                      : "bg-bg-surface text-text-secondary border border-border-default hover:text-text-primary hover:border-border-subtle"
+                    }
+                  `}
+                >
+                  {info.label}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {info.description}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
       </div>
     </div>
   );

@@ -197,6 +197,9 @@ export interface GearPool {
   readonly gems: readonly Gem[];
 }
 
+/** Available scoring modes for fitness evaluation. */
+export type ScoringMode = "linear" | "efficiency" | "multiplier";
+
 /** Configuration options for a search run. */
 export interface SearchOptions {
   readonly maxResults: number;
@@ -205,6 +208,10 @@ export interface SearchOptions {
   readonly generations?: number | undefined;
   readonly mutationRate?: number | undefined;
   readonly crossoverRate?: number | undefined;
+  /** Scoring mode for fitness evaluation. Defaults to "linear". */
+  readonly scoringMode?: ScoringMode | undefined;
+  /** User-adjustable stat weights (0-200, where 100 = normal importance). */
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 /** A single search result with its scored loadout. */

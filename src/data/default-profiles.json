@@ -1,10 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "profiles": [
     {
       "id": "example-dexterity-mage",
       "name": "Dexterity Mage Example",
       "version": 1,
+      "scoringMode": "linear",
+      "statWeights": {
+        "power": 100, "defense": 100, "size": 30, "dexterity": 30,
+        "range": 30, "haste": 10, "regeneration": 100, "resistance": 20,
+        "pierce": 25, "insanity": 0, "warding": 0, "drawback": 0
+      },
+      "enabledVariants": [],
       "constraints": [
         { "stat": "defense", "type": "atLeast", "value": 1000, "weight": 100 },
         { "stat": "power", "type": "atLeast", "value": 130, "weight": 90 },
@@ -17,6 +24,13 @@
       "id": "example-max-defense",
       "name": "Maximum Defense Build",
       "version": 1,
+      "scoringMode": "linear",
+      "statWeights": {
+        "power": 100, "defense": 100, "size": 30, "dexterity": 30,
+        "range": 30, "haste": 10, "regeneration": 100, "resistance": 20,
+        "pierce": 25, "insanity": 0, "warding": 0, "drawback": 0
+      },
+      "enabledVariants": [],
       "constraints": [
         { "stat": "defense", "type": "maximize", "weight": 100 },
         { "stat": "power", "type": "atLeast", "value": 50, "weight": 70 },
@@ -28,12 +42,51 @@
       "id": "example-reckless-power-size",
       "name": "Reckless Power Size",
       "version": 1,
+      "scoringMode": "linear",
+      "statWeights": {
+        "power": 100, "defense": 100, "size": 30, "dexterity": 30,
+        "range": 30, "haste": 10, "regeneration": 100, "resistance": 20,
+        "pierce": 25, "insanity": 0, "warding": 0, "drawback": 0
+      },
+      "enabledVariants": [],
       "constraints": [
         { "stat": "defense", "type": "atLeast", "value": 600, "weight": 80 },
         { "stat": "power", "type": "atLeast", "value": 200, "weight": 100 },
         { "stat": "size", "type": "maximize", "weight": 90 },
         { "stat": "insanity", "type": "atMost", "value": 2, "weight": 100 },
         { "stat": "drawback", "type": "atMost", "value": 4, "weight": 100 }
+      ]
+    },
+    {
+      "id": "default-efficiency",
+      "name": "Efficiency Build",
+      "version": 1,
+      "scoringMode": "efficiency",
+      "statWeights": {
+        "power": 100, "defense": 100, "size": 30, "dexterity": 30,
+        "range": 30, "haste": 10, "regeneration": 100, "resistance": 20,
+        "pierce": 25, "insanity": 0, "warding": 0, "drawback": 0
+      },
+      "enabledVariants": [],
+      "constraints": [
+        { "stat": "insanity", "type": "atMost", "value": 1, "weight": 100 },
+        { "stat": "drawback", "type": "atMost", "value": 2, "weight": 100 }
+      ]
+    },
+    {
+      "id": "default-multiplier",
+      "name": "Multiplier Build",
+      "version": 1,
+      "scoringMode": "multiplier",
+      "statWeights": {
+        "power": 100, "defense": 100, "size": 30, "dexterity": 30,
+        "range": 30, "haste": 10, "regeneration": 100, "resistance": 20,
+        "pierce": 25, "insanity": 0, "warding": 0, "drawback": 0
+      },
+      "enabledVariants": [],
+      "constraints": [
+        { "stat": "insanity", "type": "atMost", "value": 1, "weight": 100 },
+        { "stat": "drawback", "type": "atMost", "value": 2, "weight": 100 }
       ]
     }
   ]

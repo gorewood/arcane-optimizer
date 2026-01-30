@@ -8,7 +8,12 @@
  * All functions are pure — no side effects, no mutation.
  */
 
-import type { ConstraintType, SoftConstraint, Stats } from "@/models/types";
+import type { ConstraintType, SoftConstraint, StatName, Stats } from "@/models/types";
+
+import type { ScoringMode } from "./scoring-mode";
+import { DEFAULT_STAT_WEIGHTS } from "./scoring-mode";
+import { computeEfficiencyScore } from "./efficiency-scoring";
+import { computeMultiplierScore } from "./multiplier-scoring";
 
 // ---------------------------------------------------------------------------
 // Constraint scorers — one per ConstraintType
@@ -83,6 +88,68 @@ const SCORERS: Readonly<Record<ConstraintType, ConstraintScorer>> = {
 };
 
 // ---------------------------------------------------------------------------
+// Hard constraint checking (applies to ALL scoring modes)
+// ---------------------------------------------------------------------------
+
+/**
+ * Check hard constraints (atMost/atLeast) that apply in ALL scoring modes.
+ * Returns true if all hard constraints pass, false if any are violated.
+ *
+ * - atMost: stat must not exceed the target value
+ * - atLeast: stat must meet or exceed the target value
+ */
+export function checkHardConstraints(
+  stats: Stats,
+  constraints: readonly SoftConstraint[],
+): boolean {
+  for (const c of constraints) {
+    const val = stats[c.stat];
+    const target = c.value ?? 0;
+
+    if (c.type === "atMost" && val > target) return false;
+    if (c.type === "atLeast" && val < target) return false;
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Linear constraint-based scoring
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute linear constraint-based score for a stat block.
+ * Returns -Infinity if any constraint disqualifies the loadout.
+ */
+function computeLinearScore(
+  stats: Stats,
+  constraints: readonly SoftConstraint[],
+): number {
+  let score = 0;
+
+  for (const c of constraints) {
+    const val = stats[c.stat];
+    const value = c.value ?? 0;
+
+    // Guard against invalid constraint types (can happen with corrupted localStorage)
+    const constraintType = c.type as unknown;
+    if (typeof constraintType !== "string" || !(constraintType in SCORERS)) {
+      throw new Error(
+        `Invalid constraint type "${c.type}" for stat "${c.stat}". ` +
+        `Try clearing site data (Settings → Clear Local Data).`
+      );
+    }
+
+    const scorer = SCORERS[c.type];
+    const result = scorer(val, c.weight, value, c.hardCap);
+
+    if (result === null) return -Infinity;
+    score += result;
+  }
+
+  return score;
+}
+
+// ---------------------------------------------------------------------------
 // Core fitness function
 // ---------------------------------------------------------------------------
 
@@ -95,31 +162,23 @@ const SCORERS: Readonly<Record<ConstraintType, ConstraintScorer>> = {
 export function computeFitness(
   stats: Stats,
   constraints: readonly SoftConstraint[],
+  scoringMode: ScoringMode = "linear",
+  statWeights: Readonly<Record<StatName, number>> = DEFAULT_STAT_WEIGHTS,
 ): number {
-  let score = 0;
-
-  for (const c of constraints) {
-    const val = stats[c.stat];
-    const value = c.value ?? 0;
-
-    // Guard against invalid constraint types (can happen with corrupted localStorage)
-    // Cast to unknown first to bypass TypeScript's type narrowing
-    const constraintType = c.type as unknown;
-    if (typeof constraintType !== "string" || !(constraintType in SCORERS)) {
-      throw new Error(
-        `Invalid constraint type "${c.type}" for stat "${c.stat}". ` +
-        `Try clearing site data (Settings → Clear Local Data).`
-      );
-    }
-
-    const scorer = SCORERS[c.type];
-    // hardCap is only used by 'between' (as max value)
-    const result = scorer(val, c.weight, value, c.hardCap);
-
-    if (result === null) return -Infinity;
-    score += result;
+  // Hard constraints (atMost/atLeast) apply in ALL scoring modes
+  if (!checkHardConstraints(stats, constraints)) {
+    return -Infinity;
   }
 
-  return score;
+  // Mode-specific scoring
+  if (scoringMode === "efficiency") {
+    return computeEfficiencyScore(stats, statWeights);
+  }
+  if (scoringMode === "multiplier") {
+    return computeMultiplierScore(stats, statWeights);
+  }
+
+  // Linear mode: constraint-based scoring
+  return computeLinearScore(stats, constraints);
 }
 

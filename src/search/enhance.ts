@@ -14,6 +14,7 @@ import type {
   HardConstraints,
   Loadout,
   Modifier,
+  ScoringMode,
   SoftConstraint,
   StatName,
   Stats,
@@ -99,10 +100,12 @@ interface GemAssignParams {
   readonly socketCount: number;
   readonly fitness: readonly SoftConstraint[];
   readonly maxDrawback: number;
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 function assignGemsWithinBudget(params: GemAssignParams): readonly Gem[] {
-  const { baseStats, availableGems, socketCount, fitness, maxDrawback } = params;
+  const { baseStats, availableGems, socketCount, fitness, maxDrawback, scoringMode, statWeights } = params;
   if (socketCount <= 0 || availableGems.length === 0) return [];
 
   const gems: Gem[] = [];
@@ -119,7 +122,7 @@ function assignGemsWithinBudget(params: GemAssignParams): readonly Gem[] {
       if (usedDrawback + gemDrawback > maxDrawback) continue;
 
       const trialStats = sumStats(currentStats, gem.stats);
-      const score = computeFitness(trialStats, fitness);
+      const score = computeFitness(trialStats, fitness, scoringMode, statWeights);
       if (score > bestScore) {
         bestScore = score;
         bestGem = gem;
@@ -206,6 +209,8 @@ interface EvalContext {
   readonly otherSlotStats: Stats;
   readonly fitness: readonly SoftConstraint[];
   readonly gemDrawbackBudget: number;
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 function evaluateEnchantModPair(
@@ -234,6 +239,8 @@ function evaluateEnchantModPair(
     socketCount: sockets,
     fitness: ctx.fitness,
     maxDrawback: gemBudget,
+    scoringMode: ctx.scoringMode,
+    statWeights: ctx.statWeights,
   });
 
   const fullSlot: EquippedSlot = {
@@ -248,7 +255,7 @@ function evaluateEnchantModPair(
   const finalStats = computeLoadoutStatsWithSlot(
     ctx.otherSlotStats, fullSlot, atlanteanChoice,
   );
-  const score = computeFitness(finalStats, ctx.fitness);
+  const score = computeFitness(finalStats, ctx.fitness, ctx.scoringMode, ctx.statWeights);
 
   return { enchantment, modifier, gems, atlanteanChoice, score };
 }
@@ -263,6 +270,8 @@ interface FindBestParams {
   readonly hardConstraints: HardConstraints;
   readonly otherSlotStats: Stats;
   readonly fitness: readonly SoftConstraint[];
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -380,12 +389,18 @@ function extractBudgetCaps(
 // Budget-aware enhancement assignment (public)
 // ---------------------------------------------------------------------------
 
-export function budgetAwareAssign(
-  loadout: Loadout,
-  pool: GearPool,
-  hardConstraints: HardConstraints,
-  fitness: readonly SoftConstraint[],
-): EnhancedLoadoutResult {
+/** Options for budget-aware enhancement assignment. */
+export interface BudgetAssignOptions {
+  readonly loadout: Loadout;
+  readonly pool: GearPool;
+  readonly hardConstraints: HardConstraints;
+  readonly fitness: readonly SoftConstraint[];
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
+}
+
+export function budgetAwareAssign(options: BudgetAssignOptions): EnhancedLoadoutResult {
+  const { loadout, pool, hardConstraints, fitness, scoringMode, statWeights } = options;
   const state = initSlotState(loadout);
   const caps = extractBudgetCaps(fitness, hardConstraints);
   // Account for base equipment drawback when initializing enhancement budget
@@ -400,7 +415,7 @@ export function budgetAwareAssign(
 
     const otherStats = subtractStats(state.runningTotal, contribution);
     const best = findBestBudgetSlot({
-      slot, pool, hardConstraints, otherSlotStats: otherStats, fitness,
+      slot, pool, hardConstraints, otherSlotStats: otherStats, fitness, scoringMode, statWeights,
     }, state.runningTotal, remainingDrawback, caps.maxInsanity);
 
     updateSlotState(state, i, best);
@@ -420,12 +435,12 @@ function findBestBudgetSlot(
   drawbackBudget: number,
   insanityCap: number,
 ): SlotCandidate {
-  const { slot, pool, hardConstraints, otherSlotStats, fitness } = params;
+  const { slot, pool, hardConstraints, otherSlotStats, fitness, scoringMode, statWeights } = params;
   const category = slotCategory(slot);
   const enchantments = getApplicableEnchantments(category, pool.enchantments);
   const applicableMods = getApplicableModifiers(slot.piece, pool.modifiers);
   const ctx: EvalContext = {
-    slot, pool, otherSlotStats, fitness, gemDrawbackBudget: drawbackBudget,
+    slot, pool, otherSlotStats, fitness, gemDrawbackBudget: drawbackBudget, scoringMode, statWeights,
   };
 
   let best: SlotCandidate = {

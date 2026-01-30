@@ -28,3 +28,19 @@ export { GeneticSearch } from "./genetic";
 
 export type { EnhancedLoadoutResult } from "./enhance";
 export { budgetAwareAssign } from "./enhance";
+
+export type { ScoringConfig, ScoringMode } from "./scoring-mode";
+export { DEFAULT_STAT_WEIGHTS } from "./scoring-mode";
+
+export {
+  computeEfficiencyScore,
+  STAT_EFFICIENCY_RATIOS,
+} from "./efficiency-scoring";
+
+export {
+  BASE_ATTACK,
+  BASE_HEALTH,
+  computeMultiplierScore,
+  secondaryStatMultiplier,
+  STAT_FORMULA_WEIGHTS,
+} from "./multiplier-scoring";

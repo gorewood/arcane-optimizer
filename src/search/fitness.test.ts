@@ -42,12 +42,12 @@ describe("computeFitness", () => {
     expect(low).toBeGreaterThan(high);
   });
 
-  // 4. atLeast below threshold — heavy penalty
-  it("atLeast below threshold applies heavy penalty", () => {
+  // 4. atLeast below threshold — hard constraint disqualifies
+  it("atLeast below threshold disqualifies build", () => {
     const c: SoftConstraint[] = [{ stat: "defense", type: "atLeast", value: 700, weight: 100 }];
     const score = computeFitness(makeStats({ defense: 500 }), c);
-    // Penalty: -(700 - 500) * 100 * 10 = -200_000
-    expect(score).toBe(-200_000);
+    // Hard constraint: atLeast violations disqualify in ALL scoring modes
+    expect(score).toBe(-Infinity);
   });
 
   // 5. atLeast above threshold — small bonus (capped at 1× weight)
@@ -158,9 +158,9 @@ describe("Default Profiles", () => {
   const TEST_PROFILES = getTestProfiles();
   const TEST_PROFILE_NAMES = getTestProfileNames();
 
-  // 19. Has 3 entries
-  it("has exactly 3 profiles", () => {
-    expect(Object.keys(TEST_PROFILES)).toHaveLength(3);
+  // 19. Has 5 entries (3 original + 2 new scoring mode profiles)
+  it("has exactly 5 profiles", () => {
+    expect(Object.keys(TEST_PROFILES)).toHaveLength(5);
   });
 
   // 20. Each profile has valid constraint structure
@@ -235,7 +235,7 @@ describe("Profile Names", () => {
     expect(TEST_PROFILE_NAMES).toEqual(Object.keys(TEST_PROFILES));
   });
 
-  it("contains all 3 profile names", () => {
-    expect(TEST_PROFILE_NAMES).toHaveLength(3);
+  it("contains all 5 profile names", () => {
+    expect(TEST_PROFILE_NAMES).toHaveLength(5);
   });
 });

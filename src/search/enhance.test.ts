@@ -116,7 +116,7 @@ describe("atlanteanOnly modifier constraint", () => {
       { stat: "defense", type: "maximize", weight: 1 },
     ];
 
-    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign({ loadout, pool, hardConstraints: DEFAULT_HARD_CONSTRAINTS, fitness });
 
     // Set pieces (slots 0-2) should not have Frozen modifier
     const [s0, s1, s2] = result.loadout.slots;
@@ -140,7 +140,7 @@ describe("atlanteanOnly modifier constraint", () => {
       { stat: "defense", type: "maximize", weight: 1 },
     ];
 
-    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign({ loadout, pool, hardConstraints: DEFAULT_HARD_CONSTRAINTS, fitness });
 
     const [s0, s1, s2, s3, s4] = result.loadout.slots;
 
@@ -179,7 +179,7 @@ describe("budgetAwareAssign", () => {
       { stat: "insanity", type: "atMost", value: 1, weight: 100 },
     ];
 
-    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign({ loadout, pool, hardConstraints: DEFAULT_HARD_CONSTRAINTS, fitness });
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
     // Insanity must be <= max(warding, soft constraint value of 1)
@@ -208,7 +208,7 @@ describe("budgetAwareAssign", () => {
       { stat: "drawback", type: "atMost", value: 2, weight: 100 },
     ];
 
-    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign({ loadout, pool, hardConstraints: DEFAULT_HARD_CONSTRAINTS, fitness });
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
     expect(stats.drawback).toBeLessThanOrEqual(2);
@@ -243,7 +243,7 @@ describe("budgetAwareAssign", () => {
     ];
 
     // Constraint value: 5 is used as the budget limit
-    const result = budgetAwareAssign(loadout, pool, DEFAULT_HARD_CONSTRAINTS, fitness);
+    const result = budgetAwareAssign({ loadout, pool, hardConstraints: DEFAULT_HARD_CONSTRAINTS, fitness });
     const stats = computeLoadoutStats(result.loadout, result.atlanteanChoices);
 
     // Should use the value of 5 as hard limit

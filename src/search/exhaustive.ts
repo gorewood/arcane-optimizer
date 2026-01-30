@@ -12,6 +12,7 @@ import type {
   GearPool,
   HardConstraints,
   Loadout,
+  ScoringMode,
   SearchOptions,
   SearchResult,
   SearchStrategy,
@@ -184,16 +185,18 @@ interface ScoreInput {
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
   readonly atlanteanChoices?: ReadonlyMap<number, StatName> | undefined;
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 /** Validate and score a loadout. Returns null if invalid or disqualified. */
 function scoreLoadout(input: ScoreInput): SearchResult | null {
-  const { loadout, constraints, fitness, atlanteanChoices } = input;
+  const { loadout, constraints, fitness, atlanteanChoices, scoringMode, statWeights } = input;
   const validation = validateLoadout(loadout, constraints);
   if (!validation.valid) return null;
 
   const stats: Stats = computeLoadoutStats(loadout, atlanteanChoices);
-  const score = computeFitness(stats, fitness);
+  const score = computeFitness(stats, fitness, scoringMode, statWeights);
   if (score === -Infinity) return null;
 
   return { loadout, score, stats, atlanteanChoices };
@@ -216,14 +219,23 @@ interface EnhanceConfig {
   readonly pool: GearPool;
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 function enhanceLoadout(
   loadout: Loadout,
   config: EnhanceConfig,
 ): EnhancedLoadoutResult {
-  const { pool, constraints, fitness } = config;
-  return budgetAwareAssign(loadout, pool, constraints, fitness);
+  const { pool, constraints, fitness, scoringMode, statWeights } = config;
+  return budgetAwareAssign({
+    loadout,
+    pool,
+    hardConstraints: constraints,
+    fitness,
+    scoringMode,
+    statWeights,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -234,6 +246,8 @@ interface SearchLoopParams {
   readonly gearPool: GearPool;
   readonly constraints: HardConstraints;
   readonly fitness: readonly SoftConstraint[];
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
 }
 
 interface SearchLoopConfig {
@@ -255,6 +269,8 @@ function processCombo(
     constraints: enhanceConfig.constraints,
     fitness: enhanceConfig.fitness,
     atlanteanChoices: enhanced.atlanteanChoices,
+    scoringMode: enhanceConfig.scoringMode,
+    statWeights: enhanceConfig.statWeights,
   });
   if (result != null) tracker.tryInsert(result);
 }
@@ -265,10 +281,10 @@ async function runSearchLoop(
   config: SearchLoopConfig,
   onProgress: ((checked: number, total: number, best: number, results: readonly SearchResult[]) => void) | undefined,
 ): Promise<void> {
-  const { gearPool, constraints, fitness } = params;
+  const { gearPool, constraints, fitness, scoringMode, statWeights } = params;
   const { tracker, token, deadline, total } = config;
   const enhanceConfig: EnhanceConfig = {
-    pool: gearPool, constraints, fitness,
+    pool: gearPool, constraints, fitness, scoringMode, statWeights,
   };
   let checked = 0;
 
@@ -341,7 +357,7 @@ export class ExhaustiveSearch implements SearchStrategy {
       : undefined;
 
     await runSearchLoop(
-      { gearPool, constraints, fitness },
+      { gearPool, constraints, fitness, scoringMode: options.scoringMode, statWeights: options.statWeights },
       { tracker, token: this.token, deadline, total },
       this.onProgress,
     );

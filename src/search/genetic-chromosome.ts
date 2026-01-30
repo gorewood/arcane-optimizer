@@ -12,6 +12,7 @@ import type {
   HardConstraints,
   Loadout,
   Modifier,
+  ScoringMode,
   SoftConstraint,
   StatName,
   Stats,
@@ -209,12 +210,18 @@ export function decodeChromosome(
 // Evaluate
 // ---------------------------------------------------------------------------
 
-export function evaluate(
-  chromo: Chromosome,
-  pool: IndexedPool,
-  constraints: HardConstraints,
-  fitness: readonly SoftConstraint[],
-): EvaluatedIndividual | null {
+/** Options for chromosome evaluation. */
+export interface EvaluateOptions {
+  readonly chromo: Chromosome;
+  readonly pool: IndexedPool;
+  readonly constraints: HardConstraints;
+  readonly fitness: readonly SoftConstraint[];
+  readonly scoringMode?: ScoringMode | undefined;
+  readonly statWeights?: Readonly<Record<StatName, number>> | undefined;
+}
+
+export function evaluate(options: EvaluateOptions): EvaluatedIndividual | null {
+  const { chromo, pool, constraints, fitness, scoringMode = "linear", statWeights } = options;
   const decoded = decodeChromosome(chromo, pool);
   if (decoded == null) return null;
 
@@ -222,7 +229,7 @@ export function evaluate(
   if (!validation.valid) return null;
 
   const stats = computeLoadoutStats(decoded.loadout, decoded.atlanteanMap);
-  const score = computeFitness(stats, fitness);
+  const score = computeFitness(stats, fitness, scoringMode, statWeights);
   if (score === -Infinity) return null;
 
   return {

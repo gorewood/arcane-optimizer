@@ -5,8 +5,11 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { SoftConstraint } from "@/models/types";
+import type { SoftConstraint, StatName } from "@/models/types";
 import { loadDefaultProfiles, loadVariantTypes } from "@/data/loaders";
+import type { ProfileConfig } from "@/data/profile-types";
+import type { ScoringMode } from "@/search/scoring-mode";
+import { DEFAULT_STAT_WEIGHTS } from "@/search/scoring-mode";
 
 // ---------------------------------------------------------------------------
 // State & Action Types
@@ -16,6 +19,12 @@ export interface FitnessState {
   constraints: readonly SoftConstraint[];
   activeProfileName: string | null;
   enabledVariants: ReadonlySet<string>;
+  scoringMode: ScoringMode;
+  statWeights: Readonly<Record<StatName, number>>;
+  /** ID of the currently loaded profile (if any). */
+  activeProfileId: string | null;
+  /** True if state differs from the loaded profile. */
+  hasUnsavedChanges: boolean;
 }
 
 export interface FitnessActions {
@@ -29,6 +38,17 @@ export interface FitnessActions {
   setEnabledVariants: (variants: ReadonlySet<string>) => void;
   enableAllVariantsOfType: (typeId: string) => void;
   disableAllVariantsOfType: (typeId: string) => void;
+  setScoringMode: (mode: ScoringMode) => void;
+  setStatWeight: (stat: StatName, weight: number) => void;
+  resetStatWeights: () => void;
+  /** Load an entire profile configuration. */
+  applyProfile: (id: string, config: ProfileConfig) => void;
+  /** Export current state as a ProfileConfig. */
+  getCurrentConfig: () => ProfileConfig;
+  /** Mark state as having unsaved changes. */
+  markDirty: () => void;
+  /** Mark state as clean (matching loaded profile). */
+  markClean: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -42,6 +62,10 @@ function getInitialState(): FitnessState {
     constraints: firstProfile?.constraints ?? [],
     activeProfileName: firstProfile?.name ?? null,
     enabledVariants: new Set<string>(),
+    scoringMode: "linear",
+    statWeights: DEFAULT_STAT_WEIGHTS,
+    activeProfileId: firstProfile?.id ?? null,
+    hasUnsavedChanges: false,
   };
 }
 
@@ -55,6 +79,10 @@ interface FitnessSerialized {
   constraints: SoftConstraint[];
   activeProfileName: string | null;
   enabledVariants: string[];
+  scoringMode?: ScoringMode;
+  statWeights?: Record<StatName, number>;
+  activeProfileId?: string | null;
+  hasUnsavedChanges?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +102,73 @@ function createSetStorage(): ReturnType<typeof createJSONStorage<FitnessState>> 
 }
 
 // ---------------------------------------------------------------------------
-// Migration — v1 → v2: add enabledVariants
+// Migration Helpers
+// ---------------------------------------------------------------------------
+
+function isValidScoringMode(value: unknown): value is ScoringMode {
+  return value === "linear" || value === "efficiency" || value === "multiplier";
+}
+
+function parseScoringMode(value: unknown, fallback: ScoringMode): ScoringMode {
+  return isValidScoringMode(value) ? value : fallback;
+}
+
+/** List of stat names for type-safe iteration. */
+const STAT_NAME_LIST: readonly StatName[] = [
+  "power", "defense", "size", "dexterity", "range", "haste",
+  "insanity", "warding", "drawback", "regeneration", "pierce", "resistance",
+] as const;
+
+function getNumericProperty(obj: object, key: string): number | undefined {
+  if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    const val = Reflect.get(obj, key) as unknown;
+    if (typeof val === "number") return val;
+  }
+  return undefined;
+}
+
+function parseStatWeights(
+  value: unknown,
+  fallback: Readonly<Record<StatName, number>>,
+): Readonly<Record<StatName, number>> {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return fallback;
+  }
+  const merged = { ...DEFAULT_STAT_WEIGHTS };
+  for (const statKey of STAT_NAME_LIST) {
+    const numVal = getNumericProperty(value, statKey);
+    if (numVal !== undefined) {
+      merged[statKey] = numVal;
+    }
+  }
+  return merged;
+}
+
+function migrateConstraints(raw: Partial<FitnessSerialized>): readonly SoftConstraint[] {
+  if (!Array.isArray(raw.constraints)) {
+    return INITIAL_STATE.constraints;
+  }
+  return raw.constraints.map((c: SoftConstraint) => {
+    // v0 -> v1: change insanity "exactly" to "atMost"
+    if (c.stat === "insanity" && c.type === "exactly") {
+      return { ...c, type: "atMost" as const };
+    }
+    return c;
+  });
+}
+
+function migrateEnabledVariants(
+  raw: Partial<FitnessSerialized>,
+  version: number,
+): ReadonlySet<string> {
+  if (version < 2 || !Array.isArray(raw.enabledVariants)) {
+    return new Set<string>();
+  }
+  return new Set<string>(raw.enabledVariants);
+}
+
+// ---------------------------------------------------------------------------
+// Migration — handles version upgrades
 // ---------------------------------------------------------------------------
 
 function migrateFitnessState(
@@ -87,32 +181,18 @@ function migrateFitnessState(
 
   const raw = persisted as Partial<FitnessSerialized>;
 
-  // Handle constraints
-  let constraints: readonly SoftConstraint[];
-  if (!Array.isArray(raw.constraints)) {
-    constraints = INITIAL_STATE.constraints;
-  } else {
-    constraints = raw.constraints.map((c: SoftConstraint) => {
-      // v0 → v1: change insanity "exactly" to "atMost"
-      if (c.stat === "insanity" && c.type === "exactly") {
-        return { ...c, type: "atMost" as const };
-      }
-      return c;
-    });
-  }
-
-  // Handle enabledVariants (new in v2)
-  let enabledVariants: ReadonlySet<string>;
-  if (version < 2 || !Array.isArray(raw.enabledVariants)) {
-    enabledVariants = new Set<string>();
-  } else {
-    enabledVariants = new Set<string>(raw.enabledVariants);
-  }
+  // v2 -> v3: add activeProfileId and hasUnsavedChanges
+  const activeProfileId = typeof raw.activeProfileId === "string" ? raw.activeProfileId : null;
+  const hasUnsavedChanges = typeof raw.hasUnsavedChanges === "boolean" ? raw.hasUnsavedChanges : false;
 
   return {
-    constraints,
+    constraints: migrateConstraints(raw),
     activeProfileName: raw.activeProfileName ?? null,
-    enabledVariants,
+    enabledVariants: migrateEnabledVariants(raw, version),
+    scoringMode: parseScoringMode(raw.scoringMode, "linear"),
+    statWeights: parseStatWeights(raw.statWeights, DEFAULT_STAT_WEIGHTS),
+    activeProfileId,
+    hasUnsavedChanges,
   };
 }
 
@@ -124,15 +204,18 @@ function mergePersistedState(
     return current;
   }
   const raw = persisted as Partial<FitnessSerialized>;
+
   return {
     ...current,
-    constraints: Array.isArray(raw.constraints)
-      ? raw.constraints
-      : current.constraints,
+    constraints: Array.isArray(raw.constraints) ? raw.constraints : current.constraints,
     activeProfileName: raw.activeProfileName ?? current.activeProfileName,
     enabledVariants: Array.isArray(raw.enabledVariants)
       ? new Set<string>(raw.enabledVariants)
       : current.enabledVariants,
+    scoringMode: parseScoringMode(raw.scoringMode, current.scoringMode),
+    statWeights: parseStatWeights(raw.statWeights, current.statWeights),
+    activeProfileId: typeof raw.activeProfileId === "string" ? raw.activeProfileId : current.activeProfileId,
+    hasUnsavedChanges: typeof raw.hasUnsavedChanges === "boolean" ? raw.hasUnsavedChanges : current.hasUnsavedChanges,
   };
 }
 
@@ -150,85 +233,112 @@ function toggleSetItem(set: ReadonlySet<string>, item: string): ReadonlySet<stri
   return next;
 }
 
+function addVariantsOfType(
+  current: ReadonlySet<string>,
+  typeId: string,
+): ReadonlySet<string> {
+  const variantTypes = loadVariantTypes();
+  const typeEntry = variantTypes[typeId];
+  if (!typeEntry) return current;
+  const next = new Set(current);
+  for (const v of typeEntry.variants) {
+    next.add(v);
+  }
+  return next;
+}
+
+function removeVariantsOfType(
+  current: ReadonlySet<string>,
+  typeId: string,
+): ReadonlySet<string> {
+  const variantTypes = loadVariantTypes();
+  const typeEntry = variantTypes[typeId];
+  if (!typeEntry) return current;
+  const next = new Set(current);
+  for (const v of typeEntry.variants) {
+    next.delete(v);
+  }
+  return next;
+}
+
+// ---------------------------------------------------------------------------
+// Store Actions (extracted to stay under line limit)
+// ---------------------------------------------------------------------------
+
+type SetFn = (partial: Partial<FitnessState> | ((s: FitnessState) => Partial<FitnessState>)) => void;
+type GetFn = () => FitnessState;
+
+function createConstraintActions(set: SetFn): Pick<FitnessActions,
+  "setConstraints" | "addConstraint" | "removeConstraint" | "updateConstraint" | "loadPreset" | "clearPreset"
+> {
+  return {
+    setConstraints: (constraints) => { set({ constraints, activeProfileName: null, hasUnsavedChanges: true }); },
+    addConstraint: (constraint) => { set((s) => ({
+      constraints: [...s.constraints, constraint], activeProfileName: null, hasUnsavedChanges: true,
+    })); },
+    removeConstraint: (index) => { set((s) => ({
+      constraints: s.constraints.filter((_, i) => i !== index), activeProfileName: null, hasUnsavedChanges: true,
+    })); },
+    updateConstraint: (index, constraint) => { set((s) => ({
+      constraints: s.constraints.map((c, i) => (i === index ? constraint : c)), activeProfileName: null, hasUnsavedChanges: true,
+    })); },
+    loadPreset: (name, constraints) => { set({ constraints, activeProfileName: name, hasUnsavedChanges: true }); },
+    clearPreset: () => { set({ constraints: [], activeProfileName: null, hasUnsavedChanges: true }); },
+  };
+}
+
+function createVariantActions(set: SetFn): Pick<FitnessActions,
+  "toggleVariant" | "setEnabledVariants" | "enableAllVariantsOfType" | "disableAllVariantsOfType"
+> {
+  return {
+    toggleVariant: (variant) => { set((s) => ({ enabledVariants: toggleSetItem(s.enabledVariants, variant), hasUnsavedChanges: true })); },
+    setEnabledVariants: (variants) => { set({ enabledVariants: variants, hasUnsavedChanges: true }); },
+    enableAllVariantsOfType: (typeId) => { set((s) => ({ enabledVariants: addVariantsOfType(s.enabledVariants, typeId), hasUnsavedChanges: true })); },
+    disableAllVariantsOfType: (typeId) => { set((s) => ({ enabledVariants: removeVariantsOfType(s.enabledVariants, typeId), hasUnsavedChanges: true })); },
+  };
+}
+
+function createScoringActions(set: SetFn): Pick<FitnessActions, "setScoringMode" | "setStatWeight" | "resetStatWeights"> {
+  return {
+    setScoringMode: (mode) => { set({ scoringMode: mode, hasUnsavedChanges: true }); },
+    setStatWeight: (stat, weight) => { set((s) => ({ statWeights: { ...s.statWeights, [stat]: weight }, hasUnsavedChanges: true })); },
+    resetStatWeights: () => { set({ statWeights: DEFAULT_STAT_WEIGHTS, hasUnsavedChanges: true }); },
+  };
+}
+
+function createProfileActions(set: SetFn, get: GetFn): Pick<FitnessActions,
+  "applyProfile" | "getCurrentConfig" | "markDirty" | "markClean"
+> {
+  return {
+    applyProfile: (id, config) => { set({
+      scoringMode: config.scoringMode, constraints: config.constraints, statWeights: config.statWeights,
+      enabledVariants: new Set(config.enabledVariants), activeProfileId: id, activeProfileName: null, hasUnsavedChanges: false,
+    }); },
+    getCurrentConfig: () => {
+      const s = get();
+      return { scoringMode: s.scoringMode, constraints: s.constraints, statWeights: s.statWeights, enabledVariants: [...s.enabledVariants] };
+    },
+    markDirty: () => { set({ hasUnsavedChanges: true }); },
+    markClean: () => { set({ hasUnsavedChanges: false }); },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
 
 export const useFitnessStore = create<FitnessState & FitnessActions>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...INITIAL_STATE,
-
-      setConstraints: (constraints: readonly SoftConstraint[]): void => {
-        set({ constraints, activeProfileName: null });
-      },
-
-      addConstraint: (constraint: SoftConstraint): void => {
-        set((s) => ({
-          constraints: [...s.constraints, constraint],
-          activeProfileName: null,
-        }));
-      },
-
-      removeConstraint: (index: number): void => {
-        set((s) => ({
-          constraints: s.constraints.filter((_, i) => i !== index),
-          activeProfileName: null,
-        }));
-      },
-
-      updateConstraint: (index: number, constraint: SoftConstraint): void => {
-        set((s) => ({
-          constraints: s.constraints.map((c, i) => (i === index ? constraint : c)),
-          activeProfileName: null,
-        }));
-      },
-
-      loadPreset: (name: string, constraints: readonly SoftConstraint[]): void => {
-        set({ constraints, activeProfileName: name });
-      },
-
-      clearPreset: (): void => {
-        set({ constraints: [], activeProfileName: null });
-      },
-
-      toggleVariant: (variant: string): void => {
-        set((s) => ({ enabledVariants: toggleSetItem(s.enabledVariants, variant) }));
-      },
-
-      setEnabledVariants: (variants: ReadonlySet<string>): void => {
-        set({ enabledVariants: variants });
-      },
-
-      enableAllVariantsOfType: (typeId: string): void => {
-        const variantTypes = loadVariantTypes();
-        const typeEntry = variantTypes[typeId];
-        if (!typeEntry) return;
-        set((s) => {
-          const next = new Set(s.enabledVariants);
-          for (const v of typeEntry.variants) {
-            next.add(v);
-          }
-          return { enabledVariants: next };
-        });
-      },
-
-      disableAllVariantsOfType: (typeId: string): void => {
-        const variantTypes = loadVariantTypes();
-        const typeEntry = variantTypes[typeId];
-        if (!typeEntry) return;
-        set((s) => {
-          const next = new Set(s.enabledVariants);
-          for (const v of typeEntry.variants) {
-            next.delete(v);
-          }
-          return { enabledVariants: next };
-        });
-      },
+      ...createConstraintActions(set),
+      ...createVariantActions(set),
+      ...createScoringActions(set),
+      ...createProfileActions(set, get),
     }),
     {
       name: "ao-fitness",
-      version: 2,
+      version: 3,
       storage: createSetStorage(),
       merge: mergePersistedState,
       migrate: migrateFitnessState,
