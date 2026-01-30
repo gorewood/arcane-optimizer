@@ -17,8 +17,8 @@ import { FitnessPanel } from "./fitness-panel";
 // ---------------------------------------------------------------------------
 
 export function GoalsSection(): React.JSX.Element {
-  const constraints = useFitnessStore((s) => s.constraints);
-  const activeProfileName = useFitnessStore((s) => s.activeProfileName);
+  const constraints = useFitnessStore((s) => s.constraintsConfig.constraints);
+  const activeProfileId = useFitnessStore((s) => s.activeProfileId);
   const searchStatus = useSearchStore((s) => s.status);
 
   const [goalsOpen, setGoalsOpen] = useState(false);
@@ -35,7 +35,7 @@ export function GoalsSection(): React.JSX.Element {
     return unsubscribe;
   }, []);
 
-  const summary = buildSummary(constraints, activeProfileName);
+  const summary = buildSummary(constraints, activeProfileId);
   const isRunning = searchStatus === "running";
 
   return (
@@ -57,13 +57,14 @@ export function GoalsSection(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 function buildSummary(
-  constraints: ReturnType<typeof useFitnessStore.getState>["constraints"],
-  presetName: string | null,
+  constraints: readonly { stat: string; type: string; value?: number | undefined }[],
+  profileId: string | null,
 ): string {
   const parts: string[] = [];
 
-  if (presetName != null) {
-    parts.push(presetName);
+  // Profile ID shown in summary (could look up name, but ID is simpler)
+  if (profileId != null) {
+    parts.push("Profile loaded");
   }
 
   // Show top 3 constraints in summary

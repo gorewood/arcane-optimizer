@@ -16,7 +16,7 @@ export function getTestProfiles(): Readonly<Record<string, readonly SoftConstrai
   const defaults = loadDefaultProfiles();
   const result: Record<string, readonly SoftConstraint[]> = {};
   for (const profile of defaults) {
-    result[profile.name] = profile.constraints;
+    result[profile.name] = profile.constraintsConfig.constraints;
   }
   return result;
 }

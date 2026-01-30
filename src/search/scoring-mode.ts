@@ -8,6 +8,7 @@
  */
 
 import type { StatName } from "@/models/types";
+import type { StatLimits, StatMinimums, StatWeights } from "@/data/profile-types";
 
 /** Available scoring modes for fitness evaluation. */
 export type ScoringMode = "linear" | "efficiency" | "multiplier";
@@ -21,7 +22,7 @@ export interface ScoringConfig {
 }
 
 /** Default stat weights matching AO Guides defaults. */
-export const DEFAULT_STAT_WEIGHTS: Readonly<Record<StatName, number>> = {
+export const DEFAULT_STAT_WEIGHTS: StatWeights = {
   power: 100,
   defense: 100,
   size: 30,
@@ -35,3 +36,13 @@ export const DEFAULT_STAT_WEIGHTS: Readonly<Record<StatName, number>> = {
   warding: 0,
   drawback: 0,
 } as const;
+
+/** Default stat limits for Efficiency/Multiplier modes. */
+export const DEFAULT_LIMITS: StatLimits = {
+  insanity: 1,
+  warding: 0,
+  drawback: 2,
+} as const;
+
+/** Default stat minimums (all disabled). */
+export const DEFAULT_MINIMUMS: StatMinimums = {} as const;

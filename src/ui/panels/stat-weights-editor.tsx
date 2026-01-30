@@ -45,9 +45,14 @@ const STAT_LABELS: Record<StatName, string> = {
 
 export function StatWeightsEditor(): React.JSX.Element {
   const [isExpanded, setIsExpanded] = useState(true);
-  const statWeights = useFitnessStore((s) => s.statWeights);
-  const setStatWeight = useFitnessStore((s) => s.setStatWeight);
-  const resetStatWeights = useFitnessStore((s) => s.resetStatWeights);
+  const scoringMode = useFitnessStore((s) => s.scoringMode);
+  const efficiencyWeights = useFitnessStore((s) => s.efficiencyConfig.weights);
+  const multiplierWeights = useFitnessStore((s) => s.multiplierConfig.weights);
+  const setWeight = useFitnessStore((s) => s.setWeight);
+  const resetWeights = useFitnessStore((s) => s.resetWeights);
+
+  // Get weights for current mode (this component only shown in efficiency/multiplier)
+  const statWeights = scoringMode === "multiplier" ? multiplierWeights : efficiencyWeights;
 
   const hasChanges = STAT_NAMES.some(
     (stat) => statWeights[stat] !== DEFAULT_STAT_WEIGHTS[stat],
@@ -63,7 +68,7 @@ export function StatWeightsEditor(): React.JSX.Element {
         isExpanded={isExpanded}
         hasChanges={hasChanges}
         onToggle={toggle}
-        onReset={resetStatWeights}
+        onReset={resetWeights}
       />
       {isExpanded && (
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 pl-6">
@@ -73,7 +78,7 @@ export function StatWeightsEditor(): React.JSX.Element {
               stat={stat}
               value={statWeights[stat]}
               onChange={(v) => {
-                setStatWeight(stat, v);
+                setWeight(stat, v);
               }}
             />
           ))}

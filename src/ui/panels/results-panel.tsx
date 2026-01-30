@@ -18,7 +18,7 @@ import { BuildCard } from "./build-card";
 export function ResultsPanel(): React.JSX.Element {
   const results = useSearchStore((s) => s.results);
   const status = useSearchStore((s) => s.status);
-  const constraints = useFitnessStore((s) => s.constraints);
+  const constraints = useFitnessStore((s) => s.constraintsConfig.constraints);
   const expandedCards = useUIStore((s) => s.expandedCardIndices);
   const toggleCardExpanded = useUIStore((s) => s.toggleCardExpanded);
 
@@ -98,7 +98,7 @@ function ResultsList({
   readonly results: ReturnType<typeof useSearchStore.getState>["results"];
   readonly constraints: ReturnType<
     typeof useFitnessStore.getState
-  >["constraints"];
+  >["constraintsConfig"]["constraints"];
   readonly disabled?: boolean;
   readonly expandedCards: ReadonlySet<number>;
   readonly onToggleExpanded: (index: number) => void;

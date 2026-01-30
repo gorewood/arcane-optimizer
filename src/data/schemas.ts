@@ -166,21 +166,51 @@ export const softConstraintSchema = z
 /** Scoring mode for fitness evaluation. */
 const scoringModeSchema = z.enum(["linear", "efficiency", "multiplier"]);
 
+/** Stat limits schema (insanity, warding, drawback). */
+const statLimitsSchema = z
+  .object({
+    insanity: z.number(),
+    warding: z.number(),
+    drawback: z.number(),
+  })
+  .readonly();
+
+/** Stat minimums schema (partial record, missing = disabled). */
+const statMinimumsSchema = z.record(statNameSchema, z.number()).readonly();
+
 /** Stat weights schema (all 12 stats required). */
-const statWeightsSchema = z.object({
-  power: z.number(),
-  defense: z.number(),
-  size: z.number(),
-  dexterity: z.number(),
-  range: z.number(),
-  haste: z.number(),
-  insanity: z.number(),
-  warding: z.number(),
-  drawback: z.number(),
-  regeneration: z.number(),
-  pierce: z.number(),
-  resistance: z.number(),
-}).readonly();
+const statWeightsSchema = z
+  .object({
+    power: z.number(),
+    defense: z.number(),
+    size: z.number(),
+    dexterity: z.number(),
+    range: z.number(),
+    haste: z.number(),
+    insanity: z.number(),
+    warding: z.number(),
+    drawback: z.number(),
+    regeneration: z.number(),
+    pierce: z.number(),
+    resistance: z.number(),
+  })
+  .readonly();
+
+/** Constraints mode config schema. */
+const constraintsModeConfigSchema = z
+  .object({
+    constraints: z.array(softConstraintSchema).readonly(),
+  })
+  .readonly();
+
+/** Weights mode config schema (for Efficiency/Multiplier). */
+const weightsModeConfigSchema = z
+  .object({
+    limits: statLimitsSchema,
+    minimums: statMinimumsSchema,
+    weights: statWeightsSchema,
+  })
+  .readonly();
 
 /** A default profile shipped with the app. */
 export const defaultProfileSchema = z
@@ -189,9 +219,10 @@ export const defaultProfileSchema = z
     name: z.string(),
     version: z.number().int().positive(),
     scoringMode: scoringModeSchema,
-    constraints: z.array(softConstraintSchema).readonly(),
-    statWeights: statWeightsSchema,
     enabledVariants: z.array(z.string()).readonly(),
+    constraintsConfig: constraintsModeConfigSchema,
+    efficiencyConfig: weightsModeConfigSchema,
+    multiplierConfig: weightsModeConfigSchema,
   })
   .readonly();
 
@@ -209,9 +240,10 @@ export const userProfileSchema = z
     id: z.string(),
     name: z.string(),
     scoringMode: scoringModeSchema,
-    constraints: z.array(softConstraintSchema).readonly(),
-    statWeights: statWeightsSchema,
     enabledVariants: z.array(z.string()).readonly(),
+    constraintsConfig: constraintsModeConfigSchema,
+    efficiencyConfig: weightsModeConfigSchema,
+    multiplierConfig: weightsModeConfigSchema,
     baseVersion: z.number().int().optional(), // Version of default it was based on
     deleted: z.boolean().optional(), // True if user deleted a default profile
     createdAt: z.number(),

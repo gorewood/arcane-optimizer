@@ -58,8 +58,8 @@ const SCORING_MODE_INFO: Record<ScoringMode, { label: string; description: strin
 // ---------------------------------------------------------------------------
 
 export function FitnessPanel(): React.JSX.Element {
-  const constraints = useFitnessStore((s) => s.constraints);
-  const loadPreset = useFitnessStore((s) => s.loadPreset);
+  const constraints = useFitnessStore((s) => s.constraintsConfig.constraints);
+  const applyProfile = useFitnessStore((s) => s.applyProfile);
   const addConstraint = useFitnessStore((s) => s.addConstraint);
   const updateConstraint = useFitnessStore((s) => s.updateConstraint);
   const removeConstraint = useFitnessStore((s) => s.removeConstraint);
@@ -70,7 +70,7 @@ export function FitnessPanel(): React.JSX.Element {
 
   return (
     <div className="space-y-4 p-4">
-      <ProfileSelector constraints={constraints} onApplyProfile={loadPreset} />
+      <ProfileSelector onApplyProfile={applyProfile} />
 
       <Separator className="bg-border-subtle" />
 

@@ -21,8 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useProfileStore } from "@/stores/profile-store";
-import type { SoftConstraint } from "@/models/types";
-import type { Profile } from "@/data/profile-types";
+import { useFitnessStore } from "@/stores/fitness-store";
+import type { Profile, ProfileConfig } from "@/data/profile-types";
 import { Trash2, RotateCcw, Download, Upload } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -30,11 +30,7 @@ import { Trash2, RotateCcw, Download, Upload } from "lucide-react";
 // ---------------------------------------------------------------------------
 
 interface ProfileSelectorProps {
-  readonly constraints: readonly SoftConstraint[];
-  readonly onApplyProfile: (
-    name: string,
-    constraints: readonly SoftConstraint[],
-  ) => void;
+  readonly onApplyProfile: (id: string, config: ProfileConfig) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +219,7 @@ function ProfileSecondaryActions({
 // ProfileSelector
 // ---------------------------------------------------------------------------
 
-export function ProfileSelector({ constraints, onApplyProfile }: ProfileSelectorProps): React.JSX.Element {
+export function ProfileSelector({ onApplyProfile }: ProfileSelectorProps): React.JSX.Element {
   const userProfiles = useProfileStore((s) => s.userProfiles);
   const getProfiles = useProfileStore((s) => s.getProfiles);
   // Memoize profiles to avoid infinite re-render loop
@@ -236,14 +232,32 @@ export function ProfileSelector({ constraints, onApplyProfile }: ProfileSelector
   const resetToDefault = useProfileStore((s) => s.resetToDefault);
   const exportProfiles = useProfileStore((s) => s.exportProfiles);
   const importProfiles = useProfileStore((s) => s.importProfiles);
+  const getCurrentConfig = useFitnessStore((s) => s.getCurrentConfig);
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
 
-  const handleApply = (): void => { if (selectedProfile) onApplyProfile(selectedProfile.name, selectedProfile.constraints); };
-  const handleSave = (): void => { if (selectedProfileId) updateProfile(selectedProfileId, { constraints }); };
-  const handleSaveAsNew = (name: string): void => { selectProfile(createProfile(name, { constraints })); setSaveDialogOpen(false); };
+  const handleApply = (): void => {
+    if (selectedProfile) {
+      onApplyProfile(selectedProfile.id, {
+        scoringMode: selectedProfile.scoringMode,
+        enabledVariants: selectedProfile.enabledVariants,
+        constraintsConfig: selectedProfile.constraintsConfig,
+        efficiencyConfig: selectedProfile.efficiencyConfig,
+        multiplierConfig: selectedProfile.multiplierConfig,
+      });
+    }
+  };
+  const handleSave = (): void => {
+    if (selectedProfileId) {
+      updateProfile(selectedProfileId, getCurrentConfig());
+    }
+  };
+  const handleSaveAsNew = (name: string): void => {
+    selectProfile(createProfile(name, getCurrentConfig()));
+    setSaveDialogOpen(false);
+  };
   const handleDelete = (): void => { if (selectedProfileId && confirm("Delete this profile?")) deleteProfile(selectedProfileId); };
   const handleReset = (): void => { if (selectedProfileId && selectedProfile?.isDefault && confirm("Reset to default?")) resetToDefault(selectedProfileId); };
   const handleExport = (): void => { navigator.clipboard.writeText(exportProfiles()).then(() => { alert("Copied"); }, () => { /* ignore */ }); };

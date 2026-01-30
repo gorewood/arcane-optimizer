@@ -5,12 +5,38 @@
 import type { SoftConstraint, StatName } from "@/models/types";
 import type { ScoringMode } from "@/search/scoring-mode";
 
+/** Limit values for stats that can disqualify builds (max allowed). */
+export interface StatLimits {
+  readonly insanity: number;
+  readonly warding: number;
+  readonly drawback: number;
+}
+
+/** Minimum stat requirements. Missing key = no minimum (disabled). */
+export type StatMinimums = Partial<Readonly<Record<StatName, number>>>;
+
+/** Stat importance weights (0-200, 100 = normal). */
+export type StatWeights = Readonly<Record<StatName, number>>;
+
+/** Configuration for Constraints scoring mode. */
+export interface ConstraintsModeConfig {
+  readonly constraints: readonly SoftConstraint[];
+}
+
+/** Configuration for Efficiency/Multiplier scoring modes. */
+export interface WeightsModeConfig {
+  readonly limits: StatLimits;
+  readonly minimums: StatMinimums;
+  readonly weights: StatWeights;
+}
+
 /** Core configuration that defines how a build is evaluated. */
 export interface ProfileConfig {
   readonly scoringMode: ScoringMode;
-  readonly constraints: readonly SoftConstraint[];
-  readonly statWeights: Readonly<Record<StatName, number>>;
   readonly enabledVariants: readonly string[];
+  readonly constraintsConfig: ConstraintsModeConfig;
+  readonly efficiencyConfig: WeightsModeConfig;
+  readonly multiplierConfig: WeightsModeConfig;
 }
 
 /** A default profile shipped with the app (from JSON config). */

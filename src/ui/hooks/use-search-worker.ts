@@ -358,7 +358,7 @@ export function useSearchWorker(maxResults: number): WorkerHookResult {
   const algorithm = useSearchStore((s) => s.algorithm);
   const setAlgorithm = useSearchStore((s) => s.setAlgorithm);
   const gaParams = useSearchStore((s) => s.gaParams);
-  const constraints = useFitnessStore((s) => s.constraints);
+  const constraints = useFitnessStore((s) => s.constraintsConfig.constraints);
   const enabledVariants = useFitnessStore((s) => s.enabledVariants);
   const eqIds = useGearPoolStore((s) => s.enabledEquipmentIds);
   const enIds = useGearPoolStore((s) => s.enabledEnchantmentIds);
