@@ -19,7 +19,11 @@ import {
 export function HelpPanel(): React.JSX.Element {
   return (
     <div className="p-4 max-w-3xl">
-      <Accordion type="multiple" className="space-y-2">
+      <p className="text-text-secondary mb-4">
+        Find the best gear loadouts for your Arcane Odyssey build. Set your stat goals, enable
+        the equipment you have access to, and let the optimizer search for optimal combinations.
+      </p>
+      <Accordion type="multiple" defaultValue={["quick-start"]} className="space-y-2">
         <HelpAccordionItem value="quick-start" title="Quick Start">
           <QuickStartContent />
         </HelpAccordionItem>
@@ -365,52 +369,40 @@ function CreditsContent(): React.JSX.Element {
   return (
     <>
       <p className="text-text-secondary mb-3">
-        This optimizer was built using game data and formulas from the Arcane Odyssey community.
+        Built with help from the Arcane Odyssey community.
       </p>
-      <dl className="space-y-3">
-        <div>
-          <dt className="font-semibold text-accent-gold">Game Data</dt>
-          <dd className="text-text-secondary ml-4">
-            Equipment stats, enchantments, modifiers, and gems sourced from{" "}
-            <a
-              href="https://github.com/myaltaccountsthis/arcane-odyssey-guides"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-gold hover:underline"
-            >
-              myaltaccountsthis/arcane-odyssey-guides
-            </a>
-            {" "}— the most comprehensive AO data repository.
-          </dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-accent-gold">Diminishing Returns Formula</dt>
-          <dd className="text-text-secondary ml-4">
-            The multiplier scoring mode uses the community-discovered diminishing returns formula
-            for accurate in-game damage/defense calculations.
-          </dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-accent-gold">Community</dt>
-          <dd className="text-text-secondary ml-4">
-            Thanks to the Arcane Odyssey Wiki contributors and Discord community for documenting
-            game mechanics.
-          </dd>
-        </div>
-      </dl>
+      <ul className="space-y-2 text-text-secondary text-sm">
+        <li>
+          <strong className="text-accent-gold">Game Data:</strong> Compiled from the{" "}
+          <CreditLink href="https://arcane-odyssey.fandom.com/wiki/Arcane_Odyssey_Wiki">AO Wiki</CreditLink>,
+          community spreadsheets, and in-game verification.
+        </li>
+        <li>
+          <strong className="text-accent-gold">Scoring Formulas:</strong> Efficiency and multiplier modes use
+          formulas from{" "}
+          <CreditLink href="https://github.com/myaltaccountsthis/arcane-odyssey-guides">
+            myaltaccountsthis/arcane-odyssey-guides
+          </CreditLink>.
+        </li>
+        <li>
+          <strong className="text-accent-gold">Development:</strong> Built with{" "}
+          <CreditLink href="https://claude.ai/claude-code">Claude Code</CreditLink>.
+        </li>
+      </ul>
       <p className="text-text-muted text-sm mt-4">
-        Found an issue or have a suggestion?{" "}
-        <a
-          href="https://github.com/gorewood/arcane-optimizer/issues"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-accent-gold hover:underline"
-        >
+        <CreditLink href="https://github.com/gorewood/arcane-optimizer/issues">
           Open an issue on GitHub
-        </a>
-        .
+        </CreditLink>{" "}to report bugs or suggest features.
       </p>
     </>
+  );
+}
+
+function CreditLink({ href, children }: { readonly href: string; readonly children: React.ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent-gold hover:underline">
+      {children}
+    </a>
   );
 }
 
