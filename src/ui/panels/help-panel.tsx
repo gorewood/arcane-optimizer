@@ -18,7 +18,7 @@ import {
 
 export function HelpPanel(): React.JSX.Element {
   return (
-    <div className="p-4 max-w-3xl">
+    <div className="p-4">
       <p className="text-text-secondary mb-4">
         Find the best gear loadouts for your Arcane Odyssey build. Set your stat goals, enable
         the equipment you have access to, and let the optimizer search for optimal combinations.
